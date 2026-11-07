@@ -6,10 +6,9 @@ import time
 
 from arduino.app_utils import App, Bridge
 from arduino.app_bricks.cloud_llm import CloudLLM, CloudModel
+from arduino.app_bricks.web_ui import WebUI
 
-# ---------- 1. Settings ----------
-TOPIC = "Electronics I: diodes, BJTs and op-amps"
-
+# ---------- 1. Gemini ----------
 SYSTEM_PROMPT = (
     "You write ONE multiple-choice quiz question. "
     "Reply with ONLY a JSON object, no markdown, no extra text: "
@@ -28,12 +27,19 @@ BACKUP = [
     {"q": "Ideal op-amp input current?", "choices": ["Infinite", "1 mA", "Zero", "1 A"], "answer": 2},
 ]
 
-# ---------- 2. State ----------
+# ---------- 2. State (the web page reads this) ----------
 answers = queue.Queue()   # answers from the switches wait here
-current = None            # the question on screen right now
+current = None            # the question being asked right now
 recent = []               # last few questions, so Gemini doesn't repeat
-score = 0
-asked = 0
+new_topic = None          # set by the web page when you pick a topic
+
+state = {
+    "topic": "Electronics I: diodes, BJTs and op-amps",
+    "question": "", "choices": [], "answer": -1,
+    "picked": -1, "result": "",          # result: "", "right" or "wrong"
+    "status": "Starting...", "source": "",
+    "score": 0, "asked": 0, "streak": 0, "best_streak": 0,
+}
 
 # ---------- 3. Bridge: the sketch calls this when a switch flips ON ----------
 def on_answer(index: int):
@@ -47,35 +53,59 @@ def led(r, g, b):
     except Exception as e:
         print("LED error:", e)
 
-# ---------- 4. Getting a question ----------
+# ---------- 4. Web page API ----------
+ui = WebUI()
+
+def api_state():
+    return state
+
+def api_topic(name: str):
+    global new_topic
+    new_topic = name.strip()[:120]
+    return {"ok": True}
+
+ui.expose_api("GET", "/api/state", api_state)
+ui.expose_api("GET", "/api/topic", api_topic)
+
+# ---------- 5. Getting a question ----------
 def new_question():
     try:
         avoid = " | ".join(recent[-5:])
-        raw = llm.chat(f"Topic: {TOPIC}. Do not repeat these: {avoid}")
+        raw = llm.chat(f"Topic: {state['topic']}. Do not repeat these: {avoid}")
         raw = re.sub(r"^```(json)?|```$", "", raw.strip()).strip()
         q = json.loads(raw)
         if len(q["choices"]) != 4 or not 0 <= int(q["answer"]) <= 3:
             raise ValueError("bad format")
         q["answer"] = int(q["answer"])
+        state["source"] = "gemini"
     except Exception as e:
         print("Gemini failed, using a backup question:", e)
         q = random.choice(BACKUP)
+        state["source"] = "backup"
     recent.append(q["q"])
     return q
 
 def show(q):
+    state.update(question=q["q"], choices=q["choices"], answer=q["answer"],
+                 picked=-1, result="", status="Flip a switch: 1=A  2=B  3=C  4=D")
     print("\n" + "=" * 40)
     print("Q:", q["q"])
     for i, choice in enumerate(q["choices"]):
         print(f"   {'ABCD'[i]}) {choice}")
-    print("Flip a switch: 1=A  2=B  3=C  4=D")
 
-# ---------- 5. Main loop ----------
+# ---------- 6. Main loop ----------
 def loop():
-    global current, score, asked
+    global current, new_topic
+
+    if new_topic:                         # web page picked a new topic
+        state.update(topic=new_topic, score=0, asked=0, streak=0)
+        recent.clear()
+        new_topic = None
+        current = None
 
     if current is None:
         led(0, 0, 1)                      # blue = thinking
+        state.update(question="", choices=[], result="", status="Gemini is writing a question...")
         current = new_question()
         while not answers.empty():        # ignore flips made while waiting
             answers.get_nowait()
@@ -88,18 +118,24 @@ def loop():
     except queue.Empty:
         return
 
-    asked += 1
+    state["asked"] += 1
+    state["picked"] = choice
     if choice == current["answer"]:
-        score += 1
+        state["score"] += 1
+        state["streak"] += 1
+        state["best_streak"] = max(state["best_streak"], state["streak"])
+        state.update(result="right", status="Correct!")
         print("Correct!")
         led(0, 1, 0)                      # green
     else:
+        state["streak"] = 0
         right = current["choices"][current["answer"]]
+        state.update(result="wrong", status=f"Not quite. Answer: {'ABCD'[current['answer']]}) {right}")
         print(f"Wrong. Answer: {'ABCD'[current['answer']]}) {right}")
         led(1, 0, 0)                      # red
-    print(f"Score: {score}/{asked}")
+    print(f"Score: {state['score']}/{state['asked']}")
 
-    time.sleep(2)
+    time.sleep(2.5)
     led(0, 0, 0)
     current = None                        # next loop gets a new question
 

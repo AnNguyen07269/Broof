@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Broof</title>
+  <style>
+    :root {
+      --bg: #0f1115; --card: #181b22; --ink: #f2f3f5; --muted: #9aa0ab;
+      --accent: #6c8cff; --good: #2fd17a; --bad: #ff5d5d; --line: #2a2e38;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px 16px; background: var(--bg); color: var(--ink);
+      font: 17px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+    main { max-width: 760px; margin: 0 auto; display: grid; gap: 16px; }
+    header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 34px; letter-spacing: -0.02em; }
+    .tag { color: var(--muted); margin: 0; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+    .row { display: flex; gap: 8px; }
+    input {
+      flex: 1; min-width: 0; padding: 12px 14px; font: inherit; color: var(--ink);
+      background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    }
+    button {
+      padding: 12px 16px; font: inherit; font-weight: 600; cursor: pointer;
+      border: none; border-radius: 10px; background: var(--accent); color: #fff;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip { background: transparent; color: var(--ink); font-weight: 500;
+            border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px; }
+    #topic-now { color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+    #question { font-size: 26px; font-weight: 650; margin: 0 0 16px; line-height: 1.3; }
+    .choices { display: grid; gap: 10px; }
+    .choice {
+      display: flex; gap: 14px; align-items: center; padding: 14px 16px;
+      border: 2px solid var(--line); border-radius: 12px; font-size: 19px;
+      transition: border-color .2s, background .2s;
+    }
+    .letter {
+      flex: none; width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center;
+      background: var(--line); font-weight: 700;
+    }
+    .switch { margin-left: auto; color: var(--muted); font-size: 13px; white-space: nowrap; }
+    .choice.right { border-color: var(--good); background: rgba(47,209,122,.12); }
+    .choice.wrong { border-color: var(--bad); background: rgba(255,93,93,.12); }
+    #status { margin: 14px 0 0; color: var(--muted); min-height: 1.5em; }
+    #status.right { color: var(--good); font-weight: 600; }
+    #status.wrong { color: var(--bad); font-weight: 600; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+    .num { font-size: 32px; font-weight: 700; }
+    .lbl { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Broof</h1>
+    <p class="tag">your brain-rot-proof study bro</p>
+  </header>
+
+  <section class="card">
+    <p id="topic-now">Loading...</p>
+    <p id="question">Waiting for the first question...</p>
+    <div class="choices" id="choices"></div>
+    <p id="status"></p>
+  </section>
+
+  <section class="card stats">
+    <div><div class="num" id="score">0/0</div><div class="lbl">Score</div></div>
+    <div><div class="num" id="streak">0</div><div class="lbl">Streak</div></div>
+    <div><div class="num" id="best">0</div><div class="lbl">Best streak</div></div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <input id="topic" placeholder="Study anything: BJTs, Japanese N5 verbs, binary trees...">
+      <button id="go">Start</button>
+    </div>
+    <div class="chips">
+      <button class="chip" data-topic="Electronics I: diodes, BJTs and op-amps">Electronics I</button>
+      <button class="chip" data-topic="Beginner Japanese vocabulary (write Japanese in romaji with meaning)">Japanese</button>
+      <button class="chip" data-topic="Data structures: binary search trees, heaps and hash tables">Data Structures</button>
+      <button class="chip" data-topic="Digital design: logic gates, truth tables and binary">Digital Design</button>
+      <button class="chip" data-topic="Signals and systems: Fourier and Laplace transforms">Signals</button>
+    </div>
+  </section>
+</main>
+
+<script>
+  function start(topic) {
+    topic = topic.trim();
+    if (!topic) return;
+    fetch("/api/topic?name=" + encodeURIComponent(topic)).catch(console.error);
+  }
+  document.getElementById("go").onclick = () => start(document.getElementById("topic").value);
+  document.getElementById("topic").addEventListener("keydown", e => { if (e.key === "Enter") start(e.target.value); });
+  document.querySelectorAll(".chip").forEach(c => c.onclick = () => start(c.dataset.topic));
+
+  let lastKey = "";
+  async function refresh() {
+    let s;
+    try { s = await (await fetch("/api/state")).json(); } catch (e) { return; }
+
+    document.getElementById("topic-now").textContent = "Topic: " + s.topic + (s.source === "backup" ? "  (offline deck)" : "");
+    document.getElementById("score").textContent = s.score + "/" + s.asked;
+    document.getElementById("streak").textContent = s.streak;
+    document.getElementById("best").textContent = s.best_streak;
+
+    const status = document.getElementById("status");
+    status.className = s.result || "";
+    status.textContent = s.status;
+
+    const key = s.question + "|" + s.result + "|" + s.picked;
+    if (key === lastKey) return;
+    lastKey = key;
+
+    document.getElementById("question").textContent = s.question || "Thinking...";
+    const box = document.getElementById("choices");
+    box.innerHTML = "";
+    (s.choices || []).forEach((text, i) => {
+      const div = document.createElement("div");
+      div.className = "choice";
+      if (s.result && i === s.answer) div.classList.add("right");
+      if (s.result === "wrong" && i === s.picked) div.classList.add("wrong");
+      div.innerHTML = '<span class="letter"></span><span class="text"></span><span class="switch"></span>';
+      div.querySelector(".letter").textContent = "ABCD"[i];
+      div.querySelector(".text").textContent = text;
+      div.querySelector(".switch").textContent = "switch " + (i + 1);
+      box.appendChild(div);
+    });
+  }
+  setInterval(refresh, 500);
+  refresh();
+</script>
+</body>
+</html>
