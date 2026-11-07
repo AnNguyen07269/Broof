@@ -2,11 +2,16 @@
 
 // ---------- Inputs: DIP switches 1-4 = answers A-D ----------
 const int answerPins[4] = {D2, D3, D4, D5};
-bool wasOn[4] = {false, false, false, false};
+bool stableOn[4] = {false, false, false, false};   // debounced state
+bool lastRaw[4] = {false, false, false, false};
+unsigned long changedAt[4] = {0, 0, 0, 0};
+const unsigned long DEBOUNCE_MS = 60;   // contact must be steady this long
 
-// ---------- Output: the board's RGB LED (LED3) ----------
-// These LEDs light up when the pin is LOW ("active low").
-// If the colors look inverted, swap LOW and HIGH below.
+// "Armed" = every switch is OFF. An answer only counts when armed,
+// so a bouncing contact or a slow flip can never answer twice.
+bool armed = true;
+
+// ---------- Output: the board's RGB LED (LED3, active low) ----------
 const int LED_ON = LOW;
 const int LED_OFF = HIGH;
 
@@ -30,20 +35,37 @@ void setup() {
   pinMode(LED3_B, OUTPUT);
   set_color(0, 0, 0);
 
-  // Python can call set_color(r, g, b) through the Bridge
   Bridge.provide_safe("set_color", set_color);
 }
 
 void loop() {
-  for (int i = 0; i < 4; i++) {
-    bool isOn = digitalRead(answerPins[i]) == LOW;
+  unsigned long now = millis();
+  bool anyOn = false;
 
-    if (isOn && !wasOn[i]) {         // switch just flipped ON
-      Monitor.print("Answer: ");
-      Monitor.println((char)('A' + i));
-      Bridge.notify("answer", i);    // tell Python: 0=A, 1=B, 2=C, 3=D
+  for (int i = 0; i < 4; i++) {
+    bool raw = digitalRead(answerPins[i]) == LOW;
+
+    // 1. Debounce: only accept a new state after it stays steady
+    if (raw != lastRaw[i]) {
+      lastRaw[i] = raw;
+      changedAt[i] = now;
     }
-    wasOn[i] = isOn;
+    if (now - changedAt[i] >= DEBOUNCE_MS && raw != stableOn[i]) {
+      stableOn[i] = raw;
+
+      // 2. A clean OFF->ON while armed = one answer
+      if (stableOn[i] && armed) {
+        armed = false;
+        Monitor.print("Answer: ");
+        Monitor.println((char)('A' + i));
+        Bridge.notify("answer", i);   // 0=A, 1=B, 2=C, 3=D
+      }
+    }
+    if (stableOn[i]) anyOn = true;
   }
-  delay(30);                         // simple debounce
+
+  // 3. Re-arm only when every switch is back OFF
+  if (!anyOn) armed = true;
+
+  delay(5);
 }
