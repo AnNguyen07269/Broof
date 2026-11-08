@@ -10,8 +10,8 @@ from arduino.app_bricks.cloud_llm import CloudLLM, CloudModel
 from arduino.app_bricks.web_ui import WebUI
 
 # =====================================================================
-#  Broof v5 - adds: your own notes, "why" explanations, missed questions
-#  come back, saved decks, speaking style, difficulty, voice answers.
+#  Broof v8 - the box works on its own: pick a topic with the stick, read the
+#  question and the explanation on the LCD, see your score and choose what next.
 # =====================================================================
 
 # ---------- 1. Gemini ----------
@@ -19,12 +19,15 @@ DECK_SIZE = 8
 RETRY_GAP = 3            # a missed question comes back after this many answers
 
 SYSTEM_PROMPT = (
-    f"You write {DECK_SIZE} multiple-choice quiz questions. "
+    f"You are a sharp tutor who writes {DECK_SIZE} multiple-choice quiz questions that test understanding, not trivia. "
     "Reply with ONLY a JSON array, no markdown, no extra text. "
-    'Each item: {"q": "question", "choices": ["a", "b", "c", "d"], "answer": 0, "why": "one short sentence"}. '
-    "Exactly 4 short choices each. answer is the index (0-3) of the correct one. "
-    "why = one short sentence explaining the correct answer. "
-    "Mix up which index is correct. No repeated questions."
+    'Each item: {"q": "question", "choices": ["a", "b", "c", "d"], "answer": 0, "why": "short explanation"}. '
+    "Rules: "
+    "1) Mix recall, small calculations, and 'what happens if...' or 'which is the best choice' application questions. "
+    "2) Make the 3 wrong choices believable: use the mistakes students really make. "
+    "3) Exactly 4 short choices (under 40 characters each). answer is the index (0-3) of the correct one, and vary it. "
+    "4) why = at most 2 short sentences: say why the answer is right and, if useful, why the most tempting wrong answer is not. "
+    "5) No repeated questions, no 'all of the above', no trick wording."
 )
 
 llm = CloudLLM(model=CloudModel.GOOGLE_GEMINI, system_prompt=SYSTEM_PROMPT, timeout=45)
@@ -88,20 +91,32 @@ def save_deck(key, questions):
         print("Could not save decks (fine, kept in memory):", str(e)[:100])
 
 # ---------- 2. State (the web page reads this) ----------
-answers = queue.Queue()   # answers from the switches / voice wait here
+answers = queue.Queue()   # answers from the stick / switches / voice wait here
+nextq = queue.Queue()     # the web page says "I finished talking, go on"
 deck = []                 # questions waiting to be asked
 retry = []                # [due_at_asked_count, question] for missed questions
 current = None            # the question being asked right now
-pending = {}              # settings changed by the web page
+current_retry = False
+pending = {}              # commands from the web page
+page_seen = {"t": 0.0}    # last time the web page asked for the state
+last_lesson = {"kind": "topic", "text": ""}
+missed_items = []         # questions missed on the first try (for review)
+notes_text = ""
+voice_on = False
+home_lcd = {"t": 0.0}
+dwell = {"s": 3.5}        # how long to wait when nobody has the web page open
+HOME_TOPICS = ["Electronics I", "Signals and Systems", "Data Structures", "Digital Design", "Japanese N5"]
+home_idx = {"i": 0}
+LEVEL_ORDER = ["easy", "medium", "hard"]
 
 state = {
-    "topic": "Electronics I: diodes, BJTs and op-amps",
-    "style": "normal", "level": "medium", "notes": False,
-    "question": "", "choices": [], "answer": -1, "why": "",
+    "phase": "home",      # home | loading | quiz | done
+    "topic": "", "style": "normal", "level": "medium", "notes": False, "is_review": False,
+    "question": "", "choices": [], "answer": -1, "why": "", "qn": 0,
     "picked": -1, "result": "", "is_retry": False,
-    "status": "Starting...", "source": "",
+    "status": "", "source": "",
     "score": 0, "asked": 0, "streak": 0, "best_streak": 0,
-    "missed": [],
+    "done": 0, "total": 0, "review": [],
 }
 
 # ---------- 3. Bridge ----------
@@ -123,54 +138,76 @@ def ascii(text):
 def lcd(name, text):
     try:
         Bridge.call(name, text)
+        return True
     except Exception as e:
         print("LCD error:", e)
+        return False
+
+# special LCD characters (the sketch draws them): 1 up, 2 down, 3 left, 4 right, 5 check, 6 cross, 7 star
+UP, DOWN, LEFT, RIGHT, CHECK, CROSS, STAR = [chr(i) for i in range(1, 8)]
 
 # ---------- 4. Web page API ----------
 ui = WebUI()
 
 def api_state():
+    page_seen["t"] = time.time()
     return state
 
 def api_topic(name: str):
-    pending["topic"] = name.strip()[:120]
+    if name.strip():
+        pending["cmd"] = ("topic", name.strip()[:120])
     return {"ok": True}
 
 def api_notes(text: str):
-    pending["notes"] = text.strip()[:1800]
+    if text.strip():
+        pending["cmd"] = ("notes", text.strip()[:1800])
     return {"ok": True}
 
 def api_style(name: str):
     if name in STYLES:
-        pending["style"] = name
+        state["style"] = name
     return {"ok": True}
 
 def api_level(name: str):
     if name in LEVELS:
-        pending["level"] = name
+        state["level"] = name
     return {"ok": True}
 
 def api_answer(i: int):
-    """Voice answers from the web page work like a switch flip."""
+    """Voice answers from the web page work like a stick push."""
     if 0 <= int(i) <= 3:
         answers.put(int(i))
     return {"ok": True}
 
-voice_on = False
-
 def api_voice(on: int):
-    """The page tells the board when Voice is on, so it waits for the speech to finish."""
+    """The page tells the board when Voice is on."""
     global voice_on
     voice_on = int(on) == 1
     return {"ok": True}
 
-ui.expose_api("GET", "/api/voice", api_voice)
-ui.expose_api("GET", "/api/state", api_state)
-ui.expose_api("GET", "/api/topic", api_topic)
-ui.expose_api("GET", "/api/notes", api_notes)
-ui.expose_api("GET", "/api/style", api_style)
-ui.expose_api("GET", "/api/level", api_level)
-ui.expose_api("GET", "/api/answer", api_answer)
+def api_next(n: int):
+    """The page finished reading the explanation: go to the next question."""
+    if int(n) == state["asked"]:
+        nextq.put(1)
+    return {"ok": True}
+
+def api_home():
+    pending["cmd"] = ("home",)
+    return {"ok": True}
+
+def api_again():
+    pending["cmd"] = ("again",)
+    return {"ok": True}
+
+def api_review():
+    pending["cmd"] = ("review",)
+    return {"ok": True}
+
+for path, fn in [("/api/state", api_state), ("/api/topic", api_topic), ("/api/notes", api_notes),
+                 ("/api/style", api_style), ("/api/level", api_level), ("/api/answer", api_answer),
+                 ("/api/voice", api_voice), ("/api/next", api_next), ("/api/home", api_home),
+                 ("/api/again", api_again), ("/api/review", api_review)]:
+    ui.expose_api("GET", path, fn)
 
 # ---------- 5. Getting questions ----------
 def deck_key():
@@ -196,10 +233,11 @@ def fetch_deck(notes_text=""):
         for q in items:
             if len(q["choices"]) == 4 and 0 <= int(q["answer"]) <= 3:
                 q["answer"] = int(q["answer"])
-                q["why"] = str(q.get("why", ""))[:160]
+                q["why"] = str(q.get("why", ""))[:220]
                 good.append(q)
         if not good:
             raise ValueError("no usable questions")
+        good = good[:DECK_SIZE]
         state["source"] = "gemini"
         save_deck(key, [dict(q) for q in good])
         print(f"Gemini wrote {len(good)} questions")
@@ -217,10 +255,11 @@ def fetch_deck(notes_text=""):
         return backup
 
 def show(q, is_retry):
+    state["qn"] += 1
     state.update(question=q["q"], choices=q["choices"], answer=q["answer"], why="",
-                 picked=-1, result="", is_retry=is_retry,
-                 status="Flip ONE switch ON to answer (1=A 2=B 3=C 4=D), then back OFF")
-    lcd("lcd_question", "|".join([ascii(q["q"])] + [ascii(c)[:14] for c in q["choices"]]))
+                 picked=-1, result="", is_retry=is_retry, status="")
+    prefix = "Again: " if is_retry else f"Q{state['done'] + 1}/{state['total']} "
+    lcd("lcd_question", "|".join([ascii(prefix + q["q"])] + [ascii(c)[:12] for c in q["choices"]]))
     print("\n" + "=" * 40)
     print("Q:", q["q"])
     for i, choice in enumerate(q["choices"]):
@@ -234,44 +273,153 @@ def next_question():
         return deck.pop(0), False
     return None, False
 
-# ---------- 6. Main loop ----------
-notes_text = ""
+# ---------- 6. Lessons ----------
+def reset_counters():
+    state.update(score=0, asked=0, streak=0, done=0, total=0, review=[], question="", choices=[],
+                 result="", why="", picked=-1, is_retry=False)
+    missed_items.clear()
 
+def show_home():
+    """Home screen on the LCD: the topic on top, the stick options rotate on the bottom."""
+    topic = HOME_TOPICS[home_idx["i"]]
+    ok = lcd("lcd_menu", "|".join([ascii(topic),
+                                   "0:Start lesson", "1:Next topic", "3:Prev topic",
+                                   "2:Level " + state["level"]]))
+    home_lcd["t"] = time.time() if ok else time.time() - 25   # if the LCD is not ready, try again in 5 s
+
+def go_home():
+    global current, deck, retry
+    deck, retry, current = [], [], None
+    state.update(phase="home", question="", choices=[], result="", why="")
+    led(0, 0, 0)
+    home_lcd["t"] = 0.0           # draw it on the next loop (the LCD may still be booting)
+
+def home_answer(choice):
+    """Stick on the home screen: up = start, right/left = change topic, down = level."""
+    if choice == 0:
+        start_lesson("topic", HOME_TOPICS[home_idx["i"]])
+        return
+    if choice == 1:
+        home_idx["i"] = (home_idx["i"] + 1) % len(HOME_TOPICS)
+    elif choice == 3:
+        home_idx["i"] = (home_idx["i"] - 1) % len(HOME_TOPICS)
+    elif choice == 2:
+        state["level"] = LEVEL_ORDER[(LEVEL_ORDER.index(state["level"]) + 1) % 3]
+    show_home()
+
+def done_answer(choice):
+    """Stick on the results screen: up = new lesson, right = review misses, down = home."""
+    if choice == 0:
+        start_lesson(last_lesson["kind"], last_lesson["text"] or state["topic"])
+    elif choice == 1:
+        start_review()
+    elif choice == 2:
+        go_home()
+
+def start_lesson(kind, text):
+    """kind = 'topic' or 'notes'. One Gemini call, then 8 questions."""
+    global deck, retry, current, notes_text
+    last_lesson.update(kind=kind, text=text)
+    if kind == "notes":
+        notes_text = text
+        state.update(topic="My notes", notes=True)
+    else:
+        notes_text = ""
+        state.update(topic=text, notes=False)
+    reset_counters()
+    state.update(phase="loading", is_review=False, status="Gemini is writing your lesson...")
+    retry, current = [], None
+    led(0, 0, 1)                          # blue = thinking
+    lcd("lcd_message", "Thinking...|Gemini: " + ascii(state["topic"])[:16])
+    deck = fetch_deck(notes_text)
+    led(0, 0, 0)
+    state.update(total=len(deck), phase="quiz", status="")
+
+def start_review():
+    """Quiz again on only the questions missed on the first try. No Gemini call."""
+    global deck, retry, current
+    items = [dict(m) for m in missed_items]
+    if not items:
+        return
+    random.shuffle(items)
+    reset_counters()
+    deck, retry, current = items, [], None
+    state.update(total=len(deck), phase="quiz", is_review=True, status="")
+
+def finish_lesson():
+    global current
+    current = None
+    state.update(phase="done", question="", choices=[], result="", why="")
+    print(f"\nLesson done: {state['score']}/{state['total']}")
+    good = state["total"] > 0 and state["score"] * 10 >= state["total"] * 7
+    led(0, 1, 0) if good else led(0, 0, 1)
+    options = ["0:New lesson"] + (["1:Review misses"] if missed_items else []) + ["2:Home"]
+    lcd("lcd_menu", "|".join([f"Done! {state['score']}/{state['total']} {STAR}"] + options))
+
+def handle_cmd(cmd):
+    if cmd[0] == "home":
+        go_home()
+    elif cmd[0] == "topic":
+        start_lesson("topic", cmd[1])
+    elif cmd[0] == "notes":
+        start_lesson("notes", cmd[1])
+    elif cmd[0] == "again":
+        start_lesson(last_lesson["kind"], last_lesson["text"] or state["topic"])
+    elif cmd[0] == "review":
+        start_review()
+
+def wait_for_next():
+    """After an answer: wait until the web page has finished speaking (or a timer if no page)."""
+    while not nextq.empty():
+        nextq.get_nowait()
+    t0 = time.time()
+    while True:
+        elapsed = time.time() - t0
+        page_live = time.time() - page_seen["t"] < 3.0
+        if not page_live and elapsed > dwell["s"]:
+            return                        # nobody is watching the page: short pause
+        if elapsed > 90:
+            return
+        try:
+            nextq.get(timeout=0.1)
+            return
+        except queue.Empty:
+            pass
+        if not answers.empty():           # push the stick again to skip ahead
+            answers.get_nowait()
+            return
+        if "cmd" in pending:
+            return
+
+# ---------- 7. Main loop ----------
 def loop():
-    global current, deck, retry, notes_text
+    global current, current_retry
 
-    if pending:                           # the web page changed something
-        if "topic" in pending:
-            state.update(topic=pending.pop("topic"), notes=False)
-            notes_text = ""
-            reset = True
-        else:
-            reset = False
-        if "notes" in pending:
-            notes_text = pending.pop("notes")
-            state.update(topic="My notes", notes=bool(notes_text))
-            reset = True
-        if "style" in pending:
-            state["style"] = pending.pop("style")
-        if "level" in pending:
-            state["level"] = pending.pop("level")
-            reset = True
-        if reset:
-            state.update(score=0, asked=0, streak=0, missed=[])
-            deck, retry, current = [], [], None
+    cmd = pending.pop("cmd", None)
+    if cmd:
+        handle_cmd(cmd)
+        return
+
+    if state["phase"] in ("home", "done", "loading"):
+        if state["phase"] == "home" and time.time() - home_lcd["t"] > 30:
+            show_home()
+        try:
+            choice = answers.get(timeout=0.2)
+        except queue.Empty:
+            return
+        if state["phase"] == "home":
+            home_answer(choice)
+        elif state["phase"] == "done":
+            done_answer(choice)
+        return
 
     if current is None:
         q, is_retry = next_question()
-        if q is None:                     # only call Gemini when everything is used up
-            led(0, 0, 1)                  # blue = thinking
-            state.update(question="", choices=[], result="", why="", is_retry=False,
-                         status="Gemini is writing a deck...")
-            lcd("lcd_message", "Thinking...|" + ascii(state["topic"])[:16])
-            deck = fetch_deck(notes_text)
-            led(0, 0, 0)
-            q, is_retry = next_question()
-        current = q
-        while not answers.empty():        # ignore flips made while waiting
+        if q is None:
+            finish_lesson()
+            return
+        current, current_retry = q, is_retry
+        while not answers.empty():        # ignore pushes made while waiting
             answers.get_nowait()
         show(current, is_retry)
         return
@@ -282,30 +430,43 @@ def loop():
         return
 
     state["asked"] += 1
+    if not current_retry:
+        state["done"] += 1
     state["picked"] = choice
     state["why"] = current.get("why", "")
+    right_text = current["choices"][current["answer"]]
+    letter = "ABCD"[current["answer"]]
     if choice == current["answer"]:
-        state["score"] += 1
+        if not current_retry:
+            state["score"] += 1
+        else:
+            for r in state["review"]:
+                if r["q"] == current["q"]:
+                    r["recovered"] = True
         state["streak"] += 1
         state["best_streak"] = max(state["best_streak"], state["streak"])
         state.update(result="right", status="Correct!")
         print("Correct!")
         led(0, 1, 0)                      # green
-        lcd("lcd_message", f"Correct!|Streak {state['streak']}")
+        lcd("lcd_message", f"{CHECK} Correct! {STAR}x{state['streak']}|" + ascii(current.get("why", ""))[:90])
+        dwell["s"] = min(24.0, 3.0 + 0.26 * len(ascii(current.get("why", ""))[:90]))
     else:
         state["streak"] = 0
-        right = current["choices"][current["answer"]]
-        state.update(result="wrong", status=f"Not quite. Answer: {'ABCD'[current['answer']]}) {right}")
-        print(f"Wrong. Answer: {'ABCD'[current['answer']]}) {right}")
+        state.update(result="wrong", status=f"Not quite. Answer: {letter}) {right_text}")
+        print(f"Wrong. Answer: {letter}) {right_text}")
         led(1, 0, 0)                      # red
-        lcd("lcd_message", f"Nope! Answer:|{'ABCD'[current['answer']]}){ascii(right)[:14]}")
-        if current["q"] not in state["missed"]:
-            state["missed"].append(current["q"])
-        retry.append([state["asked"] + RETRY_GAP, dict(current)])   # it will come back
-    print(f"Score: {state['score']}/{state['asked']}")
+        lcd("lcd_message", f"{CROSS} Answer: {letter}|" + ascii(f"{right_text}. {current.get('why', '')}")[:100])
+        dwell["s"] = min(24.0, 3.0 + 0.26 * len(ascii(f"{right_text}. {current.get('why', '')}")[:100]))
+        if not current_retry:             # first miss: remember it, and ask once more later
+            missed_items.append(dict(current))
+            state["review"].append({"q": current["q"], "correct": f"{letter}) {right_text}",
+                                    "why": current.get("why", ""), "recovered": False})
+            retry.append([state["asked"] + RETRY_GAP, dict(current)])
+    print(f"Score: {state['score']}/{state['done']}")
 
-    time.sleep(8.0 if voice_on else 3.5)  # longer while the voice reads the "why"
+    wait_for_next()                       # the page tells us when the voice is done
     led(0, 0, 0)
     current = None                        # next loop takes the next question
 
+go_home()
 App.run(user_loop=loop)
