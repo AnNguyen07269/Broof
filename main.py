@@ -10,7 +10,7 @@ from arduino.app_bricks.cloud_llm import CloudLLM, CloudModel
 from arduino.app_bricks.web_ui import WebUI
 
 # =====================================================================
-#  Broof v9 - the box works on its own: Courses -> Topics -> Quiz -> Results, all on the
+#  Broof v10 - the box works on its own: Courses -> Topics -> Quiz -> Results, all on the
 #  LCD with the stick. Same flow as broof.study/use.html.
 # =====================================================================
 
@@ -155,6 +155,7 @@ def ascii(text):
     return text.encode("ascii", "ignore").decode().replace("|", "/")
 
 def lcd(name, text):
+    state["lcd"] = [name, text]          # the web page mirrors the LCD
     try:
         Bridge.call(name, text)
         return True
@@ -303,7 +304,7 @@ def show_home():
     ci = nav["c"]
     name = COURSES[ci][0]
     if nav["screen"] == "home":
-        packed = ["Broof", "0:Courses"]
+        packed = ["Broof `", "0:Courses"]
     elif nav["screen"] == "courses":
         packed = [ascii(f"{name} {course_pct(ci)}%"), "0:Open topics", "1:Next course", "3:Prev course", "2:Exit"]
     else:
