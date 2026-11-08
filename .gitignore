@@ -1,0 +1,6 @@
+*.env
+.env*
+*key*.txt
+*secret*
+__pycache__/
+saved_decks.json
