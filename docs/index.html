@@ -1,25 +1,106 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Broof - your brain-rot-proof study bro</title>
+<meta name="description" content="Broof is a hands-on study box. Gemini writes the quiz, you answer with a real joystick, and lights, an LCD and a voice tell you how you did.">
 <style>
-:root{--bg:#0e1116;--card:#171c24;--text:#e8edf3;--muted:#8b97a7;--accent:#7c9cff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:17px/1.6 system-ui,Segoe UI,sans-serif}
-main{max-width:760px;margin:0 auto;padding:56px 20px}
-h1{font-size:56px;margin:0;letter-spacing:-2px}.tag{color:var(--muted);font-size:20px;margin:6px 0 28px}
-.card{background:var(--card);border-radius:14px;padding:20px;margin:14px 0}
-h2{font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:0 0 8px}
-a{color:var(--accent)}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
-</style></head><body><main>
-<h1>Broof</h1>
-<div class="tag">Your phone is the distraction. This is the study bro.</div>
-<div class="card"><h2>What it is</h2>
-A small box that quizzes you. Gemini writes questions on any topic or on your own notes. You answer by flipping a real switch.
-Lights and an LCD tell you if you were right, and a voice explains why.</div>
-<div class="row">
-<div class="card"><h2>Hands-on</h2>Four switches are your answers A to D.</div>
-<div class="card"><h2>Your notes</h2>Paste a lecture, get a quiz on exactly that.</div>
-<div class="card"><h2>No skipping</h2>Questions you miss come back.</div>
+  :root { --bg:#f4f6f1; --card:#fff; --ink:#1c2a22; --muted:#66756b; --line:#e2e8e0;
+          --green:#2bb673; --green-d:#1f9a5f; --green-bg:#e3f6ec; --blue:#3b6cf6; --red:#e5484d; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:18px/1.6 "Nunito","Segoe UI",system-ui,-apple-system,sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:960px; margin:0 auto; padding:0 20px; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:18px 0; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:900; font-size:24px; letter-spacing:-.5px; }
+  .logo { width:40px; height:40px; border-radius:12px; background:var(--green); color:#fff; display:grid; place-items:center; font-weight:900; font-size:22px; box-shadow:0 3px 0 var(--green-d); }
+  nav a.link { color:var(--muted); text-decoration:none; font-weight:800; margin-left:18px; }
+  nav a.link:hover { color:var(--ink); }
+  .hero { text-align:center; padding:56px 0 40px; }
+  .hero h1 { font-size:clamp(38px,7vw,64px); line-height:1.05; margin:0 0 18px; letter-spacing:-1.5px; font-weight:900; }
+  .hero h1 em { font-style:normal; color:var(--green); }
+  .hero p { max-width:620px; margin:0 auto 26px; color:var(--muted); font-size:21px; }
+  .btn { display:inline-block; text-decoration:none; font-weight:900; padding:13px 24px; border-radius:16px; border:2px solid var(--line); border-bottom-width:5px; background:#fff; color:var(--ink); margin:4px; }
+  .btn.primary { background:var(--green); border-color:var(--green-d); color:#fff; }
+  .btn:active { transform:translateY(2px); border-bottom-width:3px; }
+  section { padding:34px 0; }
+  h2 { font-size:32px; letter-spacing:-.8px; margin:0 0 20px; font-weight:900; text-align:center; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+  .card { background:var(--card); border:2px solid var(--line); border-radius:20px; padding:22px; }
+  .card .ico { font-size:30px; }
+  .card h3 { margin:8px 0 4px; font-size:20px; font-weight:900; }
+  .card p { margin:0; color:var(--muted); font-size:16px; }
+  .steps { counter-reset:s; display:grid; gap:14px; max-width:700px; margin:0 auto; }
+  .step { display:flex; gap:16px; align-items:flex-start; background:var(--card); border:2px solid var(--line); border-radius:20px; padding:18px 20px; }
+  .step::before { counter-increment:s; content:counter(s); flex:none; width:38px; height:38px; border-radius:12px; background:var(--green); color:#fff; font-weight:900; display:grid; place-items:center; }
+  .step b { display:block; font-size:19px; }
+  .step span { color:var(--muted); font-size:16px; }
+  .mock { max-width:560px; margin:0 auto; background:var(--card); border:2px solid var(--line); border-radius:22px; padding:22px; }
+  .mock .q { font-weight:900; font-size:22px; margin-bottom:12px; }
+  .opt { display:flex; align-items:center; gap:12px; padding:11px 14px; margin:8px 0; border:2px solid var(--line); border-bottom-width:5px; border-radius:14px; font-weight:800; }
+  .opt i { font-style:normal; width:32px; height:32px; border-radius:10px; background:var(--bg); display:grid; place-items:center; color:var(--muted); }
+  .opt.ok { border-color:var(--green); background:var(--green-bg); }
+  .opt.ok i { background:var(--green); color:#fff; }
+  .opt.no { border-color:var(--red); background:#fdeaea; }
+  .opt.no i { background:var(--red); color:#fff; }
+  .tech { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .tech span { background:#fff; border:2px solid var(--line); border-radius:99px; padding:6px 16px; font-weight:800; font-size:15px; }
+  footer { text-align:center; color:var(--muted); font-size:15px; padding:36px 0 50px; }
+  footer a { color:var(--ink); font-weight:800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="brand"><div class="logo">B</div>Broof</div>
+    <div><a class="link" href="#how">How it works</a><a class="link" href="#built">Built with</a><a class="link" href="https://github.com/AnNguyen07269/Broof">GitHub</a></div>
+  </nav>
+
+  <div class="hero">
+    <h1>Study with your hands,<br><em>not your phone.</em></h1>
+    <p>Broof is a small box that quizzes you. Gemini writes the questions, you answer with a real joystick, and lights, a screen and a voice tell you how you did.</p>
+    <a class="btn primary" href="https://github.com/AnNguyen07269/Broof">See the code</a>
+    <a class="btn" href="#how">How it works</a>
+  </div>
+
+  <section>
+    <div class="mock">
+      <div class="q">Which gate outputs 1 only when its inputs differ?</div>
+      <div class="opt"><i>A</i>AND</div>
+      <div class="opt no"><i>B</i>NAND</div>
+      <div class="opt ok"><i>C</i>XOR</div>
+      <div class="opt"><i>D</i>OR</div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><div><b>Pick a topic or paste your notes</b><span>Choose a topic with the joystick on the box, or type your own or paste lecture notes on the web page. Gemini writes 8 questions in one call.</span></div></div>
+      <div class="step"><div><b>Answer with the joystick</b><span>Push up, right, down or left for A, B, C or D. The box does not care about your notifications.</span></div></div>
+      <div class="step"><div><b>Get feedback you can see and hear</b><span>The LCD and LED go green or red, and a short "why" explains the answer in a normal, coach, or mom voice.</span></div></div>
+      <div class="step"><div><b>Miss one? It comes back</b><span>Questions you get wrong return a few answers later, and each lesson ends with a score and a review of what you missed.</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why it is different</h2>
+    <div class="grid">
+      <div class="card"><div class="ico">📵</div><h3>No phone</h3><p>The phone is the distraction. This box does one thing: it makes you recall.</p></div>
+      <div class="card"><div class="ico">📝</div><h3>Your own notes</h3><p>Quizzes come from what your class actually taught, not generic trivia.</p></div>
+      <div class="card"><div class="ico">🧠</div><h3>Learns from mistakes</h3><p>Every answer comes with a why, and missed questions are asked again.</p></div>
+      <div class="card"><div class="ico">🎙️</div><h3>It talks back</h3><p>Voices by ElevenLabs read questions and explanations aloud.</p></div>
+    </div>
+  </section>
+
+  <section id="built">
+    <h2>Built with</h2>
+    <div class="tech"><span>Arduino UNO Q</span><span>Grove LCD + joystick</span><span>Gemini API</span><span>Python</span><span>C++</span><span>ElevenLabs</span><span>Arduino App Lab</span></div>
+    <p style="text-align:center;color:var(--muted);max-width:620px;margin:20px auto 0;font-size:16px">The UNO Q has two brains: Linux runs the quiz and the web page, and the microcontroller reads the stick and drives the LCD. They talk over the Arduino Bridge.</p>
+  </section>
+
+  <footer>Built solo at MakeUC 2026 by An Nguyen &middot; <a href="https://github.com/AnNguyen07269/Broof">GitHub</a></footer>
 </div>
-<div class="card"><h2>Built at MakeUC 2026</h2>Arduino UNO Q, Gemini API, Python, C++.
-<br><a href="https://github.com/AnNguyen07269/Broof">Code on GitHub</a></div>
-</main></body></html>
+</body>
+</html>
