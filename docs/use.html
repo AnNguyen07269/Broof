@@ -57,6 +57,10 @@
   .rev { background:#fff; border:2px solid var(--line); border-left:6px solid var(--red); border-radius:12px; padding:12px 16px; margin:10px 0; text-align:left; }
   .rev.ok { border-left-color:var(--green-d); } .rev small { color:var(--muted); font-weight:600; display:block; }
   .center { text-align:center; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .chip { padding:6px 14px; font-size:15px; border-radius:99px; border-bottom-width:3px; }
+  .chip.on { background:var(--green); border-color:var(--green-d); }
+  .navrow { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
   /* LCD mock */
   .lcdbar { position:fixed; left:0; right:0; bottom:0; background:#14201a; color:#cfe9b0; padding:10px 16px 14px; border-top:3px solid #0b110d; z-index:5; }
   .lcdbar .in { max-width:720px; margin:0 auto; display:flex; align-items:center; gap:14px; }
@@ -71,7 +75,9 @@
   <section id="v-courses">
     <h1>Courses</h1>
     <p class="muted">Pick a course, pick a topic, then take a short quiz. On the box you do the same with the joystick, and Gemini writes new questions for any topic. This page uses a built-in sample bank so you can try it right here.</p>
+    <div class="chips" id="cats"></div>
     <div class="list" id="courseList"></div>
+    <div class="navrow"><a href="./"><button>← Home</button></a></div>
   </section>
 
   <section id="v-topics" hidden>
@@ -79,11 +85,11 @@
     <h1 id="topicTitle"></h1>
     <p class="muted" id="topicSub"></p>
     <div class="list" id="topicList"></div>
-    <div style="margin-top:16px"><button id="backCourses">← Courses</button></div>
+    <div class="navrow"><button id="backCourses">← Exit to courses</button><button id="prevC">‹ Previous course</button><button id="nextC">Next course ›</button></div>
   </section>
 
   <section id="v-quiz" hidden>
-    <div class="study-top"><button class="ghost" id="quit">✕</button><div class="bar"><div id="prog"></div></div><span class="pill">🔥 <span id="streak">0</span></span></div>
+    <div class="study-top"><button class="ghost" id="quit">✕ Exit</button><div class="bar"><div id="prog"></div></div><span class="pill">🔥 <span id="streak">0</span></span></div>
     <div class="card">
       <div class="meta"><span id="qnum"></span><span class="tag" id="retry" hidden>second chance</span></div>
       <p class="q" id="q"></p>
@@ -111,7 +117,7 @@
 const $ = id => document.getElementById(id);
 /* question: [text, [A,B,C,D], answerIndex, why] */
 const COURSES = [
- {id:"ee1", name:"Electronics I", ico:"⚡", topics:[
+ {id:"ee1", name:"Electronics I", cat:"EE", ico:"⚡", topics:[
   {id:"ohm", name:"Ohm's law & resistors", lv:[
    [["V = I·R. With 2 A through 5 Ω, V is?",["2.5 V","7 V","10 V","0.4 V"],2,"V = I × R = 2 × 5 = 10 V."],
     ["Which unit measures resistance?",["Farad","Henry","Volt","Ohm"],3,"Resistance is in ohms. Farad is capacitance, henry is inductance."],
@@ -139,7 +145,7 @@ const COURSES = [
     ["Non-inverting amp with Rf = 9k and Rg = 1k. The gain is?",["9","10","−9","11"],1,"Gain = 1 + Rf / Rg = 10."],
     ["A voltage follower has a gain of?",["0","10","1","Infinite"],2,"The output copies the input. It is used as a buffer."],
     ["Why use negative feedback on an op-amp?",["Raises gain","Adds noise","Removes the supply","Makes gain stable"],3,"It trades raw gain for stable, predictable gain."]]]}]},
- {id:"dd", name:"Digital Design", ico:"🔌", topics:[
+ {id:"dd", name:"Digital Design", cat:"EE", ico:"🔌", topics:[
   {id:"num", name:"Number systems & gates", lv:[
    [["Binary 1010 in decimal?",["8","10","12","5"],1,"8 + 2 = 10."],
     ["Which gate outputs 1 only when its inputs differ?",["AND","OR","XOR","NAND"],2,"XOR is true when exactly one input is true."],
@@ -167,7 +173,7 @@ const COURSES = [
     ["A mod-10 counter resets after reaching?",["8","9","10","15"],1,"It counts 0 to 9, then goes back to 0."],
     ["Setup time is?",["Time D must be stable before the clock edge","Time the clock stays high","Power-up delay","Time after the edge"],0,"D must be steady just before the edge, or the result is unreliable."],
     ["A T flip-flop with T = 1 does what each clock?",["Holds","Clears","Sets","Toggles"],3,"It flips its output each clock."]]]}]},
- {id:"ds", name:"Data Structures", ico:"🌳", topics:[
+ {id:"ds", name:"Data Structures", cat:"CS", ico:"🌳", topics:[
   {id:"arr", name:"Arrays & linked lists", lv:[
    [["Reading an array element by index takes?",["O(n)","O(log n)","O(1)","O(n²)"],2,"The address is computed directly: constant time."],
     ["Inserting at the front of an array is?",["O(1)","O(n)","O(log n)","Impossible"],1,"Every element must shift over."],
@@ -194,7 +200,13 @@ const COURSES = [
    [["How many levels does a balanced BST with 1023 nodes have?",["5","10","100","1023"],1,"2¹⁰ − 1 = 1023, so 10 levels."],
     ["Worst-case search in a BST built from sorted inserts?",["O(1)","O(log n)","O(n)","O(n log n)"],2,"It degenerates into a linked list."],
     ["Max nodes in a binary tree of height h (root at h = 0)?",["2h","h²","2^(h+1) − 1","h + 1"],2,"1 + 2 + 4 + ... + 2^h = 2^(h+1) − 1."],
-    ["Pre-order visits nodes in what order?",["Left, node, right","Root, left, right","Left, right, root","Level by level"],1,"Root first, then left, then right."]]]}]}
+    ["Pre-order visits nodes in what order?",["Left, node, right","Root, left, right","Left, right, root","Level by level"],1,"Root first, then left, then right."]]]}]},
+ {id:"la", name:"Linear Algebra", cat:"Math", ico:"📐", topics:[{id:"vec",name:"Vectors & matrices",lv:[]},{id:"sys",name:"Linear systems",lv:[]},{id:"eig",name:"Eigenvalues",lv:[]}]},
+ {id:"ca", name:"Computer Architecture", cat:"CS", ico:"🖥️", topics:[{id:"isa",name:"Instruction sets",lv:[]},{id:"pipe",name:"Pipelining",lv:[]},{id:"cache",name:"Caches",lv:[]}]},
+ {id:"sec", name:"CyberSec", cat:"CS", ico:"🛡️", topics:[{id:"cry",name:"Crypto basics",lv:[]},{id:"web",name:"Web attacks",lv:[]},{id:"net",name:"Network security",lv:[]}]},
+ {id:"ml", name:"Machine Learning", cat:"CS", ico:"🤖", topics:[{id:"reg",name:"Regression",lv:[]},{id:"nn",name:"Neural networks",lv:[]},{id:"ovf",name:"Overfitting",lv:[]}]},
+ {id:"ph", name:"Physics", cat:"Physics", ico:"🪐", topics:[{id:"mech",name:"Mechanics",lv:[]},{id:"em",name:"Electricity & magnetism",lv:[]},{id:"wave",name:"Waves",lv:[]}]},
+ {id:"me", name:"Thermodynamics", cat:"ME", ico:"🔥", topics:[{id:"laws",name:"The laws",lv:[]},{id:"cyc",name:"Cycles",lv:[]},{id:"heat",name:"Heat transfer",lv:[]}]}
 ];
 const ARR = ["↑","→","↓","←"];
 const PKEY = "broof_progress_v1", DKEY = "broof_days_v1";
@@ -205,28 +217,33 @@ let course=null, topic=null, level=0, deck=[], retry=[], cur=null, curRetry=fals
 function view(v){ ["courses","topics","quiz","results"].forEach(x => $("v-"+x).hidden = x!==v); window.scrollTo(0,0); }
 function lcd(a,b){ const f = s => (s||"").slice(0,16).padEnd(16," "); $("lcd").textContent = f(a)+"\n"+f(b); }
 function doneCount(c){ let n=0; c.topics.forEach(t=>[0,1].forEach(l=>{ if(((prog[c.id]||{})[t.id]||[])[l]>=3) n++; })); return n; }
-function pct(c){ return Math.round(100*doneCount(c)/(c.topics.length*2)); }
+function pct(c){ return Math.round(100*doneCount(c)/(nl(c))); }
+function nl(c){ return (c.topics.filter(t=>t.lv.length).length*2) || 1; }
+let catSel="All";
 function today(){ return new Date().toISOString().slice(0,10); }
 $("days").textContent = days.n;
 
 function showCourses(){
   view("courses"); lcd("Broof", "Courses");
+  const cats=$("cats"); cats.innerHTML=""; ["All","CS","Math","Physics","EE","ME"].forEach(k=>{ const b=document.createElement("button"); b.className="chip"+(k===catSel?" on":""); b.textContent=k; b.onclick=()=>{ catSel=k; showCourses(); }; cats.appendChild(b); });
   const box=$("courseList"); box.innerHTML="";
-  COURSES.forEach((c,i)=>{ const b=document.createElement("button"); b.className="item";
+  COURSES.filter(c=>catSel==="All"||c.cat===catSel).forEach((c,i)=>{ const b=document.createElement("button"); b.className="item";
     b.innerHTML='<span class="ico"></span><span><span class="nm"></span><span class="sub"></span><div class="meter"><div></div></div></span><span class="go">›</span>';
     b.querySelector(".ico").textContent=c.ico; b.querySelector(".nm").textContent=c.name;
-    b.querySelector(".sub").textContent=c.topics.length+" topics · "+pct(c)+"% done"; b.querySelector(".meter div").style.width=pct(c)+"%";
+    b.querySelector(".sub").textContent=c.cat+" · "+c.topics.length+" topics · "+(c.topics.some(t=>t.lv.length)?pct(c)+"% done":"Gemini on the box"); b.querySelector(".meter div").style.width=pct(c)+"%";
     b.onmouseenter=()=>lcd("Courses", ARR[i]+" "+c.name); b.onclick=()=>showTopics(c); box.appendChild(b); });
 }
 function showTopics(c){
   course=c; view("topics"); lcd(c.name, "Pick a topic");
-  $("topicCrumb").textContent="Courses › "+c.name; $("topicTitle").textContent=c.name; $("topicSub").textContent="Progress: "+pct(c)+"% · "+doneCount(c)+" of "+(c.topics.length*2)+" levels finished";
+  $("topicCrumb").textContent="Courses › "+c.name; $("topicTitle").textContent=c.name; $("topicSub").textContent=(c.topics.some(t=>t.lv.length) ? "Progress: "+pct(c)+"% · "+doneCount(c)+" of "+nl(c)+" levels finished" : "This course runs live on the box with Gemini.");
   const box=$("topicList"); box.innerHTML="";
+  const ci=COURSES.indexOf(c); $("prevC").onclick=()=>showTopics(COURSES[(ci+COURSES.length-1)%COURSES.length]); $("nextC").onclick=()=>showTopics(COURSES[(ci+1)%COURSES.length]);
   c.topics.forEach((t,i)=>{ const p=(prog[c.id]||{})[t.id]||[]; const b=document.createElement("button"); b.className="item";
     b.innerHTML='<span class="ico"></span><span><span class="nm"></span><span class="sub"></span></span><span class="go">›</span>';
     b.querySelector(".ico").textContent=(p[0]>=3&&p[1]>=3)?"✅":"📘"; b.querySelector(".nm").textContent=t.name;
     b.querySelector(".sub").textContent="Level 1: "+(p[0]!=null?p[0]+"/4":"new")+" · Level 2: "+(p[1]!=null?p[1]+"/4":"new");
-    b.onmouseenter=()=>lcd(c.name, ARR[i]+" "+t.name); b.onclick=()=>startQuiz(t,(p[0]>=3&&p[1]==null)?1:0); box.appendChild(b); });
+    if(!t.lv.length){ b.querySelector(".sub").textContent="Live on the box: Gemini writes it"; b.querySelector(".ico").textContent="✨"; }
+    b.onmouseenter=()=>lcd(c.name, ARR[i]+" "+t.name); b.onclick=()=>{ if(!t.lv.length){ $("topicSub").textContent="Gemini writes this lesson live on the box. A sample bank for it is coming soon."; lcd("Gemini on box","Pick with stick"); return; } startQuiz(t,(p[0]>=3&&p[1]==null)?1:0); }; box.appendChild(b); });
 }
 function startQuiz(t, lv){
   topic=t; level=lv; deck=t.lv[lv].map(x=>({q:x[0],c:x[1],a:x[2],w:x[3]})); retry=[]; asked=done=score=streak=bestStreak=0; review=[]; total=deck.length; cur=null; $("streak").textContent=0; ask();
