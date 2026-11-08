@@ -10,8 +10,8 @@ from arduino.app_bricks.cloud_llm import CloudLLM, CloudModel
 from arduino.app_bricks.web_ui import WebUI
 
 # =====================================================================
-#  Broof v8 - the box works on its own: pick a topic with the stick, read the
-#  question and the explanation on the LCD, see your score and choose what next.
+#  Broof v9 - the box works on its own: Courses -> Topics -> Quiz -> Results, all on the
+#  LCD with the stick. Same flow as broof.study/use.html.
 # =====================================================================
 
 # ---------- 1. Gemini ----------
@@ -99,15 +99,34 @@ current = None            # the question being asked right now
 current_retry = False
 pending = {}              # commands from the web page
 page_seen = {"t": 0.0}    # last time the web page asked for the state
-last_lesson = {"kind": "topic", "text": ""}
+last_lesson = {"kind": "topic", "text": "", "ctx": None}
 missed_items = []         # questions missed on the first try (for review)
 notes_text = ""
 voice_on = False
 home_lcd = {"t": 0.0}
 dwell = {"s": 3.5}        # how long to wait when nobody has the web page open
-HOME_TOPICS = ["Electronics I", "Signals and Systems", "Data Structures", "Digital Design", "Japanese N5"]
-home_idx = {"i": 0}
-LEVEL_ORDER = ["easy", "medium", "hard"]
+# Courses and topics (the same ones as broof.study/use.html). Gemini writes the quiz for any of them.
+COURSES = [
+    ("Electronics I", ["Ohm's law & resistors", "Capacitors & RC", "Diodes & op-amps"]),
+    ("Digital Design", ["Number systems & gates", "Boolean algebra", "Flip-flops & counters"]),
+    ("Data Structures", ["Arrays & linked lists", "Stacks & queues", "Trees & Big-O"]),
+    ("Linear Algebra", ["Vectors & matrices", "Linear systems", "Eigenvalues"]),
+    ("Computer Architecture", ["Instruction sets", "Pipelining", "Caches"]),
+    ("CyberSec", ["Crypto basics", "Web attacks", "Network security"]),
+    ("Machine Learning", ["Regression", "Neural networks", "Overfitting"]),
+    ("Physics", ["Mechanics", "Electricity & magnetism", "Waves"]),
+    ("Thermodynamics", ["The laws", "Cycles", "Heat transfer"]),
+]
+nav = {"screen": "home", "c": 0}      # which LCD screen: home | courses | topics
+PROGRESS_FILE = pathlib.Path(__file__).with_name("saved_progress.json")
+try:
+    progress = json.loads(PROGRESS_FILE.read_text())
+except Exception:
+    progress = {}                      # "course:topic:level" -> best score ratio
+
+def course_pct(ci):
+    done = sum(1 for t in range(3) for lv in range(2) if progress.get(f"{ci}:{t}:{lv}", 0) >= 0.7)
+    return round(100 * done / 6)
 
 state = {
     "phase": "home",      # home | loading | quiz | done
@@ -280,11 +299,16 @@ def reset_counters():
     missed_items.clear()
 
 def show_home():
-    """Home screen on the LCD: the topic on top, the stick options rotate on the bottom."""
-    topic = HOME_TOPICS[home_idx["i"]]
-    ok = lcd("lcd_menu", "|".join([ascii(topic),
-                                   "0:Start lesson", "1:Next topic", "3:Prev topic",
-                                   "2:Level " + state["level"]]))
+    """Draw the current LCD menu: home -> courses -> topics. Up/right/down/left pick the options."""
+    ci = nav["c"]
+    name = COURSES[ci][0]
+    if nav["screen"] == "home":
+        packed = ["Broof", "0:Courses"]
+    elif nav["screen"] == "courses":
+        packed = [ascii(f"{name} {course_pct(ci)}%"), "0:Open topics", "1:Next course", "3:Prev course", "2:Exit"]
+    else:
+        packed = [ascii(name)] + [f"{i}:{ascii(t)}" for i, t in enumerate(COURSES[ci][1])] + ["3:Exit"]
+    ok = lcd("lcd_menu", "|".join(packed))
     home_lcd["t"] = time.time() if ok else time.time() - 25   # if the LCD is not ready, try again in 5 s
 
 def go_home():
@@ -295,31 +319,67 @@ def go_home():
     home_lcd["t"] = 0.0           # draw it on the next loop (the LCD may still be booting)
 
 def home_answer(choice):
-    """Stick on the home screen: up = start, right/left = change topic, down = level."""
-    if choice == 0:
-        start_lesson("topic", HOME_TOPICS[home_idx["i"]])
-        return
-    if choice == 1:
-        home_idx["i"] = (home_idx["i"] + 1) % len(HOME_TOPICS)
-    elif choice == 3:
-        home_idx["i"] = (home_idx["i"] - 1) % len(HOME_TOPICS)
-    elif choice == 2:
-        state["level"] = LEVEL_ORDER[(LEVEL_ORDER.index(state["level"]) + 1) % 3]
+    """Stick on the menus. Courses: up = open, right = next, left = previous, down = exit. Topics: up/right/down = topic, left = exit."""
+    n = len(COURSES)
+    if nav["screen"] == "home":
+        if choice == 0:
+            nav["screen"] = "courses"
+    elif nav["screen"] == "courses":
+        if choice == 0:
+            nav["screen"] = "topics"
+        elif choice == 1:
+            nav["c"] = (nav["c"] + 1) % n
+        elif choice == 3:
+            nav["c"] = (nav["c"] - 1) % n
+        elif choice == 2:
+            nav["screen"] = "home"
+    else:
+        if choice in (0, 1, 2):
+            start_nav_lesson(nav["c"], choice, 0)
+            return
+        nav["screen"] = "courses"
     show_home()
 
+def start_nav_lesson(ci, ti, lv):
+    """Level 1 = easy, level 2 = hard. One Gemini call for the topic."""
+    state["level"] = "easy" if lv == 0 else "hard"
+    nav.update(screen="topics", c=ci)
+    start_lesson("topic", f"{COURSES[ci][0]}: {COURSES[ci][1][ti]}", ctx=(ci, ti, lv))
+
 def done_answer(choice):
-    """Stick on the results screen: up = new lesson, right = review misses, down = home."""
+    """Results menu. Course lessons: up = next level/topic, right = redo, down = topics, left = courses."""
+    ctx = last_lesson.get("ctx")
+    if ctx:
+        ci, ti, lv = ctx
+        if choice == 0:
+            if lv == 0:
+                start_nav_lesson(ci, ti, 1)
+            elif ti < 2:
+                start_nav_lesson(ci, ti + 1, 0)
+            else:
+                nav.update(screen="courses", c=(ci + 1) % len(COURSES))
+                go_home()
+        elif choice == 1:
+            start_nav_lesson(ci, ti, lv)
+        elif choice == 2:
+            nav.update(screen="topics", c=ci)
+            go_home()
+        elif choice == 3:
+            nav.update(screen="courses", c=ci)
+            go_home()
+        return
     if choice == 0:
         start_lesson(last_lesson["kind"], last_lesson["text"] or state["topic"])
     elif choice == 1:
         start_review()
     elif choice == 2:
+        nav["screen"] = "home"
         go_home()
 
-def start_lesson(kind, text):
+def start_lesson(kind, text, ctx=None):
     """kind = 'topic' or 'notes'. One Gemini call, then 8 questions."""
     global deck, retry, current, notes_text
-    last_lesson.update(kind=kind, text=text)
+    last_lesson.update(kind=kind, text=text, ctx=ctx)
     if kind == "notes":
         notes_text = text
         state.update(topic="My notes", notes=True)
@@ -353,18 +413,43 @@ def finish_lesson():
     print(f"\nLesson done: {state['score']}/{state['total']}")
     good = state["total"] > 0 and state["score"] * 10 >= state["total"] * 7
     led(0, 1, 0) if good else led(0, 0, 1)
-    options = ["0:New lesson"] + (["1:Review misses"] if missed_items else []) + ["2:Home"]
-    lcd("lcd_menu", "|".join([f"Done! {state['score']}/{state['total']} {STAR}"] + options))
+    ctx = last_lesson.get("ctx")
+    if not ctx:                       # lesson started from the web page
+        options = ["0:New lesson"] + (["1:Review misses"] if missed_items else []) + ["2:Home"]
+        lcd("lcd_menu", "|".join([f"Done! {state['score']}/{state['total']} {STAR}"] + options))
+        return
+    ci, ti, lv = ctx
+    key = f"{ci}:{ti}:{lv}"
+    progress[key] = max(progress.get(key, 0), state["score"] / max(1, state["total"]))
+    try:
+        PROGRESS_FILE.write_text(json.dumps(progress))
+    except Exception as e:
+        print("Could not save progress (fine):", str(e)[:100])
+    pts = state["score"] * 10 + state["best_streak"] * 2
+    lcd("lcd_message", f"Done! {state['score']}/{state['total']} {STAR}|Points: {pts}")
+    time.sleep(2.5)
+    lcd("lcd_message", f"Streak: {state['best_streak']}|Course {ci + 1}: {course_pct(ci)}% done")
+    time.sleep(2.5)
+    if missed_items:
+        lcd("lcd_message", f"Review: {len(missed_items)} missed|" + ascii(missed_items[0]["q"])[:60])
+    else:
+        lcd("lcd_message", f"No misses! {STAR}|Nice work")
+    time.sleep(3.0)
+    nxt = "Next level" if lv == 0 else ("Next topic" if ti < 2 else "Next course")
+    lcd("lcd_menu", "|".join([f"Done! {state['score']}/{state['total']} {STAR}", f"0:{nxt}", "1:Redo", "2:Topics", "3:Courses"]))
+    while not answers.empty():        # ignore pushes made during the summary
+        answers.get_nowait()
 
 def handle_cmd(cmd):
     if cmd[0] == "home":
+        nav["screen"] = "home"
         go_home()
     elif cmd[0] == "topic":
         start_lesson("topic", cmd[1])
     elif cmd[0] == "notes":
         start_lesson("notes", cmd[1])
     elif cmd[0] == "again":
-        start_lesson(last_lesson["kind"], last_lesson["text"] or state["topic"])
+        start_lesson(last_lesson["kind"], last_lesson["text"] or state["topic"], ctx=last_lesson.get("ctx"))
     elif cmd[0] == "review":
         start_review()
 
