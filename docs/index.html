@@ -7,14 +7,14 @@
 <meta name="description" content="Broof is a hands-on study box. Gemini writes the quiz, you answer with a real joystick, and lights, an LCD and a voice tell you how you did.">
 <style>
   :root { --bg:#f4f6f1; --card:#fff; --ink:#1c2a22; --muted:#66756b; --line:#e2e8e0;
-          --green:#2bb673; --green-d:#1f9a5f; --green-bg:#e3f6ec; --blue:#3b6cf6; --red:#e5484d; }
+          --green:#8fd43c; --green-d:#5f9f14; --green-bg:#eef9dc; --blue:#3b6cf6; --red:#e5484d; }
   * { box-sizing:border-box; }
   html { scroll-behavior:smooth; }
   body { margin:0; background:var(--bg); color:var(--ink); font:18px/1.6 "Nunito","Segoe UI",system-ui,-apple-system,sans-serif; -webkit-font-smoothing:antialiased; }
   .wrap { max-width:960px; margin:0 auto; padding:0 20px; }
   nav { display:flex; align-items:center; justify-content:space-between; padding:18px 0; }
   .brand { display:flex; align-items:center; gap:10px; font-weight:900; font-size:24px; letter-spacing:-.5px; }
-  .logo { width:40px; height:40px; border-radius:12px; background:var(--green); color:#fff; display:grid; place-items:center; font-weight:900; font-size:22px; box-shadow:0 3px 0 var(--green-d); }
+  .logo { width:40px; height:40px; border-radius:12px; background:var(--green); color:var(--ink); display:grid; place-items:center; font-weight:900; font-size:22px; box-shadow:0 3px 0 var(--green-d); }
   nav a.link { color:var(--muted); text-decoration:none; font-weight:800; margin-left:18px; }
   nav a.link:hover { color:var(--ink); }
   .hero { text-align:center; padding:56px 0 40px; }
@@ -22,7 +22,7 @@
   .hero h1 em { font-style:normal; color:var(--green); }
   .hero p { max-width:620px; margin:0 auto 26px; color:var(--muted); font-size:21px; }
   .btn { display:inline-block; text-decoration:none; font-weight:900; padding:13px 24px; border-radius:16px; border:2px solid var(--line); border-bottom-width:5px; background:#fff; color:var(--ink); margin:4px; }
-  .btn.primary { background:var(--green); border-color:var(--green-d); color:#fff; }
+  .btn.primary { background:var(--green); border-color:var(--green-d); color:var(--ink); }
   .btn:active { transform:translateY(2px); border-bottom-width:3px; }
   section { padding:34px 0; }
   h2 { font-size:32px; letter-spacing:-.8px; margin:0 0 20px; font-weight:900; text-align:center; }
@@ -33,7 +33,7 @@
   .card p { margin:0; color:var(--muted); font-size:16px; }
   .steps { counter-reset:s; display:grid; gap:14px; max-width:700px; margin:0 auto; }
   .step { display:flex; gap:16px; align-items:flex-start; background:var(--card); border:2px solid var(--line); border-radius:20px; padding:18px 20px; }
-  .step::before { counter-increment:s; content:counter(s); flex:none; width:38px; height:38px; border-radius:12px; background:var(--green); color:#fff; font-weight:900; display:grid; place-items:center; }
+  .step::before { counter-increment:s; content:counter(s); flex:none; width:38px; height:38px; border-radius:12px; background:var(--green); color:var(--ink); font-weight:900; display:grid; place-items:center; }
   .step b { display:block; font-size:19px; }
   .step span { color:var(--muted); font-size:16px; }
   .mock { max-width:560px; margin:0 auto; background:var(--card); border:2px solid var(--line); border-radius:22px; padding:22px; }
@@ -41,7 +41,7 @@
   .opt { display:flex; align-items:center; gap:12px; padding:11px 14px; margin:8px 0; border:2px solid var(--line); border-bottom-width:5px; border-radius:14px; font-weight:800; }
   .opt i { font-style:normal; width:32px; height:32px; border-radius:10px; background:var(--bg); display:grid; place-items:center; color:var(--muted); }
   .opt.ok { border-color:var(--green); background:var(--green-bg); }
-  .opt.ok i { background:var(--green); color:#fff; }
+  .opt.ok i { background:var(--green); color:var(--ink); }
   .opt.no { border-color:var(--red); background:#fdeaea; }
   .opt.no i { background:var(--red); color:#fff; }
   .tech { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
@@ -60,7 +60,8 @@
   <div class="hero">
     <h1>Study with your hands,<br><em>not your phone.</em></h1>
     <p>Broof is a small box that quizzes you. Gemini writes the questions, you answer with a real joystick, and lights, a screen and a voice tell you how you did.</p>
-    <a class="btn primary" href="https://github.com/AnNguyen07269/Broof">See the code</a>
+    <a class="btn primary" href="try.html">Try a sample lesson</a>
+    <a class="btn" href="https://github.com/AnNguyen07269/Broof">See the code</a>
     <a class="btn" href="#how">How it works</a>
   </div>
 
