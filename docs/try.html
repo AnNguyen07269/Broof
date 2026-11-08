@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Try Broof - a sample lesson</title>
+<style>
+  :root { --bg:#f4f6f1; --card:#fff; --ink:#1c2a22; --muted:#66756b; --line:#e2e8e0;
+          --green:#8fd43c; --green-d:#5f9f14; --green-bg:#eef9dc; --red:#e5484d; --red-bg:#fdeaea; --blue:#3b6cf6; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.5 "Nunito","Segoe UI",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:720px; margin:0 auto; padding:18px 16px 60px; }
+  button { font:inherit; color:var(--ink); cursor:pointer; background:#fff; border:2px solid var(--line); border-bottom-width:4px; border-radius:14px; padding:9px 16px; font-weight:800; }
+  button:hover { border-color:#c8d2c8; }
+  button:active { transform:translateY(2px); border-bottom-width:2px; }
+  button.primary { background:var(--green); border-color:var(--green-d); }
+  button.big { padding:13px 24px; font-size:18px; border-radius:16px; }
+  button.ghost { border-color:transparent; background:transparent; color:var(--muted); }
+  a { color:inherit; }
+  .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; font-weight:900; font-size:22px; }
+  .top a { text-decoration:none; }
+  .note { background:#fff3d6; color:#7a5200; border-radius:14px; padding:10px 14px; font-size:15px; font-weight:700; margin-bottom:16px; }
+  .card { background:var(--card); border:2px solid var(--line); border-radius:18px; padding:22px; margin-bottom:16px; }
+  h1 { font-size:34px; line-height:1.1; letter-spacing:-1px; margin:8px 0 6px; font-weight:900; }
+  .muted { color:var(--muted); font-weight:600; }
+  .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+  .bar { flex:1; height:12px; background:var(--line); border-radius:99px; overflow:hidden; }
+  .bar > div { height:100%; width:0; background:var(--green); transition:width .4s; }
+  .study-top { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .pill { background:#fff; border:2px solid var(--line); border-radius:99px; padding:2px 12px; font-weight:800; }
+  .meta { color:var(--muted); font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:.7px; margin-bottom:8px; }
+  .tag { background:#fff3d6; color:#a56a00; border-radius:99px; padding:2px 10px; margin-left:6px; }
+  .q { font-size:25px; line-height:1.3; font-weight:800; margin:0 0 14px; }
+  .choice { display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:13px 16px; margin:10px 0; border-radius:16px; border-bottom-width:5px; font-weight:700; }
+  .choice .k { width:36px; height:36px; border-radius:11px; background:var(--bg); display:grid; place-items:center; font-weight:900; color:var(--muted); flex:none; }
+  .choice .t { flex:1; } .choice .d { color:var(--muted); font-size:22px; }
+  .choice.right { border-color:var(--green-d); background:var(--green-bg); } .choice.right .k { background:var(--green); color:var(--ink); }
+  .choice.wrong { border-color:var(--red); background:var(--red-bg); } .choice.wrong .k { background:var(--red); color:#fff; }
+  .sheet { margin-top:12px; padding:14px 16px; border-radius:16px; font-weight:700; }
+  .sheet.right { background:var(--green-bg); } .sheet.wrong { background:var(--red-bg); color:#8a2226; }
+  .sheet h4 { margin:0 0 2px; font-size:19px; } .sheet p { margin:0 0 10px; font-weight:600; }
+  .ring { width:150px; height:150px; border-radius:50%; margin:6px auto 14px; display:grid; place-items:center; background:conic-gradient(var(--green) var(--pct,0%), var(--line) 0); }
+  .ring div { width:118px; height:118px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:34px; font-weight:900; }
+  .rev { background:#fff; border:2px solid var(--line); border-left:6px solid var(--red); border-radius:12px; padding:12px 16px; margin:10px 0; text-align:left; }
+  .rev.ok { border-left-color:var(--green-d); } .rev small { color:var(--muted); font-weight:600; display:block; }
+  .center { text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a href="./">&larr; Broof</a><span class="pill">🔥 <span id="streak">0</span></span></div>
+
+  <section id="home">
+    <h1>Try a sample lesson</h1>
+    <p class="muted">This is the same quiz flow as the real box: 8 questions, a "why" after each answer, missed questions come back, then a score and a review. On the box, Gemini writes a fresh lesson on any topic and you answer with the joystick.</p>
+    <div class="note">Sample questions are pre-written for this demo. Keys work too: arrow keys = A B C D, Enter = next.</div>
+    <div class="card"><b>Pick a topic</b><div class="chips" id="chips"></div></div>
+  </section>
+
+  <section id="study" hidden>
+    <div class="study-top"><button class="ghost" id="quit">✕</button><div class="bar"><div id="prog"></div></div></div>
+    <div class="card">
+      <div class="meta"><span id="qnum"></span><span class="tag" id="retry" hidden>second chance</span></div>
+      <p class="q" id="q"></p>
+      <div id="choices"></div>
+      <div id="sheet" class="sheet" hidden><h4 id="st"></h4><p id="sw"></p><button class="primary" id="next">Next →</button></div>
+    </div>
+  </section>
+
+  <section id="done" hidden>
+    <div class="card center">
+      <div class="ring" id="ring"><div id="ringTxt"></div></div>
+      <h2 id="dt" style="margin:0 0 4px"></h2><div class="muted" id="ds"></div>
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <button class="primary big" id="again">New lesson</button><button class="big" id="home2">Home</button>
+      </div>
+    </div>
+    <div id="revWrap" hidden><h3>Things to review</h3><div id="rev"></div></div>
+  </section>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const DECKS = {
+ "Electronics I": [
+  {q:"Two 1 kΩ resistors in series across 10 V. What is the current?", c:["5 mA","10 mA","20 mA","2 mA"], a:0, w:"Series resistance is 2 kΩ, so I = 10 V / 2 kΩ = 5 mA. 10 mA is what you get if you forget the second resistor."},
+  {q:"Two equal resistors R are in parallel. The total is?", c:["2R","R","R/2","R²"], a:2, w:"Parallel resistors share the current, so the total is smaller than either one. Two equal ones give R/2."},
+  {q:"An LED drops 2 V and should run at 10 mA from a 5 V supply. Which resistor?", c:["150 Ω","300 Ω","500 Ω","3 kΩ"], a:1, w:"The resistor drops 5 - 2 = 3 V, so R = 3 V / 10 mA = 300 Ω."},
+  {q:"In DC steady state, an ideal capacitor acts like a(n)?", c:["Short circuit","Open circuit","10 Ω resistor","Voltage source"], a:1, w:"Once it is charged, no current flows through it, so it looks like an open circuit."},
+  {q:"What is the RC time constant for 10 kΩ and 1 µF?", c:["1 ms","10 ms","100 ms","10 µs"], a:1, w:"τ = RC = 10,000 × 0.000001 = 0.01 s, which is 10 ms."},
+  {q:"An ideal inverting op-amp has Rf = 10 kΩ and Rin = 1 kΩ. The gain is?", c:["+10","-10","+11","-0.1"], a:1, w:"Inverting gain is -Rf/Rin = -10. The +11 is the non-inverting formula."},
+  {q:"A 5 V source, a silicon diode (0.7 V drop) and a 1 kΩ resistor in series, forward biased. The current is?", c:["5 mA","4.3 mA","0.7 mA","0 mA"], a:1, w:"The resistor sees 5 - 0.7 = 4.3 V, so I = 4.3 mA."},
+  {q:"How much power does 0.1 A dissipate in a 100 Ω resistor?", c:["10 W","0.1 W","1 W","100 W"], a:2, w:"P = I²R = 0.01 × 100 = 1 W."}],
+ "Digital Design": [
+  {q:"What is binary 1101 in decimal?", c:["11","12","13","14"], a:2, w:"8 + 4 + 0 + 1 = 13."},
+  {q:"Which single gate type can build any logic function?", c:["AND","OR","XOR","NAND"], a:3, w:"NAND (and NOR) are universal. AND and OR alone cannot make an inverter."},
+  {q:"A + A·B simplifies to?", c:["A","B","A + B","A·B"], a:0, w:"Absorption law: if A is 1 the whole thing is 1, and if A is 0 both terms are 0."},
+  {q:"By De Morgan, NOT(A·B) equals?", c:["NOT A · NOT B","NOT A + NOT B","A + B","A · NOT B"], a:1, w:"Break the bar, flip the operator: NOT(A·B) = NOT A + NOT B."},
+  {q:"How many flip-flops do you need to count 0 to 9?", c:["3","4","5","10"], a:1, w:"3 flip-flops count to 7. You need 4 to reach 9 (they can hold up to 15)."},
+  {q:"A 3-to-8 decoder has how many select inputs?", c:["8","3","2","1"], a:1, w:"3 select lines give 2³ = 8 combinations, one per output."},
+  {q:"A D flip-flop copies D to Q when?", c:["D changes","The clock edge arrives","Reset is low","Q changes"], a:1, w:"It is edge-triggered: it samples D only at the clock edge."},
+  {q:"What is the 4-bit two's complement of 0101 (5), meaning -5?", c:["1010","1011","1101","0101"], a:1, w:"Flip the bits to get 1010, then add 1 to get 1011."}]
+};
+const ARR = ["↑","→","↓","←"];
+let deck=[], retry=[], cur=null, curRetry=false, asked=0, done=0, score=0, streak=0, review=[], missed=[], topic="", answered=false, total=8;
+
+function show(v){ ["home","study","done"].forEach(x => $(x).hidden = x!==v); }
+Object.keys(DECKS).forEach(t => { const b=document.createElement("button"); b.className="big"; b.textContent=t; b.onclick=()=>start(t); $("chips").appendChild(b); });
+
+function start(t){
+  topic=t; deck=DECKS[t].map(x=>({...x})); retry=[]; asked=done=score=streak=0; review=[]; total=deck.length; cur=null; $("streak").textContent=0; ask();
+}
+function nextQ(){
+  if (retry.length && (retry[0].due<=asked || !deck.length)) return [retry.shift().q, true];
+  if (deck.length) return [deck.shift(), false];
+  return [null,false];
+}
+function ask(){
+  const [q,r]=nextQ(); if(!q){ finish(); return; }
+  cur=q; curRetry=r; answered=false; show("study");
+  $("qnum").textContent = r ? "Another go" : "Question "+(done+1)+" of "+total; $("retry").hidden=!r;
+  $("q").textContent=q.q; $("sheet").hidden=true; $("prog").style.width=Math.round(100*done/total)+"%";
+  const box=$("choices"); box.innerHTML="";
+  q.c.forEach((c,i)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML='<span class="k"></span><span class="t"></span><span class="d"></span>';
+    b.querySelector(".k").textContent="ABCD"[i]; b.querySelector(".t").textContent=c; b.querySelector(".d").textContent=ARR[i]; b.onclick=()=>pick(i); box.appendChild(b); });
+}
+function pick(i){
+  if(answered||!cur) return; answered=true; asked++; if(!curRetry) done++;
+  const ok=i===cur.a, kids=$("choices").children;
+  kids[cur.a].classList.add("right"); if(!ok) kids[i].classList.add("wrong");
+  if(ok){ if(!curRetry) score++; else review.forEach(r=>{ if(r.q===cur.q) r.rec=true; }); streak++; }
+  else { streak=0; if(!curRetry){ missed.push(cur); review.push({q:cur.q, a:"ABCD"[cur.a]+") "+cur.c[cur.a], w:cur.w, rec:false}); retry.push({due:asked+3, q:{...cur}}); } }
+  $("streak").textContent=streak;
+  $("sheet").className="sheet "+(ok?"right":"wrong"); $("sheet").hidden=false;
+  $("st").textContent = ok ? "Nice! Correct." : "Not quite. Answer: "+"ABCD"[cur.a]+") "+cur.c[cur.a]; $("sw").textContent=cur.w;
+  $("prog").style.width=Math.round(100*done/total)+"%"; $("next").focus();
+}
+function finish(){
+  show("done"); const pct=Math.round(100*score/total);
+  $("ring").style.setProperty("--pct",pct+"%"); $("ringTxt").textContent=score+"/"+total;
+  $("dt").textContent = pct>=90?"Locked in. Brain-rot-proof.":pct>=70?"Solid lesson.":pct>=50?"Getting there.":"Rough one. That is how it sticks.";
+  $("ds").textContent=topic; $("revWrap").hidden=!review.length; $("rev").innerHTML="";
+  review.forEach(r=>{ const d=document.createElement("div"); d.className="rev"+(r.rec?" ok":""); d.innerHTML="<b></b><small></small>"; d.querySelector("b").textContent=r.q;
+    d.querySelector("small").textContent="Answer: "+r.a+(r.rec?" (got it on the second try)":"")+" - "+r.w; $("rev").appendChild(d); });
+}
+$("next").onclick=ask; $("quit").onclick=()=>show("home"); $("again").onclick=()=>start(topic); $("home2").onclick=()=>show("home");
+document.addEventListener("keydown",e=>{
+  if($("study").hidden) return;
+  const m={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3,a:0,b:1,c:2,d:3};
+  const k=e.key.length===1?e.key.toLowerCase():e.key;
+  if(!answered && k in m){ e.preventDefault(); pick(m[k]); }
+  else if(answered && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); ask(); }
+});
+</script>
+</body>
+</html>
