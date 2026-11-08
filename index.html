@@ -399,5 +399,82 @@ else {
 }
 loadLast();
 </script>
+<style>
+:root{--green:#8fd43c;--green-d:#5f9f14;--green-bg:#eef9dc}
+button.primary{color:#1c2a22!important}
+.logo,.choice.right .k,.choice.wrong .k{color:#1c2a22}
+.wrap{padding-bottom:150px}
+#lcdbar{position:fixed;left:0;right:0;bottom:0;background:#1c2a22;padding:10px 14px 12px;z-index:50;box-shadow:0 -4px 14px rgba(0,0,0,.18)}
+#lcdbar .in{max-width:720px;margin:0 auto;display:flex;gap:14px;align-items:center}
+#lcdbar .tag{background:none;color:#8fd43c;font-weight:900;font-size:12px;letter-spacing:1px;writing-mode:vertical-rl;transform:rotate(180deg)}
+#lcdscreen{flex:1;background:#a9d94f;color:#1c2a22;border-radius:8px;padding:8px 12px;font:700 15px/1.35 Consolas,"Courier New",monospace;box-shadow:inset 0 2px 6px rgba(0,0,0,.25);min-height:58px}
+#lcdscreen div{white-space:pre-wrap}
+.mb{display:flex;flex-wrap:wrap;gap:10px}
+.mb button{flex:1 1 140px}
+.arr{display:inline-block;width:22px;font-weight:900}
+</style>
+<div id="lcdbar"><div class="in"><div class="tag">LCD</div><div id="lcdscreen"></div></div></div>
+<script>
+(function(){
+const G={"\x01":"↑","\x02":"↓","\x03":"←","\x04":"→","\x05":"✓","\x06":"✗","\x07":"★"};
+const AR=["↑","→","↓","←"];
+const cl=t=>String(t||"").replace(/[\x01-\x07]/g,c=>G[c]).replace(/`/g,"\u{1F6E1}\uFE0F");
+const mk=(par,first,id)=>{const d=document.createElement("div");d.className="card";d.id=id;d.hidden=true;d.innerHTML='<h3 style="margin:0 0 10px"></h3><div class="mb"></div>';first?par.prepend(d):par.appendChild(d);return d;};
+const mc=mk(document.getElementById("home"),true,"menuCard");
+const md=mk(document.querySelector("#done .card"),false,"menuDone");
+function menu(card){
+  const l=S.lcd;card.hidden=true;
+  if(!l||l[0]!=="lcd_menu")return;
+  const p=l[1].split("|");card.hidden=false;
+  card.querySelector("h3").textContent=cl(p[0]);
+  const b=card.querySelector(".mb");b.innerHTML="";
+  p.slice(1).forEach(o=>{const i=parseInt(o[0]),x=document.createElement("button");x.className="primary";x.innerHTML='<span class="arr"></span><span></span>';x.firstChild.textContent=AR[i];x.lastChild.textContent=cl(o.slice(2));x.onclick=()=>{stopSpeaking();api("/api/answer",{i});};b.appendChild(x);});
+}
+function lcd(){
+  const l=S.lcd,box=document.getElementById("lcdscreen");box.innerHTML="";if(!l)return;
+  const p=l[1].split("|").map(cl);let ln=[];
+  if(l[0]==="lcd_menu"){ln=[p[0]];const o=p.slice(1).map(x=>AR[parseInt(x[0])]+" "+x.slice(2));for(let k=0;k<o.length;k+=2)ln.push(o.slice(k,k+2).join("   "));}
+  else if(l[0]==="lcd_question")ln=[p[0],p.slice(1).map((c,k)=>"ABCD"[k]+")"+c).join(" ")];
+  else ln=p;
+  ln.forEach(t=>{const d=document.createElement("div");d.textContent=t;box.appendChild(d);});
+}
+setInterval(()=>{try{lcd();menu(mc);menu(md);if(S.phase!=="home")mc.hidden=true;if(S.phase!=="done")md.hidden=true;}catch(e){}},400);
+/* voice: never two voices at once */
+window.say=function(text,force){
+  return new Promise(async resolve=>{
+    if((!voiceOn&&!force)||!text)return resolve(false);
+    stopSpeaking();const my=speechToken;text=speakable(text);
+    const key=LS.get("elKey"),voice=LS.get("elVoice");
+    if(key&&voice){
+      try{
+        const r=await fetch("https://api.elevenlabs.io/v1/text-to-speech/"+encodeURIComponent(voice),{method:"POST",headers:{"xi-api-key":key,"Content-Type":"application/json","Accept":"audio/mpeg"},body:JSON.stringify({text,model_id:"eleven_turbo_v2_5"})});
+        if(!r.ok)throw new Error("ElevenLabs "+r.status);
+        const blob=await r.blob();
+        if(my!==speechToken)return resolve(false);
+        const a=new Audio(URL.createObjectURL(blob));
+        a.onended=()=>resolve(true);a.onerror=()=>resolve(false);
+        speaking=a;await a.play();
+        if(my!==speechToken){try{a.pause();}catch(e){}resolve(false);}
+        return;
+      }catch(e){}
+    }
+    if(my!==speechToken)return resolve(false);
+    const u=new SpeechSynthesisUtterance(text);u.rate=1.05;
+    u.onend=()=>resolve(true);u.onerror=()=>resolve(false);
+    speechSynthesis.speak(u);
+  });
+};
+})();
+</script>
+<script>
+(function(){
+const c=document.getElementById("chips");if(c)c.style.display="none";
+const tb=document.querySelector("#home .topbar");
+if(tb){const a=document.createElement("a");a.href="https://broof.study/use.html";a.target="_blank";a.textContent="broof.study \u2197";a.style.cssText="font-weight:800;color:#5f9f14;text-decoration:none;border:2px solid #e2e8e0;border-bottom-width:4px;border-radius:14px;padding:6px 14px;background:#fff";tb.insertBefore(a,tb.lastElementChild);}
+const f=document.createElement("p");f.className="hint";f.style.cssText="text-align:center;margin-top:8px";f.innerHTML='Same courses and flow as <a href="https://broof.study/use.html" target="_blank" style="color:#5f9f14;font-weight:800">broof.study</a>';
+const w=document.querySelector(".wrap");if(w)w.appendChild(f);
+const hp=document.querySelector("#home .hero p");if(hp)hp.textContent="Open Courses above (or push the stick). Or type any topic or paste your notes below.";
+})();
+</script>
 </body>
 </html>
