@@ -69,6 +69,7 @@ void lcdLoadGlyphs() {
   for (int g = 0; g < 7; g++) {
     lcdCommand(0x40 | ((g + 1) * 8));
     for (int r = 0; r < 8; r++) lcdChar(GLYPH[g][r]);
+  lcdCommand(0x40); { const uint8_t SH[8] = {0x1F,0x15,0x1F,0x1F,0x0E,0x04,0x00,0x00}; for (int r = 0; r < 8; r++) lcdChar(SH[r]); }
   }
   lcdCommand(0x80);
 }
@@ -95,7 +96,7 @@ void lcdInit() {
 // print exactly 16 chars on a row
 void lcdRow(int row, const String &t) {
   lcdCommand(row == 0 ? 0x80 : 0xC0);
-  for (int i = 0; i < 16; i++) lcdChar(i < (int)t.length() ? (uint8_t)t[i] : ' ');
+  for (int i = 0; i < 16; i++) lcdChar(i < (int)t.length() ? (t[i] == '`' ? 0 : (uint8_t)t[i]) : ' ');
 }
 // one row: plain if it fits, otherwise a 16-char window that slides along
 void drawRow(int row, const String &t, int pos) {
