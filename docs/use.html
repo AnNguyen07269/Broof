@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Use Broof - courses, topics, quizzes</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+  :root { --bg:#f4f6f1; --card:#fff; --ink:#1c2a22; --muted:#66756b; --line:#e2e8e0;
+          --green:#8fd43c; --green-d:#5f9f14; --green-bg:#eef9dc; --red:#e5484d; --red-bg:#fdeaea; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.5 "Nunito","Segoe UI",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:720px; margin:0 auto; padding:16px 16px 150px; }
+  button { font:inherit; color:var(--ink); cursor:pointer; background:#fff; border:2px solid var(--line); border-bottom-width:4px; border-radius:14px; padding:9px 16px; font-weight:800; }
+  button:hover { border-color:#c8d2c8; }
+  button:active { transform:translateY(2px); border-bottom-width:2px; }
+  button.primary { background:var(--green); border-color:var(--green-d); }
+  button.big { padding:13px 22px; font-size:18px; border-radius:16px; }
+  button.ghost { border-color:transparent; background:transparent; color:var(--muted); }
+  a { color:inherit; }
+  .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .brand { display:flex; align-items:center; gap:8px; font-weight:900; font-size:22px; letter-spacing:-.5px; text-decoration:none; }
+  .brand img { width:34px; height:34px; }
+  .pill { background:#fff; border:2px solid var(--line); border-radius:99px; padding:2px 12px; font-weight:800; white-space:nowrap; }
+  .crumbs { color:var(--muted); font-weight:800; font-size:14px; margin-bottom:6px; }
+  h1 { font-size:32px; line-height:1.1; letter-spacing:-1px; margin:4px 0 6px; font-weight:900; }
+  .muted { color:var(--muted); font-weight:600; }
+  .list { display:grid; gap:12px; margin-top:16px; }
+  .item { display:flex; align-items:center; gap:14px; text-align:left; width:100%; padding:16px 18px; border-radius:18px; border-bottom-width:5px; }
+  .item .ico { font-size:30px; flex:none; width:44px; text-align:center; }
+  .item .nm { font-weight:900; font-size:19px; display:block; }
+  .item .sub { color:var(--muted); font-weight:600; font-size:14px; display:block; }
+  .item .go { margin-left:auto; color:var(--muted); font-size:22px; }
+  .meter { height:8px; background:var(--line); border-radius:99px; overflow:hidden; margin-top:6px; }
+  .meter > div { height:100%; background:var(--green); }
+  .card { background:var(--card); border:2px solid var(--line); border-radius:18px; padding:22px; margin-bottom:16px; }
+  .bar { flex:1; height:12px; background:var(--line); border-radius:99px; overflow:hidden; }
+  .bar > div { height:100%; width:0; background:var(--green); transition:width .4s; }
+  .study-top { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .meta { color:var(--muted); font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:.7px; margin-bottom:8px; }
+  .tag { background:#fff3d6; color:#a56a00; border-radius:99px; padding:2px 10px; margin-left:6px; }
+  .q { font-size:25px; line-height:1.3; font-weight:800; margin:0 0 14px; }
+  .choice { display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:13px 16px; margin:10px 0; border-radius:16px; border-bottom-width:5px; font-weight:700; }
+  .choice .k { width:36px; height:36px; border-radius:11px; background:var(--bg); display:grid; place-items:center; font-weight:900; color:var(--muted); flex:none; }
+  .choice .t { flex:1; } .choice .d { color:var(--muted); font-size:22px; }
+  .choice.right { border-color:var(--green-d); background:var(--green-bg); } .choice.right .k { background:var(--green); }
+  .choice.wrong { border-color:var(--red); background:var(--red-bg); } .choice.wrong .k { background:var(--red); color:#fff; }
+  .sheet { margin-top:12px; padding:14px 16px; border-radius:16px; font-weight:700; }
+  .sheet.right { background:var(--green-bg); } .sheet.wrong { background:var(--red-bg); color:#8a2226; }
+  .sheet h4 { margin:0 0 2px; font-size:19px; } .sheet p { margin:0 0 10px; font-weight:600; }
+  .ring { width:150px; height:150px; border-radius:50%; margin:6px auto 14px; display:grid; place-items:center; background:conic-gradient(var(--green) var(--pct,0%), var(--line) 0); }
+  .ring div { width:118px; height:118px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:34px; font-weight:900; }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0; }
+  .stat { background:var(--bg); border-radius:14px; padding:10px; text-align:center; } .stat b { display:block; font-size:24px; } .stat span { font-size:13px; color:var(--muted); font-weight:800; }
+  .acts { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:16px; }
+  .rev { background:#fff; border:2px solid var(--line); border-left:6px solid var(--red); border-radius:12px; padding:12px 16px; margin:10px 0; text-align:left; }
+  .rev.ok { border-left-color:var(--green-d); } .rev small { color:var(--muted); font-weight:600; display:block; }
+  .center { text-align:center; }
+  /* LCD mock */
+  .lcdbar { position:fixed; left:0; right:0; bottom:0; background:#14201a; color:#cfe9b0; padding:10px 16px 14px; border-top:3px solid #0b110d; z-index:5; }
+  .lcdbar .in { max-width:720px; margin:0 auto; display:flex; align-items:center; gap:14px; }
+  .lcdbar .lab { font-size:12px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:#8aa27a; width:70px; flex:none; }
+  .lcd { background:#9bd24a; color:#1c2a22; font:700 20px/1.25 "Courier New",monospace; border-radius:8px; padding:8px 12px; box-shadow:inset 0 0 0 3px #6fa326; white-space:pre; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="brand" href="./"><img src="logo.svg" alt="">Broof</a><span class="pill">🔥 <span id="days">0</span>-day streak</span></div>
+
+  <section id="v-courses">
+    <h1>Courses</h1>
+    <p class="muted">Pick a course, pick a topic, then take a short quiz. On the box you do the same with the joystick, and Gemini writes new questions for any topic. This page uses a built-in sample bank so you can try it right here.</p>
+    <div class="list" id="courseList"></div>
+  </section>
+
+  <section id="v-topics" hidden>
+    <div class="crumbs" id="topicCrumb"></div>
+    <h1 id="topicTitle"></h1>
+    <p class="muted" id="topicSub"></p>
+    <div class="list" id="topicList"></div>
+    <div style="margin-top:16px"><button id="backCourses">← Courses</button></div>
+  </section>
+
+  <section id="v-quiz" hidden>
+    <div class="study-top"><button class="ghost" id="quit">✕</button><div class="bar"><div id="prog"></div></div><span class="pill">🔥 <span id="streak">0</span></span></div>
+    <div class="card">
+      <div class="meta"><span id="qnum"></span><span class="tag" id="retry" hidden>second chance</span></div>
+      <p class="q" id="q"></p>
+      <div id="choices"></div>
+      <div id="sheet" class="sheet" hidden><h4 id="st"></h4><p id="sw"></p><button class="primary" id="next">Next →</button></div>
+    </div>
+  </section>
+
+  <section id="v-results" hidden>
+    <div class="card center">
+      <div class="crumbs" id="resCrumb"></div>
+      <div class="ring" id="ring"><div id="ringTxt"></div></div>
+      <h2 id="resTitle" style="margin:0 0 4px"></h2>
+      <div class="stats"><div class="stat"><b id="pts">0</b><span>POINTS</span></div><div class="stat"><b id="bst">0</b><span>BEST STREAK</span></div><div class="stat"><b id="cprog">0%</b><span>COURSE PROGRESS</span></div></div>
+      <div class="meter"><div id="cmeter" style="width:0"></div></div>
+      <div class="acts" id="resActs"></div>
+    </div>
+    <div id="revWrap" hidden><h3>Things to review</h3><div id="rev"></div></div>
+  </section>
+</div>
+
+<div class="lcdbar"><div class="in"><span class="lab">On the box</span><div class="lcd" id="lcd"></div></div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+/* question: [text, [A,B,C,D], answerIndex, why] */
+const COURSES = [
+ {id:"ee1", name:"Electronics I", ico:"⚡", topics:[
+  {id:"ohm", name:"Ohm's law & resistors", lv:[
+   [["V = I·R. With 2 A through 5 Ω, V is?",["2.5 V","7 V","10 V","0.4 V"],2,"V = I × R = 2 × 5 = 10 V."],
+    ["Which unit measures resistance?",["Farad","Henry","Volt","Ohm"],3,"Resistance is in ohms. Farad is capacitance, henry is inductance."],
+    ["Two 1 kΩ resistors in series make?",["500 Ω","1 kΩ","2 kΩ","1 MΩ"],2,"Series resistances add: 1k + 1k = 2 kΩ."],
+    ["Current in a 10 Ω resistor with 5 V across it?",["50 A","0.5 A","2 A","15 A"],1,"I = V / R = 5 / 10 = 0.5 A."]],
+   [["Two 6 Ω resistors in parallel give?",["12 Ω","6 Ω","3 Ω","1.5 Ω"],2,"Equal parallel resistors give R/2 = 3 Ω."],
+    ["A 100 Ω resistor carries 0.1 A. The power is?",["10 W","1 W","0.1 W","100 W"],1,"P = I²R = 0.01 × 100 = 1 W."],
+    ["9 V across 1 kΩ (top) and 2 kΩ (bottom). Voltage across the bottom one?",["3 V","4.5 V","6 V","9 V"],2,"Divider: 9 × 2k / (1k + 2k) = 6 V."],
+    ["Doubling the voltage across a fixed resistor does what to its power?",["Doubles it","Halves it","No change","Quadruples it"],3,"P = V²/R, so doubling V makes P four times bigger."]]]},
+  {id:"cap", name:"Capacitors & RC", lv:[
+   [["What is the unit of capacitance?",["Farad","Ohm","Tesla","Watt"],0,"Capacitance is measured in farads."],
+    ["In DC steady state, an ideal capacitor acts like?",["A short circuit","A resistor","An open circuit","A battery"],2,"No current flows once it is charged: an open circuit."],
+    ["At the same voltage, a bigger capacitor stores?",["Less charge","More charge","The same charge","No charge"],1,"Q = C × V, so more C means more charge."],
+    ["The RC time constant is?",["R + C","R / C","R − C","R × C"],3,"τ = R × C."]],
+   [["τ for 10 kΩ and 1 µF is?",["1 ms","10 ms","100 ms","1 s"],1,"10,000 × 0.000001 = 0.01 s = 10 ms."],
+    ["After one time constant, a charging capacitor is at about?",["37%","50%","63%","100%"],2,"It reaches 1 − e⁻¹, about 63% of the final voltage."],
+    ["Two 10 µF capacitors in parallel give?",["5 µF","10 µF","20 µF","100 µF"],2,"Parallel capacitors add: 20 µF."],
+    ["A capacitor's impedance at high frequency is?",["Large","Small","Infinite","Constant"],1,"Z = 1/(ωC) gets smaller as frequency rises."]]]},
+  {id:"diode", name:"Diodes & op-amps", lv:[
+   [["A silicon diode's forward drop is about?",["0.1 V","3.3 V","0.7 V","5 V"],2,"About 0.7 V."],
+    ["A diode lets current flow?",["Both ways","One way","Neither way","Only AC"],1,"Forward direction only."],
+    ["An ideal op-amp draws what input current?",["Infinite","1 mA","1 A","Zero"],3,"Input impedance is infinite, so input current is zero."],
+    ["LED drops 2 V, supply 5 V, 10 mA wanted. Resistor?",["150 Ω","300 Ω","500 Ω","3 kΩ"],1,"(5 − 2) / 0.01 = 300 Ω."]],
+   [["Inverting amp with Rf = 10k and Rin = 1k. The gain is?",["+10","+11","−0.1","−10"],3,"Gain = −Rf / Rin = −10."],
+    ["Non-inverting amp with Rf = 9k and Rg = 1k. The gain is?",["9","10","−9","11"],1,"Gain = 1 + Rf / Rg = 10."],
+    ["A voltage follower has a gain of?",["0","10","1","Infinite"],2,"The output copies the input. It is used as a buffer."],
+    ["Why use negative feedback on an op-amp?",["Raises gain","Adds noise","Removes the supply","Makes gain stable"],3,"It trades raw gain for stable, predictable gain."]]]}]},
+ {id:"dd", name:"Digital Design", ico:"🔌", topics:[
+  {id:"num", name:"Number systems & gates", lv:[
+   [["Binary 1010 in decimal?",["8","10","12","5"],1,"8 + 2 = 10."],
+    ["Which gate outputs 1 only when its inputs differ?",["AND","OR","XOR","NAND"],2,"XOR is true when exactly one input is true."],
+    ["NAND with both inputs 1 outputs?",["0","1","Z","X"],0,"NAND is AND inverted, and 1 AND 1 = 1, so the output is 0."],
+    ["Hex F in decimal?",["10","15","16","14"],1,"F is 15."]],
+   [["Binary 1101 in decimal?",["11","12","14","13"],3,"8 + 4 + 0 + 1 = 13."],
+    ["The 4-bit two's complement of 0101 (so -5) is?",["1010","1011","1101","0101"],1,"Flip the bits to get 1010, then add 1: 1011."],
+    ["Which single gate type can build any logic function?",["AND","NAND","OR","XOR"],1,"NAND (and NOR) are universal."],
+    ["The largest unsigned 8-bit number is?",["127","256","255","128"],2,"2⁸ − 1 = 255."]]]},
+  {id:"bool", name:"Boolean algebra", lv:[
+   [["A + 0 equals?",["0","1","A","NOT A"],2,"OR with 0 changes nothing."],
+    ["A · 1 equals?",["A","0","1","NOT A"],0,"AND with 1 changes nothing."],
+    ["NOT(NOT A) equals?",["NOT A","0","1","A"],3,"Two inversions cancel."],
+    ["A + NOT A equals?",["0","A","1","NOT A"],2,"One of the two is always 1."]],
+   [["A + A·B simplifies to?",["B","A","A + B","A·B"],1,"Absorption: if A = 1 it is 1, if A = 0 both terms are 0."],
+    ["By De Morgan, NOT(A·B) equals?",["NOT A · NOT B","A + B","NOT A + NOT B","A · NOT B"],2,"Break the bar, flip the operator."],
+    ["A · (A + B) simplifies to?",["A","B","A·B","A + B"],0,"Absorption again: the result is A."],
+    ["Which is A XOR B?",["A·B + A'·B'","A·B' + A'·B","A + B","A·B"],1,"XOR is true when exactly one is 1: A·B' + A'·B."]]]},
+  {id:"ff", name:"Flip-flops & counters", lv:[
+   [["A D flip-flop copies D to Q when?",["D changes","Reset is low","The clock edge arrives","Q changes"],2,"It is edge-triggered."],
+    ["How many states can one flip-flop store?",["1","2","4","8"],1,"It stores one bit: 2 states."],
+    ["How many flip-flops do you need for 8 states?",["2","3","4","8"],1,"2³ = 8."],
+    ["A register is?",["One gate","A resistor array","A decoder","Flip-flops sharing a clock"],3,"It is a group of flip-flops loaded together."]],
+   [["Flip-flops needed to count 0 to 9?",["3","5","4","10"],2,"3 reach 7; you need 4 to hold 9."],
+    ["A mod-10 counter resets after reaching?",["8","9","10","15"],1,"It counts 0 to 9, then goes back to 0."],
+    ["Setup time is?",["Time D must be stable before the clock edge","Time the clock stays high","Power-up delay","Time after the edge"],0,"D must be steady just before the edge, or the result is unreliable."],
+    ["A T flip-flop with T = 1 does what each clock?",["Holds","Clears","Sets","Toggles"],3,"It flips its output each clock."]]]}]},
+ {id:"ds", name:"Data Structures", ico:"🌳", topics:[
+  {id:"arr", name:"Arrays & linked lists", lv:[
+   [["Reading an array element by index takes?",["O(n)","O(log n)","O(1)","O(n²)"],2,"The address is computed directly: constant time."],
+    ["Inserting at the front of an array is?",["O(1)","O(n)","O(log n)","Impossible"],1,"Every element must shift over."],
+    ["A linked-list node holds?",["Only data","Data and a pointer","Only a pointer","An index"],1,"Data plus a link to the next node."],
+    ["Which needs contiguous memory?",["Array","Linked list","Both","Neither"],0,"Arrays are stored in one block."]],
+   [["Inserting at the head of a singly linked list is?",["O(n)","O(log n)","O(1)","O(n²)"],2,"Just rewire one pointer."],
+    ["Finding a value in an unsorted linked list is?",["O(1)","O(n)","O(log n)","O(n²)"],1,"You may have to walk the whole list."],
+    ["Why is binary search slow on a linked list?",["It is unsorted","Nodes are too big","No random access","Too many pointers"],2,"You cannot jump to the middle in O(1)."],
+    ["Reversing a singly linked list in place needs how much extra space?",["O(n)","O(1)","O(n²)","O(log n)"],1,"Three pointers are enough."]]]},
+  {id:"stack", name:"Stacks & queues", lv:[
+   [["A stack removes items in what order?",["FIFO","Random","LIFO","Sorted"],2,"Last in, first out."],
+    ["A queue removes items in what order?",["LIFO","FIFO","Random","Reverse"],1,"First in, first out."],
+    ["Push adds an item to the?",["Bottom","Middle","Back","Top"],3,"Push puts it on top."],
+    ["The undo feature in an editor is best modeled by a?",["Queue","Stack","Array","Tree"],1,"The latest action is undone first: a stack."]],
+   [["Postfix 3 4 + 2 * evaluates to?",["10","11","14","24"],2,"3 + 4 = 7, then 7 × 2 = 14."],
+    ["Breadth-first search uses a?",["Queue","Stack","Heap","Hash table"],0,"A queue visits nodes level by level."],
+    ["Depth-first search (without recursion) uses a?",["Queue","Heap","Hash table","Stack"],3,"A stack goes deep first."],
+    ["A circular queue mainly avoids?",["Overflow of values","Shifting items or wasting space","Sorting","Duplicates"],1,"Indexes wrap around, so no shifting is needed."]]]},
+  {id:"tree", name:"Trees & Big-O", lv:[
+   [["Which BST traversal gives sorted order?",["Pre-order","Post-order","In-order","Level-order"],2,"In-order: left, node, right."],
+    ["Searching a balanced BST takes?",["O(1)","O(log n)","O(n)","O(n²)"],1,"Each step halves the search space."],
+    ["A heap's root holds the?",["Median","Last item","Random item","Min or max"],3,"The extreme value sits on top."],
+    ["A leaf is a node with?",["No children","Two children","No parent","One child"],0,"Leaves have no children."]],
+   [["How many levels does a balanced BST with 1023 nodes have?",["5","10","100","1023"],1,"2¹⁰ − 1 = 1023, so 10 levels."],
+    ["Worst-case search in a BST built from sorted inserts?",["O(1)","O(log n)","O(n)","O(n log n)"],2,"It degenerates into a linked list."],
+    ["Max nodes in a binary tree of height h (root at h = 0)?",["2h","h²","2^(h+1) − 1","h + 1"],2,"1 + 2 + 4 + ... + 2^h = 2^(h+1) − 1."],
+    ["Pre-order visits nodes in what order?",["Left, node, right","Root, left, right","Left, right, root","Level by level"],1,"Root first, then left, then right."]]]}]}
+];
+const ARR = ["↑","→","↓","←"];
+const PKEY = "broof_progress_v1", DKEY = "broof_days_v1";
+const store = { get(k,d){ try { return JSON.parse(localStorage.getItem(k)) || d; } catch(e){ return d; } }, set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} } };
+let prog = store.get(PKEY, {}), days = store.get(DKEY, {n:0, last:""});
+let course=null, topic=null, level=0, deck=[], retry=[], cur=null, curRetry=false, asked=0, done=0, score=0, streak=0, bestStreak=0, review=[], answered=false, total=4;
+
+function view(v){ ["courses","topics","quiz","results"].forEach(x => $("v-"+x).hidden = x!==v); window.scrollTo(0,0); }
+function lcd(a,b){ const f = s => (s||"").slice(0,16).padEnd(16," "); $("lcd").textContent = f(a)+"\n"+f(b); }
+function doneCount(c){ let n=0; c.topics.forEach(t=>[0,1].forEach(l=>{ if(((prog[c.id]||{})[t.id]||[])[l]>=3) n++; })); return n; }
+function pct(c){ return Math.round(100*doneCount(c)/(c.topics.length*2)); }
+function today(){ return new Date().toISOString().slice(0,10); }
+$("days").textContent = days.n;
+
+function showCourses(){
+  view("courses"); lcd("Broof", "Courses");
+  const box=$("courseList"); box.innerHTML="";
+  COURSES.forEach((c,i)=>{ const b=document.createElement("button"); b.className="item";
+    b.innerHTML='<span class="ico"></span><span><span class="nm"></span><span class="sub"></span><div class="meter"><div></div></div></span><span class="go">›</span>';
+    b.querySelector(".ico").textContent=c.ico; b.querySelector(".nm").textContent=c.name;
+    b.querySelector(".sub").textContent=c.topics.length+" topics · "+pct(c)+"% done"; b.querySelector(".meter div").style.width=pct(c)+"%";
+    b.onmouseenter=()=>lcd("Courses", ARR[i]+" "+c.name); b.onclick=()=>showTopics(c); box.appendChild(b); });
+}
+function showTopics(c){
+  course=c; view("topics"); lcd(c.name, "Pick a topic");
+  $("topicCrumb").textContent="Courses › "+c.name; $("topicTitle").textContent=c.name; $("topicSub").textContent="Progress: "+pct(c)+"% · "+doneCount(c)+" of "+(c.topics.length*2)+" levels finished";
+  const box=$("topicList"); box.innerHTML="";
+  c.topics.forEach((t,i)=>{ const p=(prog[c.id]||{})[t.id]||[]; const b=document.createElement("button"); b.className="item";
+    b.innerHTML='<span class="ico"></span><span><span class="nm"></span><span class="sub"></span></span><span class="go">›</span>';
+    b.querySelector(".ico").textContent=(p[0]>=3&&p[1]>=3)?"✅":"📘"; b.querySelector(".nm").textContent=t.name;
+    b.querySelector(".sub").textContent="Level 1: "+(p[0]!=null?p[0]+"/4":"new")+" · Level 2: "+(p[1]!=null?p[1]+"/4":"new");
+    b.onmouseenter=()=>lcd(c.name, ARR[i]+" "+t.name); b.onclick=()=>startQuiz(t,(p[0]>=3&&p[1]==null)?1:0); box.appendChild(b); });
+}
+function startQuiz(t, lv){
+  topic=t; level=lv; deck=t.lv[lv].map(x=>({q:x[0],c:x[1],a:x[2],w:x[3]})); retry=[]; asked=done=score=streak=bestStreak=0; review=[]; total=deck.length; cur=null; $("streak").textContent=0; ask();
+}
+function nextQ(){
+  if (retry.length && (retry[0].due<=asked || !deck.length)) return [retry.shift().q, true];
+  if (deck.length) return [deck.shift(), false];
+  return [null,false];
+}
+function ask(){
+  const [q,r]=nextQ(); if(!q){ finish(); return; }
+  cur=q; curRetry=r; answered=false; view("quiz");
+  $("qnum").textContent = (r ? "Another go" : "Question "+(done+1)+" of "+total)+" · Level "+(level+1); $("retry").hidden=!r;
+  $("q").textContent=q.q; $("sheet").hidden=true; $("prog").style.width=Math.round(100*done/total)+"%";
+  lcd((r?"Again: ":"Q"+(done+1)+"/"+total+" ")+q.q, "A) "+q.c[0]);
+  const box=$("choices"); box.innerHTML="";
+  q.c.forEach((c,i)=>{ const b=document.createElement("button"); b.className="choice"; b.innerHTML='<span class="k"></span><span class="t"></span><span class="d"></span>';
+    b.querySelector(".k").textContent="ABCD"[i]; b.querySelector(".t").textContent=c; b.querySelector(".d").textContent=ARR[i];
+    b.onmouseenter=()=>{ if(!answered) lcd(lcdTop(), ARR[i]+"ABCD"[i]+") "+c); }; b.onclick=()=>pick(i); box.appendChild(b); });
+}
+function lcdTop(){ return (curRetry?"Again: ":"Q"+(done+1)+"/"+total+" ")+cur.q; }
+function pick(i){
+  if(answered||!cur) return; answered=true; asked++; if(!curRetry) done++;
+  const ok=i===cur.a, kids=$("choices").children;
+  kids[cur.a].classList.add("right"); if(!ok) kids[i].classList.add("wrong");
+  if(ok){ if(!curRetry) score++; else review.forEach(r=>{ if(r.q===cur.q) r.rec=true; }); streak++; bestStreak=Math.max(bestStreak,streak); }
+  else { streak=0; if(!curRetry){ review.push({q:cur.q, a:"ABCD"[cur.a]+") "+cur.c[cur.a], w:cur.w, rec:false}); retry.push({due:asked+3, q:{...cur}}); } }
+  $("streak").textContent=streak;
+  $("sheet").className="sheet "+(ok?"right":"wrong"); $("sheet").hidden=false;
+  $("st").textContent = ok ? "Nice! Correct." : "Not quite. Answer: "+"ABCD"[cur.a]+") "+cur.c[cur.a]; $("sw").textContent=cur.w;
+  $("prog").style.width=Math.round(100*done/total)+"%"; $("next").focus();
+  lcd(ok ? "✓ Correct! x"+streak : "✗ Answer: "+"ABCD"[cur.a], ok ? cur.w : cur.c[cur.a]+". "+cur.w);
+}
+function finish(){
+  const c=course, t=topic, p=(prog[c.id]=prog[c.id]||{}); const arr=(p[t.id]=p[t.id]||[]); arr[level]=Math.max(arr[level]||0, score); store.set(PKEY, prog);
+  if(days.last!==today()){ const y=new Date(Date.now()-864e5).toISOString().slice(0,10); days.n = days.last===y ? days.n+1 : 1; days.last=today(); store.set(DKEY, days); $("days").textContent=days.n; }
+  view("results"); const pc=Math.round(100*score/total);
+  $("resCrumb").textContent=c.name+" › "+t.name+" · Level "+(level+1);
+  $("ring").style.setProperty("--pct",pc+"%"); $("ringTxt").textContent=score+"/"+total;
+  $("resTitle").textContent = pc>=100?"Locked in. Brain-rot-proof.":pc>=75?"Solid lesson.":pc>=50?"Getting there.":"Rough one. That is how it sticks.";
+  $("pts").textContent=score*10+bestStreak*2; $("bst").textContent=bestStreak; $("cprog").textContent=pct(c)+"%"; $("cmeter").style.width=pct(c)+"%";
+  const acts=$("resActs"); acts.innerHTML="";
+  const add=(label,fn,primary)=>{ const b=document.createElement("button"); b.className="big"+(primary?" primary":""); b.textContent=label; b.onclick=fn; acts.appendChild(b); };
+  const ti=c.topics.indexOf(t);
+  if(level===0) add("Next level →", ()=>startQuiz(t,1), true);
+  else if(ti<c.topics.length-1) add("Next topic →", ()=>startQuiz(c.topics[ti+1],0), true);
+  add("Redo", ()=>startQuiz(t,level), false); add("Topics", ()=>showTopics(c), false); add("Courses", showCourses, false);
+  $("revWrap").hidden=!review.length; $("rev").innerHTML="";
+  review.forEach(r=>{ const d=document.createElement("div"); d.className="rev"+(r.rec?" ok":""); d.innerHTML="<b></b><small></small>"; d.querySelector("b").textContent=r.q;
+    d.querySelector("small").textContent="Answer: "+r.a+(r.rec?" (got it on the second try)":"")+" - "+r.w; $("rev").appendChild(d); });
+  lcd("Done! "+score+"/"+total+" ★ "+(score*10+bestStreak*2)+"pts", "Streak "+bestStreak+" Crs "+pct(c)+"%");
+}
+$("next").onclick=ask; $("quit").onclick=()=>showTopics(course); $("backCourses").onclick=showCourses;
+document.addEventListener("keydown",e=>{
+  if($("v-quiz").hidden) return;
+  const m={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3,a:0,b:1,c:2,d:3};
+  const k=e.key.length===1?e.key.toLowerCase():e.key;
+  if(!answered && k in m){ e.preventDefault(); pick(m[k]); }
+  else if(answered && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); ask(); }
+});
+showCourses();
+</script>
+</body>
+</html>
