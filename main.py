@@ -23,6 +23,7 @@ SYSTEM_PROMPT = (
 
 llm = CloudLLM(model=CloudModel.GOOGLE_GEMINI, system_prompt=SYSTEM_PROMPT, timeout=45)
 
+# Used if Wi-Fi or Gemini fails, so the demo never dies
 # Backup decks by subject (used only if Gemini fails)
 BACKUP = {
     "electronics": [
@@ -82,6 +83,16 @@ def led(r, g, b):
     except Exception as e:
         print("LED error:", e)
 
+def ascii(text):
+    """The LCD only draws plain ASCII; also '|' is our separator."""
+    return text.encode("ascii", "ignore").decode().replace("|", "/")
+
+def lcd(name, text):
+    try:
+        Bridge.call(name, text)
+    except Exception as e:
+        print("LCD error:", e)
+
 # ---------- 4. Web page API ----------
 ui = WebUI()
 
@@ -123,6 +134,7 @@ def fetch_deck():
 def show(q):
     state.update(question=q["q"], choices=q["choices"], answer=q["answer"],
                  picked=-1, result="", status="Flip ONE switch ON to answer (1=A 2=B 3=C 4=D), then back OFF")
+    lcd("lcd_question", "|".join([ascii(q["q"])] + [ascii(c)[:14] for c in q["choices"]]))
     print("\n" + "=" * 40)
     print("Q:", q["q"])
     for i, choice in enumerate(q["choices"]):
@@ -142,6 +154,7 @@ def loop():
         if not deck:                      # only call Gemini when the deck is empty
             led(0, 0, 1)                  # blue = thinking
             state.update(question="", choices=[], result="", status="Gemini is writing a deck...")
+            lcd("lcd_message", "Thinking...|" + ascii(state["topic"])[:16])
             deck = fetch_deck()
             led(0, 0, 0)
         current = deck.pop(0)
@@ -163,13 +176,15 @@ def loop():
         state["best_streak"] = max(state["best_streak"], state["streak"])
         state.update(result="right", status="Correct!")
         print("Correct!")
-        led(0, 1, 0)                      # green
+        led(0, 1, 0)
+        lcd("lcd_message", f"Correct!|Streak {state['streak']}")                      # green
     else:
         state["streak"] = 0
         right = current["choices"][current["answer"]]
         state.update(result="wrong", status=f"Not quite. Answer: {'ABCD'[current['answer']]}) {right}")
         print(f"Wrong. Answer: {'ABCD'[current['answer']]}) {right}")
         led(1, 0, 0)                      # red
+        lcd("lcd_message", f"Nope! Answer:|{'ABCD'[current['answer']]}){ascii(right)[:14]}")
     print(f"Score: {state['score']}/{state['asked']}")
 
     time.sleep(2.5)
