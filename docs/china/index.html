@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>China: The Art of Reinvention</title>
+<meta name="description" content="An interactive hand-drawn historical atlas of China, with a five-minute automated documentary.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F4EBD8' stroke='%232B2B2B' stroke-width='2.5'/%3E%3Cpath d='M6 20c4-7 9-9 13-5s7 2 7 2' fill='none' stroke='%23C3272B' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='11' cy='11' r='2.6' fill='%23263D50'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/atlas.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ MAP STAGE ============ -->
+  <div id="stage">
+    <svg id="map" viewBox="0 0 1000 760" preserveAspectRatio="xMidYMid meet" aria-label="Schematic historical map of China">
+      <defs>
+        <filter id="paper"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" result="n"/>
+          <feColorMatrix in="n" type="saturate" values="0"/>
+          <feComposite operator="in" in2="SourceGraphic"/></filter>
+        <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="4" result="t"/>
+          <feDisplacementMap in="SourceGraphic" in2="t" scale="2.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+        <pattern id="hatch" width="9" height="9" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="0" y2="9" stroke="#8C8372" stroke-width="2.5" opacity=".45"/></pattern>
+      </defs>
+      <rect id="sea" width="1000" height="760" fill="var(--sea)"/>
+      <g id="cam">
+        <g id="layer-outside"></g>
+        <g id="layer-regions" filter="url(#rough)"></g>
+        <g id="layer-seas"></g>
+        <g id="layer-rivers"></g>
+        <g id="layer-relief"></g>
+        <g id="layer-routes"></g>
+        <g id="layer-wall"></g>
+        <g id="layer-figures"></g>
+        <g id="layer-labels"></g>
+        <g id="layer-markers"></g>
+        <g id="layer-fx"></g>
+      </g>
+      <g id="layer-narrator"></g>
+    </svg>
+    <div id="scene-art" aria-hidden="true"></div>
+    <div id="vignette"></div>
+  </div>
+
+  <!-- ============ MASTHEAD ============ -->
+  <header id="masthead">
+    <h1>China<span>:</span> The Art of Reinvention</h1>
+    <p>A journey through history, entrepreneurship, and the human spirit.</p>
+  </header>
+
+  <!-- ============ SIDEBAR ============ -->
+  <nav id="sidebar" aria-label="Topics"></nav>
+
+  <!-- ============ SLIDE-OUT PANEL ============ -->
+  <section id="panel" class="hidden" aria-live="polite">
+    <button id="panel-close" aria-label="Close panel">&times;</button>
+    <div id="panel-body"></div>
+  </section>
+
+  <!-- ============ PERIOD CARD ============ -->
+  <aside id="periodcard">
+    <div class="pc-top"><div class="pc-emb"></div><div><div class="pc-years"></div>
+    <div class="pc-name"></div></div></div>
+    <div class="pc-blurb"></div>
+    <div class="pc-caveat"></div>
+    <div class="pc-hint"></div>
+  </aside>
+
+  <!-- ============ WALKTHROUGH BUTTON ============ -->
+  <button id="start-btn">
+    <span class="sb-k">▶</span>
+    <span class="sb-txt">
+      <span class="sb-t">AUTOMATIC<br>WALKTHROUGH</span>
+      <span class="sb-th">Life, happiness &amp; resilience,<br>through entrepreneurship &amp; civilization</span>
+    </span>
+    <span class="sb-s">4:50 · sit back, press once</span>
+  </button>
+
+  <!-- ============ TIMELINE ============ -->
+  <div id="timeline">
+    <button id="tl-expand" aria-label="Expand full timeline">▲ Full timeline</button>
+    <div id="tl-track"><div id="tl-line"></div><div id="tl-fill"></div><div id="tl-marks"></div></div>
+  </div>
+  <div id="tl-full" class="hidden"><button id="tl-collapse" aria-label="Close timeline">&times;</button><div id="tl-full-inner"></div></div>
+
+  <!-- ============ WALKTHROUGH OVERLAY ============ -->
+  <div id="wt" class="hidden">
+    <div id="wt-title">
+      <div class="wtt-k">China</div>
+      <div class="wtt-s">The Art of Reinvention</div>
+      <div class="wtt-r"></div>
+      <div class="wtt-th">Life, happiness &amp; resilience,<br>through entrepreneurship &amp; civilization</div>
+    </div>
+    <div id="wt-chrome">
+      <div id="wt-head">
+        <div id="wt-act"></div>
+        <div id="wt-scene"></div>
+      </div>
+      <div id="wt-progress"><div id="wt-bar"></div><div id="wt-ticks"></div></div>
+      <div id="wt-controls">
+        <button data-a="restart" title="Restart" aria-label="Restart">⟲</button>
+        <button data-a="prev" title="Previous scene" aria-label="Previous scene">⏮</button>
+        <button data-a="play" title="Pause / resume" aria-label="Pause or resume" class="big">⏸</button>
+        <button data-a="next" title="Next scene" aria-label="Next scene">⏭</button>
+        <span id="wt-time">0:00 / 4:50</span>
+        <span class="wt-sp"></span>
+        <button data-a="subs" class="tog on" title="Subtitles" aria-label="Toggle subtitles">CC</button>
+        <button data-a="narr" class="tog on" title="Narration" aria-label="Toggle narration">🗣</button>
+        <button data-a="music" class="tog on" title="Music" aria-label="Toggle music">♪</button>
+        <button data-a="skipv" class="hidden" title="Skip video" aria-label="Skip video">Skip video ⏭</button>
+        <button data-a="exit" title="Exit to Explore Mode" aria-label="Exit walkthrough">Explore ✕</button>
+      </div>
+    </div>
+    <div id="wt-video-wrap" class="hidden"><div id="wt-loading"><div>Loading the Shenzhen sequence…</div><div class="bar"><i></i></div></div><video id="wt-video" playsinline muted preload="auto" poster="media/shenzhen-poster.png"></video></div>
+    <div id="subs"><span></span></div>
+    <div id="wt-paused" class="hidden"><div>Paused — exploring</div><button id="wt-resume">Resume walkthrough ▶</button></div>
+  </div>
+
+  <!-- ============ STORYBOOK ============ -->
+  <div id="story" class="hidden">
+    <div id="story-card">
+      <button id="story-close" aria-label="Close">&times;</button>
+      <div id="story-art"></div>
+      <div id="story-text"></div>
+    </div>
+  </div>
+
+  <!-- ============ FOOTER ACTIONS ============ -->
+  <div id="footer-actions">
+    <button id="sources-btn">Sources &amp; notes</button>
+    <span id="mode-pill">Explore Mode</span>
+  </div>
+
+  <div id="intro">
+    <div class="intro-card">
+      <div id="intro-art"></div>
+      <h2>China: The Art of Reinvention</h2>
+      <p class="intro-theme">A journey through history, entrepreneurship, and the human spirit —
+         life, happiness and resilience, seen through entrepreneurship and civilization.</p>
+      <p>An illustrated historical atlas. Explore four thousand years freely —
+         or press one button and watch the whole story in under five minutes.</p>
+      <div class="intro-meta">
+        <span><i></i>24 periods</span><span><i></i>21 illustrated places</span>
+        <span><i></i>Builder's Lens</span><span><i></i>4:50 documentary</span>
+      </div>
+      <div class="intro-btns">
+        <button id="intro-go" class="primary">▶ Automatic Walkthrough <em>4:50</em></button>
+        <button id="intro-explore">Explore the atlas</button>
+      </div>
+      <p class="intro-note">Sound is used for narration and music. Press either button to begin.</p>
+    </div>
+  </div>
+
+</div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

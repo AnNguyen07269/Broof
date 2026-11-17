@@ -1,0 +1,204 @@
+# NARRATION SCRIPT — China: The Art of Reinvention
+# Total runtime 4:50 (290s). 26 scenes.
+#
+# HOW TO USE WITH ELEVENLABS (about 10 minutes):
+#  1. Pick a voice. Suggested: a calm documentary narrator, Stability ~50, Similarity ~75,
+#     Speed 1.0. British or neutral-American both work; avoid anything overly "announcer".
+#  2. For each block below, paste ONLY the spoken text into ElevenLabs.
+#  3. Download the MP3 and save it as the scene id shown, e.g. s01.mp3
+#  4. Put all 26 files in:  media/vo/
+#  5. Open js/audio.js and change   export const USE_VO = false;   to   true
+#  That is the whole change. Subtitles and timing stay driven by the master clock.
+#
+# TARGET column = how long that scene is on screen. If your render is a little
+# shorter, that is fine — a small gap reads as a breath. Much longer and it will
+# run into the next scene, so trim the line rather than speeding the voice up.
+
+
+==========================================================================
+ACT — THE ART OF REINVENTION   (0:00–0:25)
+==========================================================================
+
+--- s01.mp3 ---  "A question"   TARGET 9s   (18 words ≈ 7s at 150wpm)
+
+Every society faces the same question. So does every person. What happens when the world outpaces your plans?
+
+--- s02.mp3 ---  "One place, many answers"   TARGET 7.5s   (14 words ≈ 6s at 150wpm)
+
+A map of one place that answered it many times. Sometimes well. Often badly.
+
+--- s03.mp3 ---  "China: The Art of Reinvention"   TARGET 8.5s   (16 words ≈ 6s at 150wpm)
+
+Four thousand years of building things, losing them, starting again. This is the art of reinvention.
+
+==========================================================================
+ACT — ANCIENT FOUNDATIONS   (0:25–1:05)
+==========================================================================
+
+--- s04.mp3 ---  "It starts with rivers"   TARGET 8.5s   (16 words ≈ 6s at 150wpm)
+
+It begins with rivers. Villages become walled towns, then states. The trouble starts almost at once.
+
+--- s05.mp3 ---  "How should we live?"   TARGET 13s   (24 words ≈ 10s at 150wpm)
+
+Five centuries of war between rival states. It produces iron, canals, written law — and philosophers asking how to live, not how to win.
+
+--- s06.mp3 ---  "Unification, 221 BCE"   TARGET 9.5s   (18 words ≈ 7s at 150wpm)
+
+In 221 BCE one state wins, standardising script, coins, cartwheels. Built on forced labour. It lasts fifteen years.
+
+--- s07.mp3 ---  "The roads west"   TARGET 9s   (17 words ≈ 7s at 150wpm)
+
+The Han open the roads west. Silk out, ideas back. What travels is mostly technique and belief.
+
+==========================================================================
+ACT — PROSPERITY & DISRUPTION   (1:05–1:45)
+==========================================================================
+
+--- s08.mp3 ---  "Chang'an, at its best"   TARGET 10s   (18 words ≈ 7s at 150wpm)
+
+By the Tang, Chang’an may be the largest city on earth. A million people, many foreign, living well.
+
+--- s09.mp3 ---  "755"   TARGET 7s   (13 words ≈ 5s at 150wpm)
+
+In 755 a rebellion tears the empire open. Nothing about prosperity is load-bearing.
+
+--- s10.mp3 ---  "The Song answer"   TARGET 12s   (21 words ≈ 8s at 150wpm)
+
+The Song answer by building. Printed books, paper money, the compass at sea, coal-smelted iron. Ordinary people now read and travel.
+
+--- s11.mp3 ---  "They built something else"   TARGET 11s   (20 words ≈ 8s at 150wpm)
+
+The north falls. The court flees south, losing the overland trade. They never got it back. They built something else.
+
+==========================================================================
+ACT — REINVENTION: SHENZHEN   (1:45–2:40)
+==========================================================================
+
+--- s12.mp3 ---  "December 1978"   TARGET 12s   (21 words ≈ 8s at 150wpm)
+
+December 1978. After decades of planning and upheaval, the leadership lets some people try things — in a few fenced-off places.
+
+--- s13.mp3 ---  "Shenzhen"   TARGET 33s   (57 words ≈ 23s at 150wpm)
+
+One of them is Shenzhen. You will hear it was a fishing village. Mostly a myth — the county held three hundred thousand people. The honest version: an ordinary border county where the rules could differ. Factories first, then components, then the firms that designed them. And millions who came because the future seemed to be here.
+
+--- s14.mp3 ---  "One lifetime"   TARGET 10s   (17 words ≈ 7s at 150wpm)
+
+Within one lifetime, a city of eighteen million — most of them arrivals chasing a better life.
+
+==========================================================================
+ACT — MODERN ENTREPRENEURSHIP   (2:40–3:35)
+==========================================================================
+
+--- s15.mp3 ---  "Different bets"   TARGET 6s   (9 words ≈ 4s at 150wpm)
+
+These firms did not all build the same thing.
+
+--- s16.mp3 ---  "Alibaba"   TARGET 8.5s   (15 words ≈ 6s at 150wpm)
+
+Alibaba built marketplaces, and the rails underneath. Very small sellers could reach very large markets.
+
+--- s17.mp3 ---  "Tencent"   TARGET 11s   (19 words ≈ 8s at 150wpm)
+
+Tencent began as a messaging app and became the layer daily life runs on. That is power, and responsibility.
+
+--- s18.mp3 ---  "Huawei"   TARGET 8s   (14 words ≈ 6s at 150wpm)
+
+Huawei sold switchboards, then telecoms infrastructure, then survived losing the chips it depended on.
+
+--- s19.mp3 ---  "BYD"   TARGET 8s   (14 words ≈ 6s at 150wpm)
+
+BYD made batteries before cars. In 2025 it sold more battery-electric vehicles than Tesla.
+
+--- s20.mp3 ---  "ByteDance"   TARGET 13.5s   (23 words ≈ 9s at 150wpm)
+
+ByteDance bet an algorithm could pick what you watch better than your friends. It was right. Whether anyone is happier is another question.
+
+==========================================================================
+ACT — THE FUTURE OF WORK   (3:35–4:15)
+==========================================================================
+
+--- s21.mp3 ---  "The frontier now"   TARGET 9.5s   (18 words ≈ 7s at 150wpm)
+
+Now the frontier is AI, robotics, semiconductors, automation. Not the first time people tried to read the future.
+
+--- s22.mp3 ---  "Borrowed futures"   TARGET 13.5s   (25 words ≈ 10s at 150wpm)
+
+In the 1980s, Chinese leaders read the futurist Alvin Toffler and argued about a coming technological revolution. Gewirtz traces that debate into China’s technology programmes.
+
+--- s23.mp3 ---  "What work is left?"   TARGET 17s   (31 words ≈ 12s at 150wpm)
+
+The question is not whether the machines arrive. It is what work is left, and whether it is worth doing. Bankins and Formosa say that depends on how we deploy it.
+
+==========================================================================
+ACT — WHAT ARE WE BUILDING?   (4:15–4:50)
+==========================================================================
+
+--- s24.mp3 ---  "Back to the question"   TARGET 11s   (21 words ≈ 8s at 150wpm)
+
+So: what lets people keep creating when the world changes? Not ambition. This map is full of ambitious projects that ended.
+
+--- s25.mp3 ---  "What survives"   TARGET 13.5s   (26 words ≈ 10s at 150wpm)
+
+What survived was never the plan. It was resilience — the capacity to make another. Kaftanski and Hanson argue difficulty is part of a good life.
+
+--- s26.mp3 ---  "What are we building?"   TARGET 10.5s   (20 words ≈ 8s at 150wpm)
+
+You are going to build something. The question is not how big it gets. It is: what is it for?
+
+==========================================================================
+CONTINUOUS VERSION (if you would rather record one take and split it later)
+==========================================================================
+
+Every society faces the same question. So does every person. What happens when the world outpaces your plans?
+
+A map of one place that answered it many times. Sometimes well. Often badly.
+
+Four thousand years of building things, losing them, starting again. This is the art of reinvention.
+
+It begins with rivers. Villages become walled towns, then states. The trouble starts almost at once.
+
+Five centuries of war between rival states. It produces iron, canals, written law — and philosophers asking how to live, not how to win.
+
+In 221 BCE one state wins, standardising script, coins, cartwheels. Built on forced labour. It lasts fifteen years.
+
+The Han open the roads west. Silk out, ideas back. What travels is mostly technique and belief.
+
+By the Tang, Chang’an may be the largest city on earth. A million people, many foreign, living well.
+
+In 755 a rebellion tears the empire open. Nothing about prosperity is load-bearing.
+
+The Song answer by building. Printed books, paper money, the compass at sea, coal-smelted iron. Ordinary people now read and travel.
+
+The north falls. The court flees south, losing the overland trade. They never got it back. They built something else.
+
+December 1978. After decades of planning and upheaval, the leadership lets some people try things — in a few fenced-off places.
+
+One of them is Shenzhen. You will hear it was a fishing village. Mostly a myth — the county held three hundred thousand people. The honest version: an ordinary border county where the rules could differ. Factories first, then components, then the firms that designed them. And millions who came because the future seemed to be here.
+
+Within one lifetime, a city of eighteen million — most of them arrivals chasing a better life.
+
+These firms did not all build the same thing.
+
+Alibaba built marketplaces, and the rails underneath. Very small sellers could reach very large markets.
+
+Tencent began as a messaging app and became the layer daily life runs on. That is power, and responsibility.
+
+Huawei sold switchboards, then telecoms infrastructure, then survived losing the chips it depended on.
+
+BYD made batteries before cars. In 2025 it sold more battery-electric vehicles than Tesla.
+
+ByteDance bet an algorithm could pick what you watch better than your friends. It was right. Whether anyone is happier is another question.
+
+Now the frontier is AI, robotics, semiconductors, automation. Not the first time people tried to read the future.
+
+In the 1980s, Chinese leaders read the futurist Alvin Toffler and argued about a coming technological revolution. Gewirtz traces that debate into China’s technology programmes.
+
+The question is not whether the machines arrive. It is what work is left, and whether it is worth doing. Bankins and Formosa say that depends on how we deploy it.
+
+So: what lets people keep creating when the world changes? Not ambition. This map is full of ambitious projects that ended.
+
+What survived was never the plan. It was resilience — the capacity to make another. Kaftanski and Hanson argue difficulty is part of a good life.
+
+You are going to build something. The question is not how big it gets. It is: what is it for?
