@@ -35,27 +35,30 @@ export function resume(){ if(ctx && ctx.state==='suspended') ctx.resume(); }
 const YU = [220.00, 261.63, 293.66, 329.63, 392.00];     // A C D E G
 const hz = (deg, oct=0) => YU[((deg % 5) + 5) % 5] * Math.pow(2, oct + Math.floor(deg/5));
 
-/* [degree, octave, beats] — the melody, in three phrases: ask, soar, settle. */
+/* [degree, octave, beats] — four phrases: brood, climb, apex, descent.
+   Long held notes over a moving drum is what gives this kind of theme its weight. */
 const MELODY = [
-  // phrase A — low, questioning
-  [0,0,2],[1,0,1],[2,0,1],   [3,0,3],[2,0,1],   [1,0,2],[0,0,2],   [4,-1,4],
-  // phrase B — the lift
-  [3,0,1],[4,0,1],[0,1,2],   [4,0,2],[3,0,2],   [2,0,3],[1,0,1],   [2,0,4],
-  // phrase C — descent and rest
-  [0,1,2],[4,0,2],           [3,0,2],[2,0,2],   [1,0,1],[2,0,1],[3,0,2],  [0,0,4]
+  // phrase A — low and brooding
+  [0,0,3],[1,0,1],   [2,0,2],[1,0,2],   [0,0,3],[4,-1,1],  [0,0,4],
+  // phrase B — the climb
+  [2,0,2],[3,0,2],   [4,0,3],[3,0,1],   [4,0,2],[0,1,2],   [4,0,4],
+  // phrase C — the apex, held
+  [0,1,4],           [1,1,4],           [0,1,3],[4,0,1],   [3,0,4],
+  // phrase D — descent and rest
+  [2,0,2],[3,0,2],   [2,0,2],[1,0,2],   [0,0,3],[4,-1,1],  [0,0,4]
 ];
-const BEAT = 1.06;                                        // ~57 bpm
+const BEAT = 1.18;                                        // ~51 bpm, heavier tread
 let mi = 0, nextAt = 0, bar = 0;
 
 /* per-act colour: register, how much drum, how much choir */
 const MOOD = {
-  open:  {oct:0, drum:0.00, choir:0.30, bright:2200, lead:0.16},
-  ancient:{oct:0, drum:0.35, choir:0.45, bright:2000, lead:0.19},
-  change:{oct:0, drum:0.55, choir:0.60, bright:2400, lead:0.21},
-  reform:{oct:0, drum:0.85, choir:0.70, bright:2900, lead:0.23},
-  modern:{oct:1, drum:0.75, choir:0.65, bright:3300, lead:0.21},
-  future:{oct:1, drum:0.30, choir:0.50, bright:3800, lead:0.18},
-  end:   {oct:0, drum:0.45, choir:0.80, bright:2100, lead:0.22}
+  open:   {oct:0, drum:0.10, choir:0.40, bright:2000, lead:0.17, drone:0.35},
+  ancient:{oct:0, drum:0.50, choir:0.55, bright:1950, lead:0.20, drone:0.55},
+  change: {oct:0, drum:0.75, choir:0.70, bright:2300, lead:0.22, drone:0.68},
+  reform: {oct:0, drum:1.00, choir:0.92, bright:2700, lead:0.25, drone:0.82},
+  modern: {oct:1, drum:0.92, choir:0.80, bright:3100, lead:0.23, drone:0.70},
+  future: {oct:1, drum:0.45, choir:0.62, bright:3600, lead:0.19, drone:0.45},
+  end:    {oct:0, drum:0.60, choir:1.00, bright:2000, lead:0.24, drone:0.78}
 };
 let mood = MOOD.open;
 
@@ -112,16 +115,35 @@ function choir(t, f, dur, level){
   });
   lp.connect(g); g.connect(musicGain);
 }
+/* low sustained drone — the floor the whole theme sits on */
+function drone(t, f, dur, level){
+  if(!ctx || level<=0.02) return;
+  const g=ctx.createGain(), lp=ctx.createBiquadFilter();
+  lp.type='lowpass'; lp.frequency.setValueAtTime(260,t);
+  lp.frequency.linearRampToValueAtTime(420, t+dur*0.5);
+  lp.frequency.linearRampToValueAtTime(240, t+dur);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(0.088*level, t+dur*0.28);
+  g.gain.setValueAtTime(0.088*level, t+dur*0.72);
+  g.gain.linearRampToValueAtTime(0, t+dur);
+  [[1,0,0.62],[1,-7,0.30],[2,6,0.16]].forEach(([m,det,lvl])=>{
+    const o=ctx.createOscillator(); o.type='sawtooth';
+    o.frequency.value=f*m; o.detune.value=det;
+    const og=ctx.createGain(); og.gain.value=lvl;
+    o.connect(og); og.connect(lp); o.start(t); o.stop(t+dur+0.12);
+  });
+  lp.connect(g); g.connect(musicGain);
+}
 /* low taiko-style hit: pitched thump plus a short noise transient */
 function drum(t, level, deep=true){
   if(!ctx || level<=0.02) return;
   const o=ctx.createOscillator(), g=ctx.createGain();
   o.type='sine';
-  o.frequency.setValueAtTime(deep?104:150,t);
-  o.frequency.exponentialRampToValueAtTime(deep?44:62, t+0.26);
+  o.frequency.setValueAtTime(deep?96:146,t);
+  o.frequency.exponentialRampToValueAtTime(deep?38:58, t+0.30);
   g.gain.setValueAtTime(0,t);
-  g.gain.linearRampToValueAtTime(0.30*level, t+0.006);
-  g.gain.exponentialRampToValueAtTime(0.0008, t+0.5);
+  g.gain.linearRampToValueAtTime(0.36*level, t+0.006);
+  g.gain.exponentialRampToValueAtTime(0.0008, t+0.62);
   o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.56);
   const n=ctx.createBufferSource(), buf=ctx.createBuffer(1, 2400, ctx.sampleRate);
   const d=buf.getChannelData(0);
@@ -139,14 +161,17 @@ function schedule(){
     lead(nextAt, hz(deg, oct+mood.oct), mood.lead, dur*0.94, mood.bright);
     if(beats >= 2 && Math.random() < 0.5)
       pluck(nextAt + dur*0.5, hz(deg, oct+mood.oct-1), 0.05, 1.8, mood.bright*0.8);
-    // chord bed changes every 8 beats
+    // chord bed changes every 8 beats; drone holds under 16
+    if(bar % 16 === 0) drone(nextAt, hz(0, mood.oct-2), 16*BEAT, mood.drone);
     if(bar % 8 === 0) choir(nextAt, hz(0, mood.oct-1), 8*BEAT, mood.choir);
     if(bar % 8 === 4) choir(nextAt, hz(2, mood.oct-1), 8*BEAT, mood.choir*0.85);
-    // pulse: strong on 1, ghost on 3
+    // pulse: heavy on 1 and 5, ghosts between, pickups once the piece opens up
     for(let b=0;b<beats;b++){
-      const at = nextAt + b*BEAT, pos = (bar + b) % 4;
-      if(pos===0) drum(at, mood.drum, true);
-      else if(pos===2) drum(at, mood.drum*0.45, false);
+      const at = nextAt + b*BEAT, pos = (bar + b) % 8;
+      if(pos===0)      drum(at, mood.drum, true);
+      else if(pos===4) drum(at, mood.drum*0.80, true);
+      else if(pos===2 || pos===6) drum(at, mood.drum*0.42, false);
+      if(mood.drum > 0.6 && (pos===3 || pos===7)) drum(at + BEAT*0.5, mood.drum*0.34, false);
     }
     nextAt += dur; mi++; bar += beats;
   }
@@ -165,7 +190,7 @@ export function startMusic(){
   mi=0; bar=0; nextAt=ctx.currentTime+0.2;
   musicGain.gain.cancelScheduledValues(ctx.currentTime);
   musicGain.gain.setValueAtTime(0, ctx.currentTime);
-  musicGain.gain.linearRampToValueAtTime(0.52, ctx.currentTime+4.0);
+  musicGain.gain.linearRampToValueAtTime(0.55, ctx.currentTime+4.0);
   timer2 = setInterval(schedule, 220);
 }
 export function stopMusic(){
