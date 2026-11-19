@@ -3123,7 +3123,7 @@ WORLDS.forEach((w, wi) => {
 });
 const isQ = s => !s.lab;
 const QBY = {};
-LEVELS.forEach(l => l.steps.forEach((s, i) => { QBY[l.id + "." + i] = { step: s, level: l, qid: l.id + "." + i }; }));
+LEVELS.forEach(l => l.steps.forEach((s, i) => { if (!s.lab) QBY[l.id + "." + i] = { step: s, level: l, qid: l.id + "." + i }; }));
 
 /* ---------- state ---------- */
 const DEF = { xp: 0, levels: {}, bosses: {}, mistakes: [], streak: { last: "", count: 0 }, intro: false, sound: false, answered: 0 };
