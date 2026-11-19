@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semi Quest · Silicon Island</title>
+<meta name="description" content="Semiconductor Devices (EECE 2077) as a cozy island game: notebook diagrams, 3D parts, real-world uses.">
+<meta name="theme-color" content="#f7f2e7"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='24' rx='13' ry='4' fill='%239fd8cf' stroke='%2326221d' stroke-width='1.6'/%3E%3Cpath d='M6 23q10-10 20 0z' fill='%23a6cf8a' stroke='%2326221d' stroke-width='1.6'/%3E%3Cpath d='M17 17V8' stroke='%2326221d' stroke-width='1.6'/%3E%3Cpath d='M17 9q-5-3-8 1M17 9q5-3 8 1' fill='none' stroke='%233f8f5a' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f7f2e7;--paper2:#efe7d6;--card:#fffdf8;--grid:#ebe3d1;--ink:#26221d;--ink2:#6e665a;--ink3:#a59c8c;--line:#d9cfba;
+  --blue:#2f6bd3;--blue-l:#e1eafb;--blue-d:#1d4a9a;--red:#d4483b;--red-l:#fae2de;--red-d:#9b2f25;
+  --orange:#e98a25;--orange-l:#fdebd3;--green:#2f9a5d;--green-l:#dcf1e4;--green-d:#1f6e42;
+  --coral:#e0735a;--coral-l:#fbe3dc;--coral-d:#a9452f;--purple:#6b5bd2;--purple-l:#e9e5fb;--purple-d:#463a9c;--gold:#f2b632;--gold-l:#fdf0cc;
+  --serif:"Fraunces",Georgia,"Times New Roman",serif;--sans:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --hand:"Caveat","Segoe Print","Bradley Hand","Comic Sans MS",cursive;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:26px 26px;background-position:-1px -1px}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--blue-d)}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;letter-spacing:-.01em}
+.wrap{max-width:600px;margin:0 auto;padding:0 16px 80px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* chunky buttons with an ink lip */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--ink);border-radius:14px;padding:13px 18px;font-weight:800;font-size:16px;background:var(--card);box-shadow:0 4px 0 var(--ink);transition:transform .06s,box-shadow .06s,background .15s;user-select:none}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.go{background:var(--green);color:#fff}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.red{background:var(--red);color:#fff}
+.btn.purple{background:var(--purple);color:#fff}
+.btn.coral{background:var(--coral);color:#fff}
+.btn.wide{width:100%}
+.btn.sm{padding:8px 12px;font-size:14px;border-radius:11px;box-shadow:0 3px 0 var(--ink)}
+.btn:disabled{background:#ebe4d4;color:var(--ink3);border-color:#cfc5b0;box-shadow:0 4px 0 #cfc5b0;cursor:default}
+.iconbtn{border:2px solid var(--ink);background:var(--card);border-radius:12px;width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 3px 0 var(--ink)}
+.iconbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;padding:14px 0 10px;position:sticky;top:0;z-index:20;background:linear-gradient(var(--paper) 78%,transparent)}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-weight:700;font-size:20px;margin-right:auto}
+.brand svg{flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--ink);border-radius:999px;padding:4px 11px 4px 6px;background:var(--card);font-weight:800;font-size:15px;box-shadow:0 2px 0 var(--ink)}
+.chip svg{flex:none}
+
+/* island hero */
+.island{position:relative;height:300px;margin:4px -16px 0;overflow:hidden}
+.island canvas{display:block;width:100%;height:100%;touch-action:pan-y;cursor:grab}
+.island .ttl{position:absolute;left:16px;top:8px;pointer-events:none}
+.island .ttl b{display:block;font-family:var(--serif);font-size:24px;font-weight:700}
+.island .ttl span{font-family:var(--hand);font-size:19px;color:var(--ink2)}
+.islabels{position:absolute;inset:0;pointer-events:none}
+.islabel{position:absolute;transform:translate(-50%,-100%);font-family:var(--hand);font-size:17px;line-height:1;white-space:nowrap;padding:1px 6px;border-radius:6px;background:rgba(255,253,248,.82);border:1.5px solid var(--ink);color:var(--ink)}
+.islabel.ghost{border-style:dashed;color:var(--ink2);background:rgba(255,253,248,.6)}
+.islabel.new{background:var(--gold-l);animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+
+/* cards */
+.sheet{background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink)}
+.plan{display:flex;gap:14px;align-items:center;padding:14px 16px;margin:6px 0 22px}
+.plan .pk{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.plan .pt{font-family:var(--serif);font-size:19px;font-weight:600;margin:2px 0}
+.plan .ps{font-size:14px;color:var(--ink2)}
+.plan .grow{flex:1;min-width:0}
+
+/* path */
+.world{margin:26px 0 8px}
+.wband{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--ink);border-radius:16px;background:var(--wc);color:#fff;box-shadow:0 4px 0 var(--ink)}
+.wband .wn{font-family:var(--serif);font-size:19px;font-weight:700}
+.wband .ws{font-size:13px;font-weight:700;opacity:.92}
+.wband .grow{flex:1}
+.ready{min-width:118px;text-align:right;font-size:12px;font-weight:800}
+.ready .bar{height:9px;border-radius:9px;background:rgba(255,255,255,.35);border:1.5px solid var(--ink);margin-top:4px;overflow:hidden}
+.ready .bar i{display:block;height:100%;background:#fff}
+.path{position:relative;display:flex;flex-direction:column;align-items:center;padding:20px 0 6px}
+.nodewrap{position:relative;display:flex;flex-direction:column;align-items:center;margin:8px 0}
+.node{position:relative;width:74px;height:74px;border-radius:50%;border:3px solid var(--ink);background:var(--card);box-shadow:0 6px 0 var(--ink);display:flex;align-items:center;justify-content:center;transition:transform .08s}
+.node:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+.node.cur{background:var(--wc)}
+.node.done{background:var(--wc)}
+.node.legacy{border-style:dashed;box-shadow:0 6px 0 #cfc5b0;border-color:#9d927d;background:var(--paper)}
+.node.review{width:58px;height:58px;background:var(--purple-l);border-color:var(--purple-d);box-shadow:0 5px 0 var(--purple-d)}
+.node.review.due{background:var(--purple)}
+.node.chamber{width:84px;height:84px;border-radius:22px;background:#3a332b}
+.node.chamber.locked{background:#cfc5b0}
+.node .ring{position:absolute;inset:-9px;border-radius:50%;border:3px solid transparent}
+.node.cur .ring{border-color:var(--wc);opacity:.45;animation:pulse 1.6s ease-in-out infinite}
+.nlabel{margin-top:12px;font-weight:800;font-size:13px;text-align:center;max-width:150px;line-height:1.25}
+.nlabel small{display:block;font-weight:700;color:var(--ink2);font-size:12px}
+.bubble{position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:6px 12px;font-weight:800;font-size:14px;white-space:nowrap;color:var(--wc2,var(--ink));animation:bob 1.4s ease-in-out infinite;box-shadow:0 3px 0 var(--ink)}
+.bubble::after{content:"";position:absolute;left:50%;top:100%;width:12px;height:12px;background:var(--card);border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translate(-50%,-6px) rotate(45deg)}
+.mastery{position:absolute;right:-6px;top:-6px;width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);background:var(--gold);display:flex;align-items:center;justify-content:center}
+.foot{margin-top:40px;text-align:center;font-size:13px;color:var(--ink2)}
+.foot button{background:none;border:none;text-decoration:underline;color:var(--ink2);font-size:13px}
+
+/* bottom sheet */
+.scrim{position:fixed;inset:0;background:rgba(38,34,29,.35);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+.bsheet{width:100%;max-width:600px;background:var(--card);border:2px solid var(--ink);border-bottom:none;border-radius:22px 22px 0 0;padding:20px 20px 28px;animation:up .22s cubic-bezier(.2,.9,.3,1)}
+.bsheet h3{font-size:22px;margin-bottom:6px}
+.bsheet p{color:var(--ink2);margin:6px 0 16px;line-height:1.5}
+.bsheet .row{display:flex;gap:10px;flex-wrap:wrap}
+
+/* lesson runner */
+.lesson{max-width:640px;margin:0 auto;padding:0 16px;min-height:100vh;display:flex;flex-direction:column}
+.lhead{display:flex;align-items:center;gap:12px;padding:14px 0 6px;position:sticky;top:0;background:var(--paper);z-index:10}
+.prog{flex:1;display:flex;gap:5px}
+.seg{flex:var(--n);height:14px;border:2px solid var(--ink);border-radius:8px;background:var(--card);overflow:hidden}
+.seg i{display:block;height:100%;width:0;background:var(--bc);transition:width .35s}
+.beatchip{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:13px;letter-spacing:.04em;color:var(--bc);margin:8px 0 2px}
+.beatchip .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink);background:var(--bc)}
+.stage{flex:1;padding-bottom:150px}
+.card{animation:slide .28s cubic-bezier(.2,.9,.3,1)}
+.vis{position:relative;background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:10px;box-shadow:0 4px 0 var(--ink);margin:6px 0 14px;overflow:hidden}
+.vis.paper{background-color:#fffdf8;background-image:linear-gradient(#f0e9da 1px,transparent 1px),linear-gradient(90deg,#f0e9da 1px,transparent 1px);background-size:20px 20px}
+.vis svg.fig{display:block;width:100%;height:auto}
+.cap{font-size:17px;line-height:1.45;margin:0 2px 10px;font-weight:600}
+.cap .hl-e{color:var(--blue);font-weight:800}.cap .hl-h{color:var(--red);font-weight:800}.cap .hl-f{color:var(--orange);font-weight:800}
+.q{font-family:var(--serif);font-size:21px;font-weight:600;line-height:1.3;margin:4px 2px 14px}
+.opts{display:grid;gap:10px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;border:2px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:0 3px 0 var(--ink);font-weight:700;font-size:16px}
+.opt .k{flex:none;width:28px;height:28px;border-radius:8px;border:2px solid var(--ink2);color:var(--ink2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.opt.sel{background:var(--blue-l);border-color:var(--blue-d);box-shadow:0 3px 0 var(--blue-d)}
+.opt.sel .k{border-color:var(--blue-d);color:var(--blue-d)}
+.opt.right{background:var(--green-l);border-color:var(--green-d);box-shadow:0 3px 0 var(--green-d)}
+.opt.wrong{background:var(--red-l);border-color:var(--red-d);box-shadow:0 3px 0 var(--red-d);opacity:.75}
+.opt:disabled{cursor:default}
+.picks{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.picks.one{grid-template-columns:1fr}
+.pick{position:relative;border:2px solid var(--ink);border-radius:16px;background:#fffdf8;padding:8px 8px 6px;box-shadow:0 4px 0 var(--ink)}
+.pick svg{display:block;width:100%;height:auto}
+.pick .tag{position:absolute;left:8px;top:8px;width:26px;height:26px;border-radius:8px;border:2px solid var(--ink);background:var(--card);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.pick.sel{border-color:var(--blue-d);box-shadow:0 4px 0 var(--blue-d);background:var(--blue-l)}
+.pick.right{border-color:var(--green-d);box-shadow:0 4px 0 var(--green-d);background:var(--green-l)}
+.pick.wrong{border-color:var(--red-d);box-shadow:0 4px 0 var(--red-d);background:var(--red-l);opacity:.7}
+.spot-live [data-zone]{cursor:pointer}
+.zone{fill:transparent;stroke:transparent;stroke-width:2.5;transition:fill .15s,stroke .15s}
+.spot-live .zone{stroke:var(--ink3);stroke-dasharray:6 5}
+.spot-live .zone:hover{fill:rgba(47,107,211,.08);stroke:var(--blue)}
+.zone.z-ok{fill:rgba(47,154,93,.18)!important;stroke:var(--green)!important;stroke-dasharray:none!important}
+.zone.z-bad{fill:rgba(212,72,59,.12)!important;stroke:var(--red)!important;stroke-dasharray:none!important}
+.hint-tap{font-family:var(--hand);font-size:21px;color:var(--blue-d);margin:2px 4px}
+.numrow{display:flex;gap:10px;align-items:center}
+.numrow input{flex:1;min-width:0;font:700 20px var(--mono);padding:12px 14px;border:2px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:inset 0 2px 0 rgba(0,0,0,.05)}
+.numrow input:focus{outline:3px solid var(--blue-l);border-color:var(--blue-d)}
+.numrow .u{font-weight:800;font-size:18px;color:var(--ink2)}
+.formula{font-family:var(--serif);font-size:20px;text-align:center;padding:8px 6px 4px}
+.formula .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 4px}
+.formula .fr span:first-child{border-bottom:2px solid var(--ink);padding:0 4px}
+.given{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 2px}
+.given span{font-family:var(--mono);font-size:14px;font-weight:700;border:1.5px solid var(--ink);border-radius:8px;padding:3px 8px;background:var(--paper)}
+.nudge{font-family:var(--hand);font-size:22px;color:var(--red-d);margin:10px 4px 0;min-height:24px}
+.mission{display:flex;align-items:center;gap:10px;margin:2px 0 10px;padding:10px 12px;border:2px dashed var(--ink2);border-radius:14px;font-weight:700}
+.mission .box{width:24px;height:24px;border-radius:7px;border:2px solid var(--ink);flex:none;display:flex;align-items:center;justify-content:center;background:var(--card)}
+.mission.done{border-style:solid;border-color:var(--green-d);background:var(--green-l)}
+.mission.done .box{background:var(--green)}
+.ctrl{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:4px 2px 10px}
+.ctrl label{font-weight:800;font-size:14px;min-width:34px}
+.ctrl input[type=range]{flex:1;min-width:140px;accent-color:var(--ink);height:28px}
+.ctrl .val{font-family:var(--mono);font-weight:700;font-size:15px;min-width:78px;text-align:right}
+.readout{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 8px}
+.readout div{border:2px solid var(--ink);border-radius:12px;padding:6px 10px;background:var(--card);font-weight:800;font-size:14px}
+.readout div b{font-family:var(--mono);font-size:16px}
+.conf{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.conf .opt{flex-direction:column;justify-content:center;text-align:center;gap:4px;padding:14px 8px}
+.conf .opt small{font-weight:600;color:var(--ink2);font-size:12px}
+
+/* footer bar + feedback */
+.lfoot{position:fixed;left:0;right:0;bottom:0;z-index:30;border-top:2px solid var(--ink);background:var(--paper);padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
+.lfoot .in{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.lfoot.ok{background:var(--green-l)}
+.lfoot.bad{background:var(--red-l)}
+.lfoot.info{background:var(--blue-l)}
+.fb{display:none;gap:12px;align-items:flex-start;animation:up .2s}
+.lfoot.ok .fb,.lfoot.bad .fb,.lfoot.info .fb{display:flex}
+.fb .badge{flex:none;width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;background:var(--card)}
+.fb .ft{font-family:var(--serif);font-size:20px;font-weight:700}
+.lfoot.ok .ft{color:var(--green-d)}.lfoot.bad .ft{color:var(--red-d)}.lfoot.info .ft{color:var(--blue-d)}
+.fb .fx{font-size:15px;line-height:1.45;margin-top:2px}
+.fb .gain{font-family:var(--hand);font-size:22px;color:var(--blue-d);margin-left:6px}
+.fbfig{margin-top:8px;border:2px solid var(--ink);border-radius:12px;background:#fffdf8;padding:6px;max-width:420px}
+.fbfig svg{display:block;width:100%;height:auto;max-height:150px;margin:0 auto}
+
+/* beat splash */
+.splash{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:52vh;gap:10px;animation:slide .3s}
+.splash .big{width:120px;height:120px;border-radius:30px;border:3px solid var(--ink);background:var(--bc);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 var(--ink);animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.splash h2{font-size:32px;margin-top:10px}
+.splash p{font-family:var(--hand);font-size:24px;color:var(--ink2);margin:0}
+.splash .n{font-weight:800;font-size:13px;letter-spacing:.1em;color:var(--ink2)}
+
+/* 3D lab */
+.lab3d{position:relative;height:330px;margin:-10px;background:#fffdf8}
+.lab3d canvas{display:block;width:100%;height:100%;touch-action:pan-y;cursor:grab}
+.lab3d .lbls{position:absolute;inset:0;pointer-events:none;font-family:var(--hand);font-size:19px}
+.lab3d .lbls div{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;background:rgba(255,253,248,.85);padding:0 5px;border-radius:5px}
+.lab3d .hud{position:absolute;right:10px;top:10px;display:flex;gap:8px;align-items:center}
+.bulb{width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);background:var(--card);display:flex;align-items:center;justify-content:center}
+.lab3d .drag{position:absolute;left:12px;top:8px;font-family:var(--hand);font-size:18px;color:var(--ink2);pointer-events:none}
+
+/* results */
+.results{text-align:center;padding:30px 0 120px}
+.results h1{font-size:34px;margin:8px 0 4px}
+.results .sub{font-family:var(--hand);font-size:24px;color:var(--ink2)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}
+.stat{border:2px solid var(--ink);border-radius:16px;padding:10px 6px;background:var(--card);box-shadow:0 4px 0 var(--ink)}
+.stat .k{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.stat .v{font-family:var(--serif);font-size:26px;font-weight:700;margin-top:2px}
+.reward{display:flex;gap:14px;align-items:center;text-align:left;padding:14px;margin:14px 0}
+.reward .rk{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--ink2)}
+.reward .rt{font-family:var(--serif);font-size:19px;font-weight:600}
+.reward .rs{font-size:14px;color:var(--ink2)}
+.reward .art{flex:none;width:110px}
+.reward .art svg{display:block;width:100%;height:auto}
+
+/* binder */
+.binder{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin:12px 0 40px}
+.pcard{border:2px solid var(--ink);border-radius:16px;background:var(--card);box-shadow:0 4px 0 var(--ink);padding:10px;text-align:left}
+.pcard.locked{border-style:dashed;box-shadow:none;background:transparent;color:var(--ink2)}
+.pcard .pa{background:#fffdf8;border:1.5px solid var(--line);border-radius:10px;height:96px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.pcard .pa svg{width:90%;height:auto}
+.pcard .pn{font-family:var(--serif);font-weight:700;font-size:17px}
+.pcard .pl{font-size:12px;font-weight:800;color:var(--ink2);letter-spacing:.04em}
+.pcard ul{margin:6px 0 0;padding-left:16px;font-size:13px;line-height:1.45;color:var(--ink2)}
+
+/* onboarding */
+.onb{min-height:100vh;display:flex;flex-direction:column;justify-content:center;max-width:520px;margin:0 auto;padding:30px 20px;gap:16px}
+.onb h1{font-size:36px;line-height:1.1}
+.onb p{font-size:17px;line-height:1.5;color:var(--ink2);margin:0}
+.goal{display:grid;gap:10px}
+
+/* character animation */
+.bob{animation:bob 1.8s ease-in-out infinite;transform-box:fill-box}
+.eye{animation:blink 4.2s infinite;transform-box:fill-box;transform-origin:center}
+.burst{animation:burst .5s ease-out forwards;transform-box:fill-box;transform-origin:center}
+.flow{stroke-dasharray:3 9;animation:flow .7s linear infinite}
+.draw{stroke-dasharray:var(--len,600);stroke-dashoffset:var(--len,600);animation:draw 1.2s ease-out forwards}
+.fadein{animation:fade .5s ease-out both}
+.glow{animation:glow 1.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes burst{0%{transform:scale(.3);opacity:1}100%{transform:scale(2.2);opacity:0}}
+@keyframes flow{to{stroke-dashoffset:-12}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes glow{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.08);opacity:.15}}
+@keyframes pop{0%{transform:scale(.4)}100%{transform:scale(1)}}
+@keyframes slide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes wob{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+@media (max-width:420px){.q{font-size:19px}.cap{font-size:16px}.island{height:260px}}
+.t-hand{font-family:var(--hand);font-size:20px;fill:var(--ink)}
+.t-it{font-family:var(--serif);font-style:italic;font-weight:600;fill:var(--ink)}
+.ch{transition:opacity .3s}
+
+</style></head><body><div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ART: characters + notebook/sketch/real-world figures for Semi Quest: Silicon Island */
+const ART = (() => {
+const INK = "#26221d", BLUE = "#2f6bd3", BLUED = "#1d4a9a", RED = "#d4483b", REDD = "#9b2f25", OR = "#e98a25", GRN = "#2f9a5d", PAPER = "#fffdf8";
+let _s = 7; const rnd = () => (_s = (_s * 16807) % 2147483647, (_s - 1) / 2147483646); const seed = s => { _s = s; };
+const dl = () => `style="animation-delay:-${(Math.random() * 2).toFixed(2)}s"`;
+const svg = (vb, body, cls = "fig") => `<svg class="${cls}" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+const hand = (x, y, t, o = {}) => `<text x="${x}" y="${y}" class="t-hand" ${o.anchor ? `text-anchor="${o.anchor}"` : ""} ${o.fill ? `fill="${o.fill}"` : ""} ${o.size ? `font-size="${o.size}"` : ""} ${o.cls ? `class="t-hand ${o.cls}"` : ""}>${t}</text>`;
+const ital = (x, y, t, o = {}) => `<text x="${x}" y="${y}" class="t-it" ${o.anchor ? `text-anchor="${o.anchor}"` : ""} ${o.fill ? `fill="${o.fill}"` : ""} ${o.size ? `font-size="${o.size}"` : ""}>${t}</text>`;
+const arrowDefs = (id, col) => `<marker id="${id}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1L8 5L1 9" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>`;
+
+/* ---------- characters ---------- */
+function e(x, y, r = 11, extra = "") {
+  return `<g class="ch el" transform="translate(${x} ${y})" ${extra}><g class="bob" ${dl()}>
+  <circle r="${r}" fill="${BLUE}" stroke="${BLUED}" stroke-width="1.6"/>
+  <ellipse cx="${-r * .38}" cy="${-r * .42}" rx="${r * .3}" ry="${r * .18}" fill="#fff" opacity=".5" transform="rotate(-25 ${-r * .38} ${-r * .42})"/>
+  <g class="eye" ${dl()}><ellipse cx="${-r * .32}" cy="${-r * .02}" rx="${r * .12}" ry="${r * .18}" fill="#0f1d38"/><ellipse cx="${r * .32}" cy="${-r * .02}" rx="${r * .12}" ry="${r * .18}" fill="#0f1d38"/></g>
+  <path d="M${-r * .2} ${r * .32}Q0 ${r * .5} ${r * .2} ${r * .32}" stroke="#0f1d38" stroke-width="${Math.max(1, r * .12)}" fill="none" stroke-linecap="round"/></g></g>`;
+}
+function h(x, y, r = 11, extra = "") {
+  return `<g class="ch ho" transform="translate(${x} ${y})" ${extra}><g class="bob" ${dl()}>
+  <circle r="${r * .84}" fill="${PAPER}" stroke="${RED}" stroke-width="${r * .34}"/>
+  <g class="eye" ${dl()}><ellipse cx="${-r * .28}" cy="${-r * .06}" rx="${r * .1}" ry="${r * .16}" fill="#6d1c14"/><ellipse cx="${r * .28}" cy="${-r * .06}" rx="${r * .1}" ry="${r * .16}" fill="#6d1c14"/></g>
+  <path d="M${-r * .16} ${r * .26}Q0 ${r * .4} ${r * .16} ${r * .26}" stroke="#6d1c14" stroke-width="${Math.max(1, r * .1)}" fill="none" stroke-linecap="round"/></g></g>`;
+}
+function ion(x, y, sign, r = 7) {
+  const c = sign > 0 ? BLUED : REDD;
+  return `<g class="ion" transform="translate(${x} ${y})"><circle r="${r}" fill="${PAPER}" stroke="${c}" stroke-width="1.4" stroke-dasharray="2.2 1.8"/><path d="M${-r * .5} 0H${r * .5}${sign > 0 ? `M0 ${-r * .5}V${r * .5}` : ""}" stroke="${c}" stroke-width="1.8" stroke-linecap="round"/></g>`;
+}
+const dotE = (x, y, r = 5) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${BLUE}" stroke="${BLUED}" stroke-width="1"/>`;
+const dotH = (x, y, r = 5) => `<circle cx="${x}" cy="${y}" r="${r * .8}" fill="${PAPER}" stroke="${RED}" stroke-width="${r * .4}"/>`;
+
+/* ---------- PN junction scene (interactive) ---------- */
+function pnLayout(asym) {
+  if (!asym) return { pc: [82, 126, 170, 214, 258], pr: [88, 132, 176, 220], nc: [342, 386, 430, 474, 518], nr: [88, 132, 176, 220], dep: [236, 364], cr: 11, ir: 7 };
+  return { pc: [94, 126, 158, 190, 222, 254, 286], pr: [76, 113, 150, 187, 224], nc: [352, 422, 492], nr: [96, 150, 204], dep: [276, 440], cr: 8.5, ir: 5.5, crn: 11, irn: 7 };
+}
+function pnScene(host, o = {}) {
+  seed(o.asym ? 21 : 11);
+  const L = pnLayout(o.asym), J = 300, apart = o.state === "apart";
+  const off = apart ? 26 : 0;
+  const inDep = x => x > L.dep[0] && x < L.dep[1];
+  const P = [], N = [];
+  L.pc.forEach(x => L.pr.forEach(y => { const a = rnd() * 6.28, d = (L.cr + L.ir) * 1.05; P.push({ ix: x, iy: y, x: x + Math.cos(a) * d * .7, y: y + Math.sin(a) * d * .8, dep: inDep(x) }); }));
+  L.nc.forEach(x => L.nr.forEach(y => { const a = rnd() * 6.28, d = ((L.crn || L.cr) + (L.irn || L.ir)) * 1.05; N.push({ ix: x, iy: y, x: x + Math.cos(a) * d * .7, y: y + Math.sin(a) * d * .8, dep: inDep(x) }); }));
+  P.forEach(c => { c.x = Math.min(J - 12, Math.max(70, c.x)); c.y = Math.min(240, Math.max(60, c.y)); });
+  N.forEach(c => { c.x = Math.min(530, Math.max(J + 12, c.x)); c.y = Math.min(240, Math.max(60, c.y)); });
+  const hideDep = !apart;
+  const H = o.tug ? 372 : 300;
+  const pPath = `M${J} 50H70Q60 50 60 60V240Q60 250 70 250H${J}Z`, nPath = `M${J} 50H530Q540 50 540 60V240Q540 250 530 250H${J}Z`;
+  let s = `<defs>${arrowDefs("arF", OR)}${arrowDefs("arB", BLUED)}${arrowDefs("arI", INK)}</defs>
+  <g class="pm" transform="translate(${-off} 0)"><path d="${pPath}" fill="#fdeeea" stroke="${INK}" stroke-width="2.2"/>${ital(70, 38, o.asym ? "p⁺" : "p-type", { fill: REDD, size: 20 })}</g>
+  <g class="nm" transform="translate(${off} 0)"><path d="${nPath}" fill="#ecf2fd" stroke="${INK}" stroke-width="2.2"/>${ital(530, 38, "n-type", { fill: BLUED, size: 20, anchor: "end" })}</g>
+  <g class="dep" style="opacity:${hideDep ? 1 : 0};transition:opacity .6s"><rect x="${L.dep[0]}" y="51" width="${L.dep[1] - L.dep[0]}" height="198" fill="#fff8ea" stroke="${OR}" stroke-width="2" stroke-dasharray="7 5"/></g>
+  <g class="pm" transform="translate(${-off} 0)">${L.pc.map(x => L.pr.map(y => ion(x, y, -1, L.ir)).join("")).join("")}${P.map((c, i) => (hideDep && c.dep) ? "" : `<g class="pc" data-i="${i}">${h(c.x, c.y, L.cr)}</g>`).join("")}</g>
+  <g class="nm" transform="translate(${off} 0)">${L.nc.map(x => L.nr.map(y => ion(x, y, 1, L.irn || L.ir)).join("")).join("")}${N.map((c, i) => (hideDep && c.dep) ? "" : `<g class="nc" data-i="${i}">${e(c.x, c.y, L.crn || L.cr)}</g>`).join("")}</g>
+  <g class="fx"></g>
+  <g class="field" style="opacity:${o.field ? 1 : 0};transition:opacity .6s">${[96, 150, 204].map(y => `<line x1="${L.dep[1] - 12}" y1="${y}" x2="${L.dep[0] + 16}" y2="${y}" stroke="${OR}" stroke-width="3.2" marker-end="url(#arF)"/>`).join("")}${ital((L.dep[0] + L.dep[1]) / 2, 40, "E", { fill: OR, size: 24, anchor: "middle" })}</g>
+  <g class="deplbl" style="opacity:${hideDep && o.label !== false ? 1 : 0};transition:opacity .6s">${hand((L.dep[0] + L.dep[1]) / 2, 285, "depletion region", { anchor: "middle", fill: "#b56411", size: 22 })}</g>`;
+  if (o.tug) s += `<g transform="translate(0 300)"><line x1="160" y1="22" x2="290" y2="22" stroke="${BLUED}" stroke-width="4" marker-end="url(#arB)"/>${hand(225, 54, "diffusion current", { anchor: "middle", fill: BLUED, size: 20 })}
+   <line x1="440" y1="22" x2="310" y2="22" stroke="${OR}" stroke-width="4" marker-end="url(#arF)"/>${hand(375, 54, "drift current", { anchor: "middle", fill: "#b56411", size: 20 })}<circle cx="300" cy="22" r="7" fill="${INK}"/></g>`;
+  if (o.zones === "dep") s += `<rect class="zone" data-zone="dep" x="${L.dep[0] + 2}" y="52" width="${L.dep[1] - L.dep[0] - 4}" height="196" rx="6"/><rect class="zone" data-zone="pside" x="62" y="52" width="${L.dep[0] - 66}" height="196" rx="6"/><rect class="zone" data-zone="nside" x="${L.dep[1] + 4}" y="52" width="${536 - L.dep[1] - 4}" height="196" rx="6"/>`;
+  if (o.zones === "half") s += `<rect class="zone" data-zone="p" x="62" y="52" width="236" height="196" rx="8"/><rect class="zone" data-zone="n" x="302" y="52" width="236" height="196" rx="8"/>`;
+  host.innerHTML = svg(apart ? `16 14 568 ${H - 14}` : `44 14 512 ${H - 14}`, s);
+  const root = host.querySelector("svg");
+  if (o.tug) {
+    const dEl = root.querySelectorAll(".nc"), dHo = root.querySelectorAll(".pc");
+    const probe = (g, dx) => { if (!g) return; g.style.transformBox = "fill-box"; g.animate([{ transform: "translateX(0)" }, { transform: `translateX(${dx}px)`, offset: .45 }, { transform: `translateX(${dx}px)`, offset: .55 }, { transform: "translateX(0)" }], { duration: 2600, iterations: Infinity, easing: "ease-in-out" }); };
+    const nearN = [...dEl].sort((a, b) => N[a.dataset.i].x - N[b.dataset.i].x)[0], nearP = [...dHo].sort((a, b) => P[b.dataset.i].x - P[a.dataset.i].x)[0];
+    probe(nearN, -46); probe(nearP, 46);
+  }
+  const api = { root };
+  api.join = () => new Promise(res => {
+    const pm = root.querySelectorAll(".pm"), nm = root.querySelectorAll(".nm");
+    const t0 = performance.now(), D1 = 650, D2 = 1300;
+    const pcs = [...root.querySelectorAll(".pc")].filter(g => P[g.dataset.i].dep), ncs = [...root.querySelectorAll(".nc")].filter(g => N[g.dataset.i].dep);
+    const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const step = now => {
+      const t = Math.min(1, (now - t0) / D1), k = ease(t);
+      pm.forEach(g => g.setAttribute("transform", `translate(${-off * (1 - k)} 0)`)); nm.forEach(g => g.setAttribute("transform", `translate(${off * (1 - k)} 0)`));
+      const u = Math.max(0, Math.min(1, (now - t0 - D1) / D2)), q = ease(u);
+      pcs.forEach(g => { const c = P[g.dataset.i]; g.setAttribute("transform", `translate(${(J - c.x) * q} ${0})`); g.style.opacity = u > .85 ? (1 - (u - .85) / .15) : 1; });
+      ncs.forEach(g => { const c = N[g.dataset.i]; g.setAttribute("transform", `translate(${(J - c.x) * q} ${0})`); g.style.opacity = u > .85 ? (1 - (u - .85) / .15) : 1; });
+      if (u >= 1) {
+        const fx = root.querySelector(".fx");
+        [...pcs, ...ncs].forEach(g => { const c = (g.classList.contains("pc") ? P : N)[g.dataset.i]; fx.insertAdjacentHTML("beforeend", `<circle class="burst" cx="${J}" cy="${c.y}" r="9" fill="none" stroke="${OR}" stroke-width="3"/>`); g.remove(); });
+        root.querySelector(".dep").style.opacity = 1; root.querySelector(".deplbl").style.opacity = 1;
+        setTimeout(res, 450); return;
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+  api.field = on => { root.querySelector(".field").style.opacity = on ? 1 : 0; };
+  return api;
+}
+
+/* ---------- band diagrams ---------- */
+function band(kind, o = {}) {
+  const L = 22, R = 228, x1 = 98, x2 = 152, g = 62;
+  let ecL = 34, ecR = 76; if (kind === "flat") { ecL = ecR = 52; }
+  const cur = (a, b) => `M${L} ${a}H${x1}C${x1 + 28} ${a} ${x2 - 28} ${b} ${x2} ${b}H${R}`;
+  let ef;
+  if (kind === "eq") ef = `M${L} ${ecL + g - 9}H${R}`;
+  else if (kind === "flat") ef = `M${L} ${ecL + g - 9}H125M125 ${ecR + 9}H${R}`;
+  else ef = cur(ecL + g / 2, ecR + g / 2);
+  const ecRy = kind === "flat" ? ecR : ecR, evL = ecL + g, evR = ecR + g;
+  let s = `<path d="${cur(ecL, ecR)}" fill="none" stroke="${INK}" stroke-width="2.4"/><path d="${cur(evL, evR)}" fill="none" stroke="${INK}" stroke-width="2.4"/>
+  <path d="${ef}" fill="none" stroke="${OR}" stroke-width="2.4" stroke-dasharray="6 4"/>
+  ${[198, 210, 222].map((x, i) => dotE(x, ecRy - 7 - (i % 2) * 3, 4.2)).join("")}${[40, 58, 76].map((x, i) => dotH(x, evL + 7 + (i % 2) * 3, 4.6)).join("")}
+  ${ital(232, ecRy + 5, "E<tspan font-size='11' dy='3'>C</tspan>", { size: 15 })}${ital(232, evR + 5, "E<tspan font-size='11' dy='3'>V</tspan>", { size: 15 })}
+  ${ital(2, (kind === "bend" ? ecL + g / 2 : ecL + g - 9) + 5, "E<tspan font-size='11' dy='3'>F</tspan>", { size: 15, fill: "#b56411" })}
+  ${hand(58, 168, "p", { size: 22, fill: REDD, anchor: "middle" })}${hand(192, 168, "n", { size: 22, fill: BLUED, anchor: "middle" })}`;
+  if (o.bracket) s += `<path d="M${L} ${ecL}H182" stroke="${INK}" stroke-dasharray="3 3" fill="none"/><path d="M178 ${ecL}V${ecR - 3}" stroke="${GRN}" stroke-width="2.5" marker-end="url(#arG)"/>${ital(172, (ecL + ecR) / 2 + 5, "qV<tspan font-size='11' dy='3'>0</tspan>", { size: 16, fill: GRN, anchor: "end" })}`;
+  return svg("0 0 260 178", `<defs>${arrowDefs("arG", GRN)}</defs>` + s);
+}
+
+/* V0 lab: sliders + live band diagram */
+function v0Lab(host, ctx) {
+  host.innerHTML = `<div class="vis paper"><svg class="fig" viewBox="0 0 520 262"><defs>${arrowDefs("arG2", GRN)}</defs>
+   <path class="ec" fill="none" stroke="${INK}" stroke-width="3"/><path class="ev" fill="none" stroke="${INK}" stroke-width="3"/>
+   <path class="ef" fill="none" stroke="${OR}" stroke-width="3" stroke-dasharray="8 6"/><path class="ecd" fill="none" stroke="${INK}" stroke-dasharray="3 4"/>
+   <path class="br" fill="none" stroke="${GRN}" stroke-width="3" marker-end="url(#arG2)"/><text class="t-it brt" font-size="20" fill="${GRN}">qV<tspan font-size="13" dy="4">0</tspan></text>
+   ${hand(110, 252, "p side", { size: 24, fill: REDD, anchor: "middle" })}${hand(400, 252, "n side", { size: 24, fill: BLUED, anchor: "middle" })}
+   <text class="t-it lblc" font-size="17">E<tspan font-size="12" dy="3">C</tspan></text><text class="t-it lblv" font-size="17">E<tspan font-size="12" dy="3">V</tspan></text><text class="t-it lblf" font-size="17" fill="#b56411">E<tspan font-size="12" dy="3">F</tspan></text></svg></div>
+   <div class="ctrl"><label style="color:var(--red-d)">N<sub>A</sub></label><input type="range" min="14" max="18" step="0.5" value="15" class="na" aria-label="Acceptor doping"><span class="val nav"></span></div>
+   <div class="ctrl"><label style="color:var(--blue-d)">N<sub>D</sub></label><input type="range" min="14" max="18" step="0.5" value="15" class="nd" aria-label="Donor doping"><span class="val ndv"></span></div>
+   <div class="readout"><div>V<sub>0</sub> = <b class="v0"></b></div></div>`;
+  const q = s => host.querySelector(s), na = q(".na"), nd = q(".nd");
+  const sup = v => "10" + String(v % 1 ? v.toFixed(1) : v).replace(/[-0-9.]/g, c => "⁻⁰¹²³⁴⁵⁶⁷⁸⁹·"["-0123456789.".indexOf(c)]);
+  const upd = () => {
+    const a = +na.value, d = +nd.value, V0 = 0.0259 * Math.log(Math.pow(10, a + d) / 2.25e20);
+    const step = 82 * V0, ecL = 40, ecR = ecL + step, g = 92, x1 = 200, x2 = 300, L = 40, R = 470;
+    const cur = (y1, y2) => `M${L} ${y1}H${x1}C${x1 + 50} ${y1} ${x2 - 50} ${y2} ${x2} ${y2}H${R}`;
+    q(".ec").setAttribute("d", cur(ecL, ecR)); q(".ev").setAttribute("d", cur(ecL + g, ecR + g));
+    const efy = ecL + g - 82 * (0.56 - 0.0259 * Math.log(Math.pow(10, a) / 1.5e10)); q(".ef").setAttribute("d", `M${L} ${efy}H${R}`);
+    q(".ecd").setAttribute("d", `M${L} ${ecL}H420`); q(".br").setAttribute("d", `M426 ${ecL}V${ecR - 4}`);
+    const t = q(".brt"); t.setAttribute("x", 434); t.setAttribute("y", (ecL + ecR) / 2 + 6);
+    q(".lblc").setAttribute("x", 476); q(".lblc").setAttribute("y", ecR + 5); q(".lblv").setAttribute("x", 476); q(".lblv").setAttribute("y", ecR + g + 5); q(".lblf").setAttribute("x", 4); q(".lblf").setAttribute("y", efy - 6);
+    q(".nav").textContent = sup(a) + " cm⁻³"; q(".ndv").textContent = sup(d) + " cm⁻³"; q(".v0").textContent = V0.toFixed(2) + " V";
+    if (V0 > 0.8) ctx && ctx.mission && ctx.mission(true);
+  };
+  na.oninput = nd.oninput = upd; upd();
+}
+
+/* ---------- 2D sketch of a real diode ---------- */
+function pkg(o = {}) {
+  const flip = !!o.flip;
+  const bx1 = 170, bx2 = 430, by = 96, bh = 68, bandX = flip ? bx1 + 22 : bx2 - 50;
+  let s = `<defs>${arrowDefs("arP", INK)}</defs>
+  <rect x="30" y="${by + bh / 2 - 4}" width="${bx1 - 26}" height="8" rx="4" fill="#c7ccd2" stroke="${INK}" stroke-width="2"/>
+  <rect x="${bx2 - 4}" y="${by + bh / 2 - 4}" width="${574 - bx2}" height="8" rx="4" fill="#c7ccd2" stroke="${INK}" stroke-width="2"/>
+  <rect x="${bx1}" y="${by}" width="${bx2 - bx1}" height="${bh}" rx="${bh / 2}" fill="#2b2a2f" stroke="${INK}" stroke-width="2.4"/>
+  <rect x="${bx1 + 26}" y="${by + 9}" width="${bx2 - bx1 - 70}" height="7" rx="3.5" fill="#55545c"/>
+  <rect x="${bandX}" y="${by + 1}" width="26" height="${bh - 2}" fill="#cfcbc3"/>
+  <text x="${(bx1 + bx2) / 2 - 18}" y="${by + bh / 2 + 7}" font-family="ui-monospace,Menlo,monospace" font-size="18" font-weight="700" fill="#a9a59c" text-anchor="middle">1N4007</text>`;
+  if (o.ruler) s += `<path d="M${bx1} 200V212M${bx2} 200V212M${bx1} 206H${bx2}" stroke="${INK}" stroke-width="1.6" fill="none"/>${hand(300, 236, "about 5 mm long", { anchor: "middle", size: 22 })}`;
+  if (o.labels) s += `${hand(96, 82, "anode", { anchor: "middle", size: 24, fill: REDD })}${hand(500, 82, "cathode", { anchor: "middle", size: 24, fill: BLUED })}<path d="M${bandX + 13} ${by - 6}Q${bandX + 40} ${by - 30} 470 ${by - 28}" fill="none" stroke="${INK}" stroke-width="1.6" marker-start="url(#arP)"/>`;
+  if (o.zones) s += `<rect class="zone" data-zone="left" x="26" y="${by - 8}" width="${bandX - 34}" height="${bh + 16}" rx="10"/><rect class="zone" data-zone="band" x="${bandX - 4}" y="${by - 10}" width="34" height="${bh + 20}" rx="8"/><rect class="zone" data-zone="right" x="${bandX + 34}" y="${by - 8}" width="${574 - bandX - 38}" height="${bh + 16}" rx="10"/>`;
+  return svg(o.mini ? "20 70 560 120" : "0 0 600 250", s);
+}
+function trio(o = {}) {
+  const rev = !!o.reveal;
+  return svg("0 0 600 330", `<defs>${arrowDefs("arT", INK)}${arrowDefs("arTG", GRN)}</defs>
+  <path d="M110 58H262M338 58H490" stroke="${INK}" stroke-width="3"/><path d="M262 28L330 58L262 88Z" fill="${PAPER}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><path d="M332 26V90" stroke="${INK}" stroke-width="4"/>
+  ${hand(110, 34, "anode", { size: 22, fill: REDD })}${hand(490, 34, "cathode", { size: 22, fill: BLUED, anchor: "end" })}
+  ${rev ? `<path d="M240 108H350" stroke="${GRN}" stroke-width="3" marker-end="url(#arTG)"/>${hand(200, 132, "current can flow this way", { anchor: "middle", size: 20, fill: GRN })}` : ""}
+  <rect x="80" y="${rev ? 152 : 140}" width="10" height="0"/>
+  <g transform="translate(0 ${rev ? 152 : 140})"><rect x="60" y="20" width="114" height="8" rx="4" fill="#c7ccd2" stroke="${INK}" stroke-width="2"/><rect x="426" y="20" width="114" height="8" rx="4" fill="#c7ccd2" stroke="${INK}" stroke-width="2"/>
+  <rect x="170" y="0" width="260" height="48" rx="24" fill="#2b2a2f" stroke="${INK}" stroke-width="2.4"/><rect x="380" y="1" width="22" height="46" fill="#cfcbc3"/></g>
+  <g transform="translate(0 ${rev ? 230 : 220})"><rect x="170" y="10" width="130" height="66" fill="#fdeeea" stroke="${INK}" stroke-width="2.4"/><rect x="300" y="10" width="130" height="66" fill="#ecf2fd" stroke="${INK}" stroke-width="2.4"/>
+  ${hand(235, 54, rev ? "p" : "?", { anchor: "middle", size: 34, fill: rev ? REDD : INK })}${hand(365, 54, rev ? "n" : "?", { anchor: "middle", size: 34, fill: rev ? BLUED : INK })}</g>
+  <path d="M332 92V${rev ? 150 : 138}M391 ${rev ? 202 : 190}V${rev ? 238 : 228}" stroke="${INK}" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>`);
+}
+
+/* ---------- hook: circuit toy ---------- */
+function circuit(host, ctx, o = {}) {
+  const st = { up: true, left: true, flipsD: 0, flipsB: 0 };
+  const draw = () => {
+    const lit = (st.up && st.left) || (!st.up && !st.left);
+    const path = st.up ? "M90 112V70H510V240H90V198" : "M90 198V240H510V70H90V112";
+    const bandX = st.left ? 268 : 314, tri = st.left ? "M292 208L270 198L292 188Z" : "M276 208L298 198L276 188Z", bar = st.left ? "M268 186V210" : "M300 186V210";
+    host.querySelector(".cv").innerHTML = `
+    <path d="M90 112V70H274M326 70H510V240H340M262 240H90V198" fill="none" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+    ${lit ? `<path d="${path}" fill="none" stroke="${OR}" stroke-width="4" class="flow" stroke-linecap="round"/>` : ""}
+    <g class="bat" style="cursor:${o.toy ? "pointer" : "default"}"><rect x="50" y="96" width="80" height="116" fill="transparent" pointer-events="all"/><rect x="66" y="112" width="48" height="86" rx="9" fill="${st.up ? "#e9c46a" : "#e9c46a"}" stroke="${INK}" stroke-width="2.6"/><rect x="66" y="${st.up ? 112 : 168}" width="48" height="30" rx="9" fill="#3c3a40" stroke="${INK}" stroke-width="2.6"/>
+     <rect x="80" y="${st.up ? 104 : 198}" width="20" height="9" rx="3" fill="#c7ccd2" stroke="${INK}" stroke-width="2"/>
+     <text x="90" y="${st.up ? 135 : 189}" text-anchor="middle" font-family="var(--sans)" font-weight="800" font-size="22" fill="#fff">+</text><text x="90" y="${st.up ? 189 : 140}" text-anchor="middle" font-family="var(--sans)" font-weight="800" font-size="26" fill="${INK}">−</text></g>
+    <g class="bulb">${lit ? `<g class="glow">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => { const r = a * Math.PI / 180, cx = 300, cy = 38; return `<line x1="${cx + Math.cos(r) * 32}" y1="${cy + Math.sin(r) * 32}" x2="${cx + Math.cos(r) * 44}" y2="${cy + Math.sin(r) * 44}" stroke="${OR}" stroke-width="3.5" stroke-linecap="round"/>`; }).join("")}</g>` : ""}
+     <circle cx="300" cy="38" r="25" fill="${lit ? "#fff1b8" : "#ece6da"}" stroke="${INK}" stroke-width="2.6"/><path d="M290 46Q295 28 300 46Q305 28 310 46" fill="none" stroke="${lit ? OR : "#8d8577"}" stroke-width="2.4"/><rect x="286" y="60" width="28" height="18" rx="3" fill="#c7ccd2" stroke="${INK}" stroke-width="2.4"/></g>
+    <g class="dio" style="cursor:${o.toy ? "pointer" : "default"}"><rect x="250" y="176" width="102" height="86" fill="transparent" pointer-events="all"/><rect x="262" y="228" width="78" height="24" rx="12" fill="#2b2a2f" stroke="${INK}" stroke-width="2.4"/><rect x="${bandX}" y="229" width="16" height="22" fill="#cfcbc3"/>
+     <path d="${tri}" fill="${PAPER}" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/><path d="${bar}" stroke="${INK}" stroke-width="3"/></g>
+    ${o.toy ? hand(300, 290, "tap the diode", { anchor: "middle", size: 21, fill: BLUED }) + hand(36, 160, "tap", { anchor: "middle", size: 20, fill: BLUED }) : hand(300, 290, "battery → bulb → diode", { anchor: "middle", size: 21, fill: "#6e665a" })}
+    ${hand(380, 52, lit ? "ON" : "off", { size: 24, fill: lit ? "#b56411" : "#8d8577" })}`;
+    if (o.toy) {
+      host.querySelector(".dio").onclick = () => { st.left = !st.left; st.flipsD++; draw(); check(); };
+      host.querySelector(".bat").onclick = () => { st.up = !st.up; st.flipsB++; draw(); check(); };
+    }
+    return lit;
+  };
+  const check = () => { const lit = (st.up && st.left) || (!st.up && !st.left); if (ctx && ctx.mission && st.flipsD > 0 && st.flipsB > 0 && lit) ctx.mission(true); };
+  host.innerHTML = `<svg class="fig cv" viewBox="0 0 600 300"></svg>`;
+  draw();
+}
+
+/* ---------- real world ---------- */
+function charger(o = {}) {
+  const dio = (x, y, rot) => `<g transform="translate(${x} ${y}) rotate(${rot})"><rect x="-19" y="-7" width="38" height="14" rx="7" fill="#2b2a2f" stroke="${INK}" stroke-width="1.8"/><rect x="10" y="-6" width="6" height="12" fill="#cfcbc3"/></g>`;
+  const sine = (x0, y0, w, a, abs) => { let d = ""; for (let i = 0; i <= 60; i++) { const t = i / 60, v = Math.sin(t * Math.PI * 4); d += (i ? "L" : "M") + (x0 + t * w).toFixed(1) + " " + (y0 - (abs ? Math.abs(v) : v) * a).toFixed(1); } return d; };
+  let s = `<defs>${arrowDefs("arC", INK)}</defs>
+  <rect x="22" y="128" width="58" height="74" rx="10" fill="${PAPER}" stroke="${INK}" stroke-width="2.4"/><rect x="38" y="150" width="7" height="22" rx="3" fill="${INK}"/><rect x="57" y="150" width="7" height="22" rx="3" fill="${INK}"/>
+  <path d="M80 165C120 165 120 160 168 160" fill="none" stroke="${INK}" stroke-width="3"/>
+  <rect x="20" y="40" width="128" height="62" rx="8" fill="${PAPER}" stroke="${INK}" stroke-width="1.6"/><path d="${sine(28, 71, 112, 22)}" fill="none" stroke="${OR}" stroke-width="2.6" class="${o.anim ? "flow" : ""}"/>${hand(84, 30, "AC from the wall", { anchor: "middle", size: 19 })}
+  <rect x="168" y="70" width="280" height="190" rx="18" fill="#dcebd3" stroke="${INK}" stroke-width="2.4"/>${hand(308, 62, "inside your charger", { anchor: "middle", size: 20, fill: "#6e665a" })}
+  <path d="M200 160H222M278 160H300M250 110V132M250 188V210" stroke="#7fae73" stroke-width="3" fill="none"/>
+  ${dio(232, 136, 45)}${dio(268, 136, -45)}${dio(232, 184, -45)}${dio(268, 184, 45)}
+  <rect x="320" y="104" width="38" height="78" rx="8" fill="#3c6fb6" stroke="${INK}" stroke-width="2.2"/><rect x="320" y="104" width="38" height="14" rx="6" fill="#c7ccd2" stroke="${INK}" stroke-width="2"/><path d="M350 124V176" stroke="#a9c3ea" stroke-width="3"/>
+  <rect x="378" y="110" width="52" height="64" rx="6" fill="#f2c94c" stroke="${INK}" stroke-width="2.2"/><path d="M386 126H422M386 138H422M386 150H422M386 162H422" stroke="#b8922a" stroke-width="2"/>
+  <rect x="196" y="214" width="112" height="36" rx="6" fill="${PAPER}" stroke="${INK}" stroke-width="1.3"/><path d="${sine(202, 244, 100, 22, true)}" fill="none" stroke="${OR}" stroke-width="2.2"/>
+  <path d="M448 160C478 160 480 170 508 170" fill="none" stroke="${INK}" stroke-width="3"/>
+  <rect x="508" y="140" width="72" height="50" rx="6" fill="#d8dce2" stroke="${INK}" stroke-width="2.4"/><rect x="498" y="190" width="92" height="10" rx="4" fill="#bfc5cd" stroke="${INK}" stroke-width="2.2"/>
+  <rect x="456" y="40" width="128" height="62" rx="8" fill="${PAPER}" stroke="${INK}" stroke-width="1.6"/><path d="M464 66H576" stroke="${OR}" stroke-width="2.8"/>${hand(520, 30, "steady DC out", { anchor: "middle", size: 19 })}`;
+  if (o.labels) s += `${hand(250, 104, "4 diodes", { anchor: "middle", size: 21, fill: GRN })}${hand(339, 202, "cap", { anchor: "middle", size: 18 })}${hand(404, 100, "transformer", { anchor: "middle", size: 18 })}`;
+  if (o.zones) s += `${[[232, 136, 45], [268, 136, -45], [232, 184, -45], [268, 184, 45]].map(([x, y, r]) => `<g transform="translate(${x} ${y}) rotate(${r})"><rect class="zone" data-zone="diode" x="-24" y="-12" width="48" height="24" rx="10"/></g>`).join("")}<rect class="zone" data-zone="cap" x="314" y="98" width="50" height="90" rx="10"/><rect class="zone" data-zone="xfmr" x="372" y="104" width="64" height="76" rx="10"/>`;
+  return svg("0 0 600 270", s);
+}
+function space(o = {}) {
+  const cells = (x0, y0, w, hgt) => { let d = ""; for (let i = 1; i < 6; i++) d += `M${x0 + i * w / 6} ${y0}V${y0 + hgt}`; d += `M${x0} ${y0 + hgt / 2}H${x0 + w}`; return `<rect x="${x0}" y="${y0}" width="${w}" height="${hgt}" rx="3" fill="#3b5ea8" stroke="${INK}" stroke-width="2.2"/><path d="${d}" stroke="#8fa9de" stroke-width="1.2"/>`; };
+  return svg("0 0 600 300", `<defs>${arrowDefs("arS", OR)}${arrowDefs("arSE", BLUED)}${arrowDefs("arSH", REDD)}<clipPath id="ins"><circle cx="138" cy="218" r="64"/></clipPath></defs>
+  <circle cx="62" cy="58" r="30" fill="#f6c453" stroke="${INK}" stroke-width="2.4"/>${[0, 40, 80, 120, 160, 200, 240, 280, 320].map(a => { const r = a * Math.PI / 180; return `<line x1="${62 + Math.cos(r) * 38}" y1="${58 + Math.sin(r) * 38}" x2="${62 + Math.cos(r) * 48}" y2="${58 + Math.sin(r) * 48}" stroke="${OR}" stroke-width="3" stroke-linecap="round"/>`; }).join("")}
+  ${[[110, 80, 250, 108], [118, 50, 300, 100], [96, 98, 200, 118]].map(([x1, y1, x2, y2]) => `<path d="M${x1} ${y1}Q${(x1 + x2) / 2} ${y1 - 14} ${x2} ${y2}" fill="none" stroke="${OR}" stroke-width="2.4" stroke-dasharray="5 5" class="flow" marker-end="url(#arS)"/>`).join("")}
+  ${cells(196, 112, 140, 46)}${cells(424, 112, 140, 46)}<path d="M336 135H362M398 135H424" stroke="${INK}" stroke-width="3"/>
+  <rect x="362" y="100" width="36" height="72" rx="5" fill="#e9c46a" stroke="${INK}" stroke-width="2.4"/><path d="M370 112H390M370 124H390" stroke="#b8922a" stroke-width="2"/><path d="M380 100V80" stroke="${INK}" stroke-width="2.4"/><path d="M366 80Q380 62 394 80Z" fill="${PAPER}" stroke="${INK}" stroke-width="2.2"/>
+  <path d="M186 170L250 152" stroke="${INK}" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <g clip-path="url(#ins)"><rect x="70" y="150" width="140" height="140" fill="${PAPER}"/><rect x="70" y="160" width="140" height="28" fill="#ecf2fd"/><rect x="70" y="188" width="140" height="22" fill="#fff8ea"/><rect x="70" y="210" width="140" height="80" fill="#fdeeea"/>
+   <path d="M108 194V206M138 194V206M168 194V206" stroke="${OR}" stroke-width="2.6" marker-end="url(#arS)"/>
+   <g class="sep-e">${dotE(138, 200, 6)}</g><g class="sep-h">${dotH(138, 200, 6.5)}</g></g>
+  <circle cx="138" cy="218" r="64" fill="none" stroke="${INK}" stroke-width="3"/>
+  ${hand(208, 200, "n", { size: 22, fill: BLUED })}${hand(208, 252, "p", { size: 22, fill: REDD })}${hand(138, 300, "one cell, zoomed in", { anchor: "middle", size: 19, fill: "#6e665a" })}
+  ${hand(470, 200, o.labels ? "solar wings" : "solar wings", { anchor: "middle", size: 21 })}
+  <style>.sep-e{animation:sepE 2.4s ease-in-out infinite}.sep-h{animation:sepH 2.4s ease-in-out infinite}@keyframes sepE{0%,15%{transform:translateY(0)}70%,100%{transform:translateY(-28px)}}@keyframes sepH{0%,15%{transform:translateY(0)}70%,100%{transform:translateY(42px)}}</style>`);
+}
+function fab(o = {}) {
+  const lbl = o.reveal ? "P" : "?";
+  let ions = ""; [[292, 86], [306, 118], [296, 150], [304, 182]].forEach(([x, y], i) => { ions += `<g class="ionfall" style="animation-delay:-${i * .45}s"><circle cx="${x}" cy="${y}" r="10" fill="${PAPER}" stroke="${BLUED}" stroke-width="2"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-family="var(--sans)" font-weight="800" font-size="13" fill="${BLUED}">${lbl}</text></g>`; });
+  return svg("0 0 600 300", `<defs><clipPath id="wf"><ellipse cx="300" cy="232" rx="190" ry="48"/></clipPath></defs>
+  <path d="M262 14H338L326 62H274Z" fill="#c7ccd2" stroke="${INK}" stroke-width="2.4"/><rect x="250" y="4" width="100" height="14" rx="4" fill="#9aa0a6" stroke="${INK}" stroke-width="2.2"/>
+  <path d="M278 62L322 62L362 222L238 222Z" fill="#fde9cf" opacity=".85"/>
+  <ellipse cx="300" cy="240" rx="190" ry="48" fill="#a4a8b0" stroke="${INK}" stroke-width="2.4"/><ellipse cx="300" cy="232" rx="190" ry="48" fill="#cfd3da" stroke="${INK}" stroke-width="2.4"/>
+  <g clip-path="url(#wf)" stroke="#aeb3bc" stroke-width="1.2">${[150, 190, 230, 270, 310, 350, 390, 430].map(x => `<line x1="${x}" y1="180" x2="${x - 20}" y2="290"/>`).join("")}${[204, 222, 240, 258].map(y => `<line x1="100" y1="${y}" x2="500" y2="${y}"/>`).join("")}</g>
+  <ellipse cx="300" cy="226" rx="62" ry="15" fill="${o.reveal ? "#cddcf8" : "#efe1c6"}" stroke="${o.reveal ? BLUED : "#b56411"}" stroke-width="2" stroke-dasharray="5 4"/>
+  ${ions}${hand(120, 50, "ion implanter", { anchor: "middle", size: 21 })}<path d="M170 46Q220 30 256 22" fill="none" stroke="${INK}" stroke-width="1.5"/>
+  ${hand(470, 120, "dopant ions", { anchor: "middle", size: 21, fill: BLUED })}<path d="M420 116Q360 110 318 118" fill="none" stroke="${INK}" stroke-width="1.5"/>
+  ${hand(520, 268, "silicon wafer", { anchor: "middle", size: 21 })}
+  <style>.ionfall{animation:fall 1.8s linear infinite}@keyframes fall{0%{transform:translateY(-30px);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateY(40px);opacity:0}}</style>`);
+}
+
+/* ---------- lock-in mini pictures ---------- */
+function mini(kind) {
+  let s = `<rect x="10" y="14" width="100" height="84" fill="#fdeeea" stroke="${INK}" stroke-width="2"/><rect x="110" y="14" width="100" height="84" fill="#ecf2fd" stroke="${INK}" stroke-width="2"/>`;
+  const ions = []; [30, 55, 80, 100].forEach(x => [32, 56, 80].forEach(y => ions.push([x, y, -1]))); [120, 140, 165, 190].forEach(x => [32, 56, 80].forEach(y => ions.push([x, y, 1])));
+  s += ions.map(([x, y, sg]) => `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="800" fill="${sg > 0 ? BLUED : REDD}" opacity=".55">${sg > 0 ? "+" : "−"}</text>`).join("");
+  seed(kind.length * 13);
+  if (kind === "ok") { s = `<rect x="88" y="15" width="44" height="82" fill="#fff8ea"/>` + s.replace('fill="#fdeeea"', 'fill="#fdeeea"'); s = s; s += `<rect x="88" y="15" width="44" height="82" fill="none" stroke="${OR}" stroke-width="1.6" stroke-dasharray="4 3"/>`; for (let i = 0; i < 8; i++) s += dotH(20 + rnd() * 58, 22 + rnd() * 70, 5.5) + dotE(140 + rnd() * 62, 22 + rnd() * 70, 5.2); }
+  if (kind === "mixed") for (let i = 0; i < 8; i++) s += dotH(18 + rnd() * 184, 22 + rnd() * 70, 5.5) + dotE(18 + rnd() * 184, 22 + rnd() * 70, 5.2);
+  if (kind === "crowd") for (let i = 0; i < 8; i++) s += dotH(84 + rnd() * 24, 22 + rnd() * 70, 5.5) + dotE(112 + rnd() * 24, 22 + rnd() * 70, 5.2);
+  return svg("0 0 220 110", s);
+}
+function arrowPick(dir) {
+  return svg("0 0 220 90", `<defs>${arrowDefs("arA" + dir, OR)}</defs><rect x="20" y="20" width="90" height="50" fill="#fdeeea" stroke="${INK}" stroke-width="2"/><rect x="110" y="20" width="90" height="50" fill="#ecf2fd" stroke="${INK}" stroke-width="2"/>${hand(40, 52, "p", { size: 22, fill: REDD })}${hand(180, 52, "n", { size: 22, fill: BLUED })}<line x1="${dir === "left" ? 150 : 70}" y1="45" x2="${dir === "left" ? 72 : 148}" y2="45" stroke="${OR}" stroke-width="4" marker-end="url(#arA${dir})"/>`);
+}
+
+/* ---------- icons ---------- */
+const ICON = {
+  hook: `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="27" cy="27" r="15"/><path d="M38 38L52 52"/><path d="M21 24a7 7 0 0 1 7-5"/></svg>`,
+  note: `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 50L18 36L42 12L52 22L28 46Z"/><path d="M36 18L46 28"/></svg>`,
+  sketch: `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="22" width="44" height="20" rx="10"/><path d="M40 22V42"/><path d="M4 32H10M54 32H60"/></svg>`,
+  cube: `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 8L54 20V44L32 56L10 44V20Z"/><path d="M10 20L32 32L54 20M32 32V56"/></svg>`,
+  globe: `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="22"/><path d="M10 32H54M32 10C24 18 24 46 32 54M32 10C40 18 40 46 32 54"/></svg>`,
+  lock: `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="28" width="36" height="26" rx="6"/><path d="M22 28V20a10 10 0 0 1 20 0v8"/><path d="M26 41l5 5 9-10"/></svg>`,
+  star: c => `<svg width="34" height="34" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z" fill="${c || "#fff"}" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+  review: c => `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="${c || "#fff"}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>`,
+  door: c => `<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="${c || "#fff"}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V8a7 7 0 0 1 14 0v13Z"/><path d="M3 21h18"/><circle cx="15" cy="14" r="1.2" fill="${c || "#fff"}"/></svg>`,
+  sketchy: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9d927d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 2.5"><path d="M4 20L6 14L16 4L20 8L10 18Z"/></svg>`,
+  check: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
+  x: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+  flame: n => `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-6 1-9z" fill="${n ? "#f08a24" : "#d6cdb8"}" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+  book: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></svg>`,
+  island: `<svg width="30" height="30" viewBox="0 0 32 32"><ellipse cx="16" cy="24" rx="13" ry="4" fill="#9fd8cf" stroke="${INK}" stroke-width="1.6"/><path d="M6 23q10-10 20 0z" fill="#a6cf8a" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M17 17V8" stroke="${INK}" stroke-width="1.6"/><path d="M17 9q-5-3-8 1M17 9q5-3 8 1" fill="none" stroke="#3f8f5a" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+  echip: `<svg width="22" height="22" viewBox="-12 -12 24 24"><circle r="10" fill="${BLUE}" stroke="${BLUED}" stroke-width="1.6"/><ellipse cx="-3.5" cy="-1" rx="1.3" ry="2" fill="#0f1d38"/><ellipse cx="3.5" cy="-1" rx="1.3" ry="2" fill="#0f1d38"/><path d="M-2 3.5Q0 5.2 2 3.5" stroke="#0f1d38" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>`,
+};
+function bridgeArt() {
+  return svg("0 0 220 120", `<rect x="0" y="70" width="220" height="50" fill="#9fd8cf"/><path d="M0 70H70V120H0Z" fill="#c9d48c" stroke="${INK}" stroke-width="2"/><path d="M150 70H220V120H150Z" fill="#9fcf9a" stroke="${INK}" stroke-width="2"/>
+  <path d="M50 70Q110 30 170 70" fill="none" stroke="#8a5a32" stroke-width="10" stroke-linecap="round"/><path d="M50 70Q110 30 170 70" fill="none" stroke="${INK}" stroke-width="2"/>${[70, 90, 110, 130, 150].map((x, i) => `<line x1="${x}" y1="${[58, 49, 46, 49, 58][i]}" x2="${x}" y2="${[38, 29, 26, 29, 38][i]}" stroke="${INK}" stroke-width="2"/>`).join("")}
+  <path d="M60 52Q110 12 160 52" fill="none" stroke="#8a5a32" stroke-width="3"/>${e(30, 58, 9)}${h(190, 58, 9)}`);
+}
+return { e, h, ion, pnScene, band, v0Lab, pkg, trio, circuit, charger, space, fab, mini, arrowPick, ICON, bridgeArt, svg, hand };
+})();
+
+/* T3: cozy toon 3D for Silicon Island (home diorama) and the diode lab. Needs THREE (r128). */
+const T3 = (() => {
+const INK = 0x26221d;
+const has = () => typeof THREE !== "undefined";
+function mkRenderer(host, bg) {
+  const r = new THREE.WebGLRenderer({ antialias: true });
+  r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  r.setClearColor(bg, 1);
+  const w = host.clientWidth || 360, hgt = host.clientHeight || 300;
+  r.setSize(w, hgt, false);
+  r.domElement.style.width = "100%"; r.domElement.style.height = "100%";
+  host.prepend(r.domElement);
+  return r;
+}
+function gradMap(r) {
+  const d = new Uint8Array([150, 150, 150, 255, 210, 210, 210, 255, 255, 255, 255, 255]);
+  const t = new THREE.DataTexture(d, 3, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true; return t;
+}
+function kit(r) {
+  const gm = gradMap(r);
+  const inkBack = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
+  const toon = (c, o = {}) => new THREE.MeshToonMaterial(Object.assign({ color: c, gradientMap: gm }, o));
+  const outline = (m, s = 1.06) => { const o = new THREE.Mesh(m.geometry, inkBack); o.scale.setScalar(s); m.add(o); return o; };
+  const ghostMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .45, depthWrite: false });
+  const ghostLine = new THREE.LineDashedMaterial({ color: INK, dashSize: .09, gapSize: .07, transparent: true, opacity: .7 });
+  const part = (geo, color, ghost, o = {}) => {
+    const m = new THREE.Mesh(geo, ghost ? ghostMat : toon(color, o));
+    if (ghost) { const l = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 20), ghostLine); l.computeLineDistances(); m.add(l); }
+    else if (o.outline !== false) outline(m, o.os || 1.06);
+    return m;
+  };
+  return { gm, toon, outline, part, inkBack };
+}
+function sizeLoop(host, r, cam, fit) {
+  const ro = new ResizeObserver(() => { const w = host.clientWidth, hgt = host.clientHeight; if (!w || !hgt) return; r.setSize(w, hgt, false); cam.aspect = w / hgt; cam.updateProjectionMatrix(); fit && fit(); });
+  ro.observe(host); return ro;
+}
+function dragRotate(el, onDrag) {
+  let down = null;
+  el.addEventListener("pointerdown", ev => { down = { x: ev.clientX, y: ev.clientY }; el.setPointerCapture(ev.pointerId); el.style.cursor = "grabbing"; });
+  el.addEventListener("pointermove", ev => { if (!down) return; const dx = ev.clientX - down.x, dy = ev.clientY - down.y; down = { x: ev.clientX, y: ev.clientY }; onDrag(dx, dy); });
+  const up = () => { down = null; el.style.cursor = "grab"; };
+  el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+}
+function charTex(kind) {
+  const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d");
+  x.translate(64, 64);
+  if (kind === "e") {
+    x.fillStyle = "#2f6bd3"; x.strokeStyle = "#1d4a9a"; x.lineWidth = 7; x.beginPath(); x.arc(0, 0, 54, 0, 7); x.fill(); x.stroke();
+    x.fillStyle = "rgba(255,255,255,.5)"; x.beginPath(); x.ellipse(-20, -24, 16, 9, -.4, 0, 7); x.fill();
+    x.fillStyle = "#0f1d38"; x.beginPath(); x.ellipse(-17, 0, 6.5, 10, 0, 0, 7); x.ellipse(17, 0, 6.5, 10, 0, 0, 7); x.fill();
+    x.strokeStyle = "#0f1d38"; x.lineWidth = 6; x.lineCap = "round"; x.beginPath(); x.moveTo(-11, 18); x.quadraticCurveTo(0, 27, 11, 18); x.stroke();
+  } else {
+    x.fillStyle = "#fffdf8"; x.beginPath(); x.arc(0, 0, 46, 0, 7); x.fill();
+    x.strokeStyle = "#d4483b"; x.lineWidth = 17; x.beginPath(); x.arc(0, 0, 46, 0, 7); x.stroke();
+    x.fillStyle = "#6d1c14"; x.beginPath(); x.ellipse(-15, -3, 6, 9.5, 0, 0, 7); x.ellipse(15, -3, 6, 9.5, 0, 0, 7); x.fill();
+    x.strokeStyle = "#6d1c14"; x.lineWidth = 5.5; x.lineCap = "round"; x.beginPath(); x.moveTo(-9, 15); x.quadraticCurveTo(0, 22, 9, 15); x.stroke();
+  }
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+function blobShadow() {
+  const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d");
+  const g = x.createRadialGradient(64, 64, 4, 64, 64, 62); g.addColorStop(0, "rgba(38,34,29,.35)"); g.addColorStop(1, "rgba(38,34,29,0)");
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+}
+const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const back = t => { const c1 = 1.7, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+
+/* ================= ISLAND ================= */
+function island(host, opts = {}) {
+  if (!has()) { host.insertAdjacentHTML("beforeend", `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--hand);font-size:22px;color:var(--ink2)">3D island couldn't load</div>`); return { destroy() {} }; }
+  const built = new Set(opts.built || []), just = opts.justBuilt;
+  const r = mkRenderer(host, 0xf7f2e7), K = kit(r);
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 1, .1, 100);
+  scene.add(new THREE.HemisphereLight(0xfffaf0, 0xc8b893, .5));
+  const sun = new THREE.DirectionalLight(0xffffff, .5); sun.position.set(6, 10, 5); scene.add(sun);
+  const root = new THREE.Group(); scene.add(root);
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(8.4, 8.4, .25, 56), K.toon(0x9fd8cf)); water.position.y = -.28; root.add(water);
+  const rip = []; [6.1, 6.9].forEach((rad, i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(rad, .045, 6, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .6 })); m.rotation.x = Math.PI / 2; m.position.y = -.14; m.userData.ph = i * 1.6; root.add(m); rip.push(m); });
+  const sand = K.part(new THREE.CylinderGeometry(5.3, 5.8, .6, 13), 0xead6a4, false, { os: 1.025 }); sand.position.y = .04; root.add(sand);
+  const halfN = new THREE.Mesh(new THREE.CylinderGeometry(4.85, 4.85, .32, 13, 1, false, Math.PI / 2, Math.PI), K.toon(0xc5d48a)); halfN.position.set(0, .48, -.42); root.add(halfN); K.outline(halfN, 1.02);
+  const halfS = new THREE.Mesh(new THREE.CylinderGeometry(4.85, 4.85, .32, 13, 1, false, -Math.PI / 2, Math.PI), K.toon(0x9bcf9c)); halfS.position.set(0, .48, .42); root.add(halfS); K.outline(halfS, 1.02);
+  const river = new THREE.Mesh(new THREE.BoxGeometry(10.6, .12, .84), K.toon(0x8fd0c8)); river.position.y = .38; root.add(river);
+  const groundY = .64;
+  /* districts */
+  const D = {};
+  const mkQuarry = g => { const G = new THREE.Group(); const rock = K.part(new THREE.DodecahedronGeometry(.62, 0), 0xb7ad9d, g); rock.scale.set(1.3, .6, 1.1); rock.position.y = .2; G.add(rock);
+    [[0, .95, 0, .55, 0x9a8be0], [.48, .7, .25, .4, 0xc3b8f3], [-.45, .66, -.15, .34, 0x7e6cd6]].forEach(([x, y, z, s, c]) => { const m = K.part(new THREE.OctahedronGeometry(s, 0), c, g); m.position.set(x, y, z); m.scale.y = 1.5; m.rotation.y = x * 3; G.add(m); }); return G; };
+  const mkBridge = g => { const G = new THREE.Group(); for (let i = 0; i <= 8; i++) { const t = i / 8, z = -1.05 + t * 2.1, y = .12 + .42 * Math.sin(Math.PI * t); const p = K.part(new THREE.BoxGeometry(.95, .08, .24), i % 2 ? 0xc28a55 : 0xb67c48, g, { os: 1.08 }); p.position.set(0, y, z); p.rotation.x = -Math.cos(Math.PI * t) * .55; G.add(p); }
+    [-.44, .44].forEach(x => [-1, -.35, .35, 1].forEach(z => { const t = (z + 1.05) / 2.1, y = .12 + .42 * Math.sin(Math.PI * t); const post = K.part(new THREE.CylinderGeometry(.045, .045, .42, 6), 0x8a5a32, g, { os: 1.25 }); post.position.set(x, y + .22, z); G.add(post); })); return G; };
+  const mkTown = g => { const G = new THREE.Group(); [[0, 0, 0, 1], [.85, 0, .45, .8], [-.7, 0, .55, .7]].forEach(([x, , z, s]) => { const b = K.part(new THREE.BoxGeometry(.62 * s, .55 * s, .62 * s), 0xf4ead5, g); b.position.set(x, .28 * s, z); G.add(b); const roof = K.part(new THREE.ConeGeometry(.52 * s, .42 * s, 4), 0xd4704f, g); roof.position.set(x, .55 * s + .2 * s, z); roof.rotation.y = Math.PI / 4; G.add(roof); }); return G; };
+  const mkCity = g => { const G = new THREE.Group(); [[0, 0, 1.5, 0x8fb3e8], [.62, .3, 1.05, 0xb9c9e8], [-.5, .45, .8, 0xe2e7ef]].forEach(([x, z, hh, c]) => { const b = K.part(new THREE.BoxGeometry(.48, hh, .48), c, g); b.position.set(x, hh / 2, z); G.add(b); }); return G; };
+  const mkLight = g => { const G = new THREE.Group(); const t = K.part(new THREE.CylinderGeometry(.27, .42, 1.6, 10), 0xfffdf8, g); t.position.y = .8; G.add(t); const band = K.part(new THREE.CylinderGeometry(.33, .36, .3, 10), 0xd4483b, g, { os: 1.03 }); band.position.y = .75; G.add(band);
+    const lamp = K.part(new THREE.CylinderGeometry(.24, .24, .3, 10), 0xffe08a, g); lamp.position.y = 1.75; G.add(lamp); const roof = K.part(new THREE.ConeGeometry(.34, .34, 10), 0xd4483b, g); roof.position.y = 2.06; G.add(roof); return G; };
+  const SPEC = [
+    { id: "quarry", name: "Crystal quarry", mk: mkQuarry, pos: [-2.5, groundY, -2.3], lab: 1.9 },
+    { id: "bridge", name: "Junction bridge", mk: mkBridge, pos: [0, groundY - .18, 0], lab: 1.2 },
+    { id: "town", name: "Transistor town", mk: mkTown, pos: [2.4, groundY, -2.25], lab: 1.3 },
+    { id: "city", name: "Gate city", mk: mkCity, pos: [2.5, groundY, 2.35], lab: 1.9 },
+    { id: "light", name: "Lighthouse", mk: mkLight, pos: [-2.9, groundY, 2.5], lab: 2.5 },
+  ];
+  SPEC.forEach(s => {
+    const holder = new THREE.Group(); holder.position.set(...s.pos); root.add(holder);
+    const isBuilt = built.has(s.id) && s.id !== just;
+    const model = s.mk(!isBuilt); holder.add(model);
+    D[s.id] = { holder, model, built: isBuilt, spec: s };
+  });
+  /* trees, clouds, critters */
+  const tree = (x, z, s = 1) => { const G = new THREE.Group(); const tr = K.part(new THREE.CylinderGeometry(.07 * s, .1 * s, .4 * s, 6), 0x8a5a32, false, { os: 1.2 }); tr.position.y = .2 * s; G.add(tr); const top = K.part(new THREE.ConeGeometry(.36 * s, .8 * s, 7), 0x3f8f5a, false); top.position.y = .75 * s; G.add(top); const top2 = K.part(new THREE.ConeGeometry(.28 * s, .55 * s, 7), 0x4fa86a, false); top2.position.y = 1.05 * s; G.add(top2); G.position.set(x, groundY, z); root.add(G); };
+  [[-.6, -3.6, 1], [.9, -3.9, .8], [-3.9, -1.1, .9], [4.0, -1.0, .85], [.7, 3.8, 1], [-1.0, 3.6, .8], [3.9, 1.1, .9], [-4.1, .95, .75], [1.6, -1.5, .7], [-1.6, 1.5, .7]].forEach(a => tree(...a));
+  const clouds = []; [[3, 3.2, 0], [3.6, 3.7, 2.3], [4.2, 3.0, 4.4]].forEach(([rad, y, ph]) => { const G = new THREE.Group(); [[0, 0, 0, .55], [.5, -.08, .1, .42], [-.5, -.1, 0, .4], [.15, .25, -.05, .38]].forEach(([x, yy, z, s]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(s, 12, 10), K.toon(0xffffff)); m.position.set(x, yy, z); K.outline(m, 1.07); G.add(m); }); G.userData = { rad, y, ph }; scene.add(G); clouds.push(G); });
+  const critters = [];
+  const blob = (kind, x, z) => { const G = new THREE.Group(); let body; if (kind === "e") { body = new THREE.Mesh(new THREE.SphereGeometry(.2, 16, 12), K.toon(0x2f6bd3)); } else { body = new THREE.Mesh(new THREE.TorusGeometry(.16, .07, 10, 20), K.toon(0xd4483b)); } K.outline(body, 1.1); G.add(body);
+    [-.07, .07].forEach(dx => { const eye = new THREE.Mesh(new THREE.SphereGeometry(.03, 8, 6), new THREE.MeshBasicMaterial({ color: 0x0f1d38 })); eye.position.set(dx, .03, kind === "e" ? .185 : .17); G.add(eye); });
+    G.position.set(x, groundY + .22, z); G.userData = { x, z, ph: Math.random() * 6 }; root.add(G); critters.push(G); };
+  blob("e", 1.2, 2.1); blob("e", -.4, 2.8); blob("h", -1.2, -2.2); blob("h", .5, -2.6);
+  /* labels */
+  const lbl = document.createElement("div"); lbl.className = "islabels"; host.appendChild(lbl);
+  SPEC.forEach(s => { const d = document.createElement("div"); d.className = "islabel" + (D[s.id].built ? "" : " ghost"); d.textContent = s.name; if (!D[s.id].built && s.id !== (opts.next || "") && s.id !== just) d.style.visibility = "hidden"; lbl.appendChild(d); D[s.id].el = d; });
+  /* camera fit */
+  let az = .75, autoT = 0;
+  const fit = () => { const a = cam.aspect; const rad = 20 * Math.max(1, 1.45 / a); cam.position.set(0, rad * .55, rad * .83); cam.lookAt(0, .9, 0); };
+  const ro = sizeLoop(host, r, cam, fit); cam.aspect = (host.clientWidth || 360) / (host.clientHeight || 300); cam.updateProjectionMatrix(); fit();
+  dragRotate(r.domElement, dx => { az += dx * .008; autoT = performance.now(); });
+  /* build animation */
+  let confetti = [];
+  const build = id => {
+    const d = D[id]; if (!d || d.built) return;
+    d.holder.remove(d.model); d.model = d.spec.mk(false); d.holder.add(d.model); d.built = true; d.t0 = performance.now(); d.model.scale.setScalar(.01);
+    d.el.className = "islabel new"; d.el.style.visibility = "visible";
+    const cols = [0x2f6bd3, 0xd4483b, 0xf2b632, 0x2f9a5d, 0xe98a25];
+    for (let i = 0; i < 36; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(.09, .09, .02), new THREE.MeshBasicMaterial({ color: cols[i % 5] })); m.position.copy(d.holder.position).add(new THREE.Vector3(0, .6, 0)); m.userData.v = new THREE.Vector3((Math.random() - .5) * 3.4, 2.4 + Math.random() * 2.6, (Math.random() - .5) * 3.4); m.userData.w = new THREE.Vector3(Math.random() * 8, Math.random() * 8, 0); root.add(m); confetti.push(m); }
+    opts.onBuilt && opts.onBuilt(id);
+  };
+  if (just && D[just]) setTimeout(() => build(just), 900);
+  /* loop */
+  let alive = true, last = performance.now();
+  const v = new THREE.Vector3();
+  const loop = now => {
+    if (!alive) return;
+    if (!document.body.contains(r.domElement)) { api.destroy(); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (now - autoT > 2500) az += dt * .12;
+    root.rotation.y = az;
+    rip.forEach(m => { const k = (Math.sin(now / 900 + m.userData.ph) + 1) / 2; m.scale.setScalar(1 + k * .04); m.material.opacity = .25 + .4 * (1 - k); });
+    clouds.forEach(c => { const u = c.userData, a = now / 9000 + u.ph; c.position.set(Math.cos(a) * u.rad * 1.6, u.y + Math.sin(now / 1300 + u.ph) * .08, Math.sin(a) * u.rad * 1.4); });
+    critters.forEach(c => { const u = c.userData, t = now / 1000 + u.ph; c.position.y = groundY + .22 + Math.abs(Math.sin(t * 3)) * .14; c.position.x = u.x + Math.sin(t * .6) * .35; c.rotation.y = Math.sin(t * .6) > 0 ? .4 : -.4; });
+    Object.values(D).forEach(d => { if (d.t0) { const t = Math.min(1, (now - d.t0) / 900); d.model.scale.setScalar(Math.max(.01, back(t))); if (t >= 1) d.t0 = 0; } });
+    confetti = confetti.filter(m => { m.userData.v.y -= 9 * dt; m.position.addScaledVector(m.userData.v, dt); m.rotation.x += m.userData.w.x * dt; m.rotation.y += m.userData.w.y * dt; if (m.position.y < -.3) { root.remove(m); return false; } return true; });
+    r.render(scene, cam);
+    const w = host.clientWidth, hh = host.clientHeight;
+    Object.values(D).forEach(d => { v.set(0, d.spec.lab, 0); d.holder.localToWorld(v); v.project(cam); d.el.style.left = ((v.x + 1) / 2 * w) + "px"; d.el.style.top = ((1 - v.y) / 2 * hh) + "px"; d.el.style.opacity = v.z < 1 ? 1 : 0; });
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  const api = { build, destroy() { alive = false; ro.disconnect(); r.dispose(); } };
+  return api;
+}
+
+/* ================= DIODE LAB ================= */
+function diodeLab(host) {
+  host.innerHTML = `<div class="lab3d"><div class="lbls"></div><div class="hud"><div class="bulb" title="bulb"></div></div><div class="drag">drag to turn</div></div>`;
+  const box = host.querySelector(".lab3d"), lbl = box.querySelector(".lbls"), bulb = box.querySelector(".bulb");
+  if (!has()) { box.insertAdjacentHTML("beforeend", `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--hand);font-size:22px">3D couldn't load here</div>`); return { setState() {}, setBias() {}, get state() { return {}; }, destroy() {} }; }
+  const r = mkRenderer(box, 0xfffdf8), K = kit(r);
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(34, 1, .02, 60);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8ccb0, .5)); const dl = new THREE.DirectionalLight(0xffffff, .5); dl.position.set(3, 5, 4); scene.add(dl);
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(7, 2.2), new THREE.MeshBasicMaterial({ map: blobShadow(), transparent: true, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = -1.05; scene.add(shadow);
+  const g = new THREE.Group(); scene.add(g);
+  const cyl = (rad, len, seg) => { const geo = new THREE.CylinderGeometry(rad, rad, len, seg); geo.rotateZ(Math.PI / 2); return geo; };
+  const bodyM = K.toon(0x2e2d33, { transparent: true }); const body = new THREE.Mesh(cyl(.75, 2.6, 40), bodyM); g.add(body);
+  const bodyO = new THREE.Mesh(body.geometry, new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide, transparent: true })); bodyO.scale.set(1.012, 1.045, 1.045); g.add(bodyO);
+  const bandM = K.toon(0xd3cfc6, { transparent: true }); const band = new THREE.Mesh(cyl(.765, .42, 40), bandM); band.position.x = .9; g.add(band);
+  const leadM = K.toon(0xc3c8ce); [-2.8, 2.8].forEach(x => { const l = new THREE.Mesh(cyl(.07, 3, 12), leadM); l.position.x = x; K.outline(l, 1.25); g.add(l); });
+  const inner = new THREE.Group(); g.add(inner); inner.visible = false;
+  const slugM = K.toon(0xc98a5a, { transparent: true }); [-.675, .675].forEach(x => { const s = new THREE.Mesh(cyl(.28, .55, 28), slugM); s.position.x = x; K.outline(s, 1.05); inner.add(s); });
+  const unit = new THREE.BoxGeometry(1, .6, .6), edgeG = new THREE.EdgesGeometry(unit), lineM = new THREE.LineBasicMaterial({ color: INK });
+  const slab = c => { const m = new THREE.Mesh(unit, K.toon(c)); m.add(new THREE.LineSegments(edgeG, lineM)); inner.add(m); return m; };
+  const pB = slab(0xeea193), dB = slab(0xfbeed2), nB = slab(0x93b5ee);
+  const tE = charTex("e"), tH = charTex("h");
+  const spr = (t, s = .085) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false })); m.scale.setScalar(s); inner.add(m); return m; };
+  const holes = [], elecs = [], flyE = [], flyH = [];
+  let sd = 5; const rr = () => (sd = (sd * 16807) % 2147483647, (sd - 1) / 2147483646);
+  for (let i = 0; i < 11; i++) { holes.push({ s: spr(tH), u: rr(), v: rr() }); elecs.push({ s: spr(tE), u: rr(), v: rr() }); }
+  for (let i = 0; i < 5; i++) { const a = spr(tE, .062); a.visible = false; flyE.push({ s: a, t: 1, y: 0 }); const b = spr(tH, .062); b.visible = false; flyH.push({ s: b, t: 1, y: 0 }); }
+  let V = 0, Wcur = .16, state = "whole", tw = null, yaw = 0, pitch = 0, autoT = 0;
+  const Wof = v => .17 * Math.sqrt(Math.max(.012, (.7 - v) / .7));
+  const layout = () => {
+    const xl = -Wcur * .45, xr = Wcur * .55;
+    pB.scale.x = xl + .4; pB.position.x = (-.4 + xl) / 2; dB.scale.x = xr - xl; dB.position.x = (xl + xr) / 2; nB.scale.x = .4 - xr; nB.position.x = (xr + .4) / 2;
+    return { xl, xr };
+  };
+  const LBL = { whole: [["cathode band", [.9, 1.0, 0]], ["anode lead", [-3.3, .32, 0]]], open: [["metal contact", [-.68, .5, 0]], ["silicon die", [0, -.5, 0]]], die: [["p", [-.24, .37, .3]], ["n", [.24, .37, .3]], ["depletion", [0, -.39, .3]]] };
+  const lblEls = {}; Object.entries(LBL).forEach(([k, arr]) => { lblEls[k] = arr.map(([t]) => { const d = document.createElement("div"); d.textContent = t; d.style.display = "none"; lbl.appendChild(d); return d; }); });
+  const PRESET = { whole: { p: [5.1, 2.3, 7.3], op: 1 }, open: { p: [2.5, 1.5, 3.4], op: .14 }, die: { p: [.12, .18, 1.72], op: 0 } };
+  const fitScale = () => Math.max(1, 1.3 / cam.aspect);
+  const setState = s => {
+    state = s; const P = PRESET[s], k = s === "whole" ? fitScale() : Math.max(1, 1.2 / cam.aspect);
+    tw = { t0: performance.now(), p0: cam.position.clone(), p1: new THREE.Vector3(...P.p).multiplyScalar(k), o0: bodyM.opacity, o1: P.op, y0: yaw, y1: s === "whole" ? yaw : 0, x0: pitch };
+    inner.visible = s !== "whole"; box.querySelector(".drag").textContent = s === "die" ? "slide the voltage below" : "drag to turn";
+    slugM.opacity = s === "die" ? .35 : 1; slugM.depthWrite = s !== "die";
+  };
+  dragRotate(r.domElement, (dx, dy) => { yaw += dx * .01; pitch = Math.max(-.6, Math.min(.6, pitch + dy * .006)); autoT = performance.now(); });
+  const ro = sizeLoop(box, r, cam); cam.aspect = (box.clientWidth || 360) / (box.clientHeight || 330); cam.updateProjectionMatrix(); cam.position.set(...PRESET.whole.p).multiplyScalar(fitScale()); cam.lookAt(0, 0, 0);
+  let alive = true, last = performance.now(); const v3 = new THREE.Vector3();
+  const loop = now => {
+    if (!alive) return;
+    if (!r.domElement.isConnected) { last = now; requestAnimationFrame(loop); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (state === "whole" && !tw && now - autoT > 2200) yaw += dt * .45;
+    if (tw) {
+      const t = Math.min(1, (now - tw.t0) / 950), e = ease(t);
+      cam.position.lerpVectors(tw.p0, tw.p1, e);
+      const op = tw.o0 + (tw.o1 - tw.o0) * e; bodyM.opacity = bandM.opacity = op; bodyM.depthWrite = bandM.depthWrite = op > .99; body.visible = band.visible = op > .01; bodyO.visible = op > .05; bodyO.material.opacity = op > .99 ? 1 : op * .35;
+      if (tw.y1 !== tw.y0) { const target = Math.round(tw.y0 / (Math.PI * 2)) * Math.PI * 2; yaw = tw.y0 + (target - tw.y0) * e; pitch = tw.x0 * (1 - e); }
+      if (t >= 1) tw = null;
+    }
+    g.rotation.set(pitch, yaw, 0);
+    cam.lookAt(0, 0, 0);
+    const Wt = Wof(V); Wcur += (Wt - Wcur) * Math.min(1, dt * 6); const { xl, xr } = layout();
+    const zf = .31;
+    holes.forEach(c => { const x0 = -.37, x1 = xl - .04; c.s.position.lerp(v3.set(x0 + c.u * Math.max(.01, x1 - x0), -.24 + c.v * .48, zf), .15); });
+    elecs.forEach(c => { const x0 = xr + .04, x1 = .37; c.s.position.lerp(v3.set(x0 + c.u * Math.max(.01, x1 - x0), -.24 + c.v * .48, zf), .15); });
+    const b = Math.max(0, Math.min(1, (V - .48) / .2));
+    const spawn = (arr, dir) => { if (b <= 0) return; const f = arr.find(o => o.t >= 1); if (f && Math.random() < b * dt * 3.2) { f.t = 0; f.y = -.22 + Math.random() * .44; f.s.visible = true; } };
+    spawn(flyE); spawn(flyH);
+    flyE.forEach(o => { if (o.t >= 1) { o.s.visible = false; return; } o.t += dt * .45; const x = (xr + .02) + (-.32 - (xr + .02)) * o.t; o.s.position.set(x, o.y, zf + .005); o.s.material.opacity = o.t < .12 ? o.t / .12 : o.t > .7 ? (1 - o.t) / .3 : 1; });
+    flyH.forEach(o => { if (o.t >= 1) { o.s.visible = false; return; } o.t += dt * .45; const x = (xl - .02) + (.32 - (xl - .02)) * o.t; o.s.position.set(x, o.y, zf + .005); o.s.material.opacity = o.t < .12 ? o.t / .12 : o.t > .7 ? (1 - o.t) / .3 : 1; });
+    bulb.style.background = b > 0 ? `rgba(255,214,90,${.35 + .65 * b})` : "var(--card)"; bulb.style.boxShadow = b > 0 ? `0 0 ${10 + 26 * b}px rgba(242,182,50,${.7 * b})` : "none";
+    bulb.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" fill="${b > 0 ? "#fff3c0" : "none"}" stroke="#26221d" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
+    r.render(scene, cam);
+    const w = box.clientWidth, hh = box.clientHeight;
+    Object.entries(LBL).forEach(([k, arr]) => arr.forEach(([, p], i) => { const d = lblEls[k][i]; if (k !== state || tw) { d.style.display = "none"; return; } let pp = p; if (k === "die") { if (i === 0) pp = [(-.4 + xl) / 2, .37, .3]; if (i === 1) pp = [(xr + .4) / 2, .37, .3]; if (i === 2) pp = [(xl + xr) / 2, -.39, .3]; } v3.set(...pp); g.localToWorld(v3); v3.project(cam); d.style.display = v3.z < 1 ? "block" : "none"; d.style.left = ((v3.x + 1) / 2 * w) + "px"; d.style.top = ((1 - v3.y) / 2 * hh) + "px"; }));
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  const api = {
+    setState, setBias(x) { V = x; }, get state() { return { V, W: Wof(V) / Wof(0), lit: V > .55, view: state }; },
+    destroy() { alive = false; ro.disconnect(); r.dispose(); }
+  };
+  return api;
+}
+return { island, diodeLab, has };
+})();
+
+/* Lecture 3 · PN junction: the first lesson rebuilt for Silicon Island */
+const BEATS = {
+  hook:   { name: "Hook",       tag: "See the real thing first",   color: "#e98a6f", icon: "hook" },
+  note:   { name: "Notebook",   tag: "The idea, in ink",            color: "#6b5bd2", icon: "note" },
+  sketch: { name: "Sketch",     tag: "What it really looks like",   color: "#7d7466", icon: "sketch" },
+  lab:    { name: "3D lab",     tag: "Turn it. Open it. Drive it.", color: "#e0735a", icon: "cube" },
+  real:   { name: "Real world", tag: "Where it lives",              color: "#c45f45", icon: "globe" },
+  lock:   { name: "Lock it in", tag: "No hints. Just you.",         color: "#5a4bc4", icon: "lock" },
+};
+const V0F = `<div class="formula">V<sub>0</sub> = <span class="fr"><span>kT</span><span>q</span></span> ln <span class="fr"><span>N<sub>A</sub> N<sub>D</sub></span><span>n<sub>i</sub><sup>2</sup></span></span></div><div class="given"><span>kT/q = 0.0259 V</span><span>n<sub>i</sub> = 1.5×10¹⁰ cm⁻³</span></div>`;
+
+const LESSONS = {
+L3: {
+  id: "L3", n: 3, title: "PN junction", sub: "Lecture 3 · contact potential", world: "w2", mins: 12,
+  card: "1N4007", building: "bridge",
+  steps: [
+    /* ---------- HOOK ---------- */
+    { beat: "hook", kind: "predict", paper: true,
+      cap: "This little black bead is a <b>diode</b>. Your laptop charger has at least four of them.",
+      fig: h => ART.circuit(h, null, {}),
+      q: "Predict: flip the diode around. The bulb…", o: ["Stays on", "Turns off", "Gets brighter"], a: 1,
+      x: "Let's find out. Your turn next." },
+    { beat: "hook", kind: "play", paper: true,
+      cap: "Tap the diode to flip it. Tap the battery to flip that too.",
+      fig: (h, ctx) => ART.circuit(h, ctx, { toy: true }),
+      mission: "Flip both, and get the bulb shining again",
+      done: "It only lights when the diode points along the current. A one-way door! Let's see why." },
+
+    /* ---------- NOTEBOOK ---------- */
+    { beat: "note", kind: "play", paper: true,
+      cap: "Two slabs of silicon. <span class='hl-h'>Holes</span> roam the p side, <span class='hl-e'>electrons</span> roam the n side. Dashed circles are ions stuck in place.",
+      fig: (h, ctx) => { const s = ART.pnScene(h, { state: "apart" }); ctx.cta("Push them together", () => s.join().then(() => ctx.mission(true))); },
+      mission: "Join the two slabs",
+      done: "Electrons and holes near the seam meet and cancel out. The stuck ions stay behind." },
+    { beat: "note", kind: "spot", paper: true,
+      cap: "Look closely at the seam.",
+      fig: h => ART.pnScene(h, { state: "joined", zones: "dep", label: false }),
+      q: "Tap the region with no free carriers left.", spot: "dep",
+      x: "That's the <b>depletion region</b>: only fixed ions, no free carriers.", fx: h => ART.pnScene(h, { state: "joined" }) },
+    { beat: "note", kind: "pick", paper: true,
+      cap: "The leftover ions: <b>−</b> on the p side, <b>+</b> on the n side.",
+      fig: h => ART.pnScene(h, { state: "joined", label: false }),
+      q: "Which way does the electric field point?", pick: [ART.arrowPick("left"), ART.arrowPick("right")], a: 0,
+      x: "A field points from + to −, so it runs from the n side toward the p side.",
+      fx: h => ART.pnScene(h, { state: "joined", field: true }) },
+    { beat: "note", kind: "tf", paper: true,
+      cap: "<span class='hl-e'>Diffusion</span> pushes carriers across the seam. The <span class='hl-f'>field</span> pushes them back.",
+      fig: h => ART.pnScene(h, { state: "joined", field: true, tug: true }),
+      q: "At equilibrium, nothing moves at all.", tf: false,
+      x: "Carriers keep crossing both ways. Diffusion and drift currents are equal and opposite, so the <b>net</b> current is zero." },
+    { beat: "note", kind: "pick",
+      cap: "Same junction, drawn as a band diagram. Dashed orange = Fermi level.",
+      q: "Which band diagram is at equilibrium?", pick: [ART.band("flat"), ART.band("eq"), ART.band("bend")], a: 1,
+      x: "At equilibrium E<sub>F</sub> is one flat line. The bands bend instead, by qV<sub>0</sub>.",
+      fx: () => ART.band("eq", { bracket: true }) },
+    { beat: "note", kind: "play", raw: true,
+      cap: "That bend is the <b>built-in voltage</b> V<sub>0</sub>. Doping sets its size.",
+      fig: (h, ctx) => ART.v0Lab(h, ctx),
+      mission: "Push V₀ above 0.80 V",
+      done: "More doping on either side makes the step taller." },
+    { beat: "note", kind: "num",
+      cap: "Now with numbers.", fig: V0F, html: true,
+      q: "N<sub>A</sub> = 10¹⁷ and N<sub>D</sub> = 10¹⁵ cm⁻³. What is V<sub>0</sub>?", num: 0.695, u: "V", tol: 0.03,
+      hint: "Plug in: 0.0259 × ln(10³² ÷ 2.25×10²⁰).",
+      x: "0.0259 × ln(4.4×10¹¹) ≈ 0.695 V." },
+    { beat: "note", kind: "spot", paper: true,
+      cap: "Now the p side is doped much more heavily: p⁺.",
+      fig: h => ART.pnScene(h, { state: "joined", asym: true, zones: "half" }),
+      q: "Tap the side that holds most of the depletion region.", spot: "n",
+      x: "The light side has fewer ions per slice, so it gives up a wider slice to balance the charge." },
+
+    /* ---------- SKETCH ---------- */
+    { beat: "sketch", kind: "spot", paper: true,
+      cap: "Here's what a real diode looks like: the 1N4007, about 5 mm long.",
+      fig: ART.pkg({ zones: true, ruler: true }),
+      q: "Tap the cathode end.", spot: ["band", "right"],
+      x: "The painted band marks the <b>cathode</b>.", fx: () => ART.pkg({ labels: true }) },
+    { beat: "sketch", kind: "mcq", paper: true,
+      cap: "The symbol, the real part and the junction, lined up.",
+      fig: ART.trio(),
+      q: "So the cathode is which side of the junction?", o: ["The p side", "The n side"], a: 1,
+      x: "Cathode = n side. The triangle points from p to n, the way current is allowed to flow.", fx: () => ART.trio({ reveal: true }) },
+
+    /* ---------- 3D LAB ---------- */
+    { beat: "lab", kind: "play", lab: "whole",
+      cap: "The same diode in 3D. Drag to turn it around.",
+      done: "Gray band = cathode. Now let's open it." },
+    { beat: "lab", kind: "play", lab: "whole", cta: "Open it up", ctaLab: "open",
+      cap: "What's inside that black epoxy?", mission: "Open the diode",
+      done: "A tiny slab of silicon (the die) is squeezed between two metal contacts." },
+    { beat: "lab", kind: "play", lab: "die", bias: true,
+      cap: "Zoomed into the die. Slide the voltage across it.", mission: "Light the bulb",
+      done: "Forward bias shrinks the depletion region and carriers flood across. Current flows!" },
+    { beat: "lab", kind: "mcq", lab: "die", bias: true,
+      cap: "Keep sliding. Try negative voltages too.",
+      q: "Reverse bias (negative V) makes the depletion region…", o: ["Narrower", "Wider", "Disappear"], a: 1,
+      x: "Reverse bias pulls carriers away from the seam: the depletion region grows and almost no current flows." },
+
+    /* ---------- REAL WORLD ---------- */
+    { beat: "real", kind: "spot", paper: true,
+      cap: "Inside your laptop charger, diodes turn the wall's back-and-forth AC into one-way current.",
+      fig: ART.charger({ zones: true }),
+      q: "Tap one of the diodes.", spot: "diode",
+      x: "Four diodes in a diamond make a <b>bridge rectifier</b>. Whichever way AC pushes, current comes out one way.",
+      fx: () => ART.charger({ labels: true }) },
+    { beat: "real", kind: "mcq", paper: true,
+      cap: "Every solar cell on a satellite is one big pn junction.",
+      fig: ART.space(),
+      q: "Light makes an electron–hole pair. What pushes them apart?", o: ["The built-in field of the junction", "Diffusion", "A battery inside the panel"], a: 0,
+      x: "The depletion region's field sweeps electrons to n and holes to p. That flow is solar current (Lecture 16)." },
+    { beat: "real", kind: "mcq", paper: true,
+      cap: "Chip fabs make p and n regions by firing dopant atoms into silicon wafers.",
+      fig: ART.fab(),
+      q: "Which atom would you fire in to make <b>n-type</b> silicon?", o: ["Phosphorus: 5 valence electrons", "Boron: 3 valence electrons"], a: 0,
+      x: "Phosphorus has a spare electron to give away, so it makes n-type silicon.", fx: () => ART.fab({ reveal: true }) },
+
+    /* ---------- LOCK IT IN ---------- */
+    { beat: "lock", kind: "pick", id: "q1",
+      q: "Which picture shows a pn junction at equilibrium?", pick: [ART.mini("mixed"), ART.mini("ok"), ART.mini("crowd")], a: 1,
+      x: "Carriers clear out near the seam and leave a depletion region of fixed ions." },
+    { beat: "lock", kind: "tf", id: "q2", fig: ART.band("eq", { bracket: true }), paper: true,
+      q: "Doping both sides more heavily makes the built-in voltage V<sub>0</sub> bigger.", tf: true,
+      x: "V<sub>0</sub> = (kT/q)·ln(N<sub>A</sub>N<sub>D</sub>/n<sub>i</sub>²). More doping, bigger log." },
+    { beat: "lock", kind: "mcq", id: "q3", fig: h => ART.pnScene(h, { state: "joined", label: false }), paper: true,
+      q: "To make the depletion region <b>wider</b>, you apply…", o: ["Forward bias", "Reverse bias", "No bias at all"], a: 1,
+      x: "Reverse bias pulls carriers away from the seam." },
+    { beat: "lock", kind: "mcq", id: "q4", fig: h => ART.pnScene(h, { state: "apart", asym: true }), paper: true,
+      q: "In a p⁺n junction, most of the depletion region sits on the…", o: ["p⁺ side", "n side"], a: 1,
+      x: "The lightly doped side depletes deeper." },
+    { beat: "lock", kind: "conf",
+      q: "How sure do you feel about pn junctions?",
+      o: [["Shaky", "Review tomorrow", 1], ["Okay", "Review in 3 days", 3], ["Solid", "Review in a week", 7]] },
+  ],
+  review: [
+    { beat: "lock", kind: "pick", q: "Which way does the built-in field point?", pick: [ART.arrowPick("left"), ART.arrowPick("right")], a: 0, x: "From the + ions (n side) to the − ions (p side)." },
+    { beat: "lock", kind: "pick", q: "Which band diagram is at equilibrium?", pick: [ART.band("bend"), ART.band("flat"), ART.band("eq")], a: 2, x: "Flat Fermi level, bent bands." },
+    { beat: "lock", kind: "mcq", q: "Which end of a real diode is the n side?", fig: ART.pkg({}), paper: true, o: ["The end with the band", "The plain end"], a: 0, x: "Band = cathode = n side." },
+    { beat: "lock", kind: "tf", q: "At equilibrium, the diffusion and drift currents cancel.", tf: true, x: "Equal and opposite, so the net current is zero." },
+    { beat: "lock", kind: "conf", q: "How did that feel?", o: [["Shaky", "Again tomorrow", 1], ["Okay", "Again in 4 days", 4], ["Solid", "Again in 2 weeks", 14]] },
+  ],
+},
+};
+
+const COURSE = {
+  name: "Semiconductor Devices", code: "EECE 2077",
+  worlds: [
+    { id: "w1", name: "Crystal quarry", sub: "Bands & carriers", color: "#7b68d9", district: "quarry", lec: ["L1", "L2"] },
+    { id: "w2", name: "Junction bridge", sub: "The diode", color: "#2f9a5d", district: "bridge", lec: ["L3", "L4", "L5", "L6"], test: { id: "T1", name: "Test 1 chamber", covers: ["L1", "L2", "L3", "L4", "L5", "L6"], v2: "boss-B2" } },
+    { id: "w3", name: "Transistor town", sub: "BJTs", color: "#d98a2b", district: "town", lec: ["L7", "L8", "L9", "L10"], test: { id: "T2", name: "Test 2 chamber", covers: ["L7", "L8", "L9", "L10"], v2: "boss-B3" } },
+    { id: "w4", name: "Gate city", sub: "FETs & MOSFETs", color: "#3f7fd6", district: "city", lec: ["L11", "L12", "L13", "L14"], test: { id: "T3", name: "Test 3 chamber", covers: ["L11", "L12", "L13", "L14"], v2: "boss-B4" } },
+    { id: "w5", name: "Lighthouse coast", sub: "Light", color: "#d0566f", district: "light", lec: ["L15", "L16", "L17", "L18", "L19", "L20"], test: { id: "F", name: "Final chamber", covers: ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18", "L19", "L20"], v2: "boss-B5" } },
+  ],
+  titles: { L1: "Bands & carriers", L2: "Carrier dynamics", L3: "PN junction", L4: "Diode currents", L5: "Metal contacts", L6: "Breakdown", L7: "BJT basics", L8: "BJT currents", L9: "Ebers–Moll", L10: "BJT speed", L11: "JFET & HEMT", L12: "Ideal MOSFET", L13: "Real MOSFET & CMOS", L14: "Memory & scaling", L15: "Light in, light out", L16: "Solar cells", L17: "LEDs", L18: "OLEDs", L19: "Lasers", L20: "Camera sensors" },
+};
+
+const PARTS = [
+  { id: "1N4007", name: "1N4007 diode", lec: "L3", kind: "Rectifier diode", specs: ["Silicon pn junction", "Up to 1000 V reverse", "1 A forward", "DO-41 package"], found: "Chargers, power supplies, appliances" },
+  { id: "zener", name: "Zener diode", lec: "L6" }, { id: "2N3904", name: "2N3904 BJT", lec: "L7" }, { id: "mosfet", name: "Power MOSFET", lec: "L12" },
+  { id: "finfet", name: "FinFET", lec: "L14" }, { id: "solar", name: "Solar cell", lec: "L16" }, { id: "led", name: "5 mm LED", lec: "L17" }, { id: "laser", name: "Laser diode", lec: "L19" },
+];
+
+/* Semi Quest: Silicon Island · engine */
+(() => {
+const $ = (s, r = document) => r.querySelector(s);
+const app = document.getElementById("app");
+const KEY = "semiIsland.v1";
+const DEF = () => ({ onboarded: false, goal: null, e: 0, streak: { last: "", count: 0 }, lessons: {}, reviews: {}, cards: [], built: [], justBuilt: null, newCard: null });
+let S = load(); let cleanup = [];
+function load() { try { const v = JSON.parse(localStorage.getItem(KEY) || "{}"); return Object.assign(DEF(), v); } catch (e) { return DEF(); } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v; else if (k === "html") n.innerHTML = v; else if (k === "style" && typeof v === "object") { for (const [sk, sv] of Object.entries(v)) sk.startsWith("--") ? n.style.setProperty(sk, sv) : (n.style[sk] = sv); }
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) n.append(c.nodeType ? c : document.createTextNode(c));
+  return n;
+}
+const H = s => { const d = document.createElement("div"); d.innerHTML = s; return d.firstElementChild; };
+const go = h => { if (location.hash.slice(1) === h) route(); else location.hash = h; };
+const day = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
+const fmtDate = t => new Date(t).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+const DAY = 864e5;
+function bumpStreak() { const t = day(), y = day(Date.now() - DAY); if (S.streak.last === t) return; S.streak.count = S.streak.last === y ? S.streak.count + 1 : 1; S.streak.last = t; }
+function streakNow() { const t = day(), y = day(Date.now() - DAY); return (S.streak.last === t || S.streak.last === y) ? S.streak.count : 0; }
+function teardown() { cleanup.forEach(f => { try { f(); } catch (e) {} }); cleanup = []; document.onkeydown = null; }
+function sheet(title, text, buttons) {
+  const scrim = el("div", { class: "scrim", onclick: e => { if (e.target === scrim) scrim.remove(); } },
+    el("div", { class: "bsheet", role: "dialog", "aria-label": title }, el("h3", null, title), el("p", { html: text }), el("div", { class: "row" }, buttons.map(b => b.href ? el("a", { class: "btn " + (b.cls || ""), href: b.href, target: "_blank", rel: "noopener", style: { textDecoration: "none" } }, b.label) : el("button", { type: "button", class: "btn " + (b.cls || ""), onclick: () => { scrim.remove(); b.fn && b.fn(); } }, b.label)))));
+  document.body.append(scrim);
+}
+const lessonState = id => (S.lessons[id] || {}).state || null;
+const reviewDue = id => S.reviews[id] && S.reviews[id].due <= Date.now();
+
+/* ================= ONBOARDING ================= */
+function viewWelcome() {
+  let page = 0;
+  const draw = () => {
+    app.innerHTML = "";
+    if (page === 0) app.append(el("div", { class: "onb" },
+      el("div", { class: "vis paper", html: ART.bridgeArt(), style: { maxWidth: "360px" } }),
+      el("h1", null, "Welcome to Silicon Island"),
+      el("p", null, "Every lesson you finish builds something here. Right now the island is mostly pencil sketches."),
+      el("p", null, "Each lesson goes: real thing → notebook → sketch → 3D → real world → lock it in."),
+      el("button", { type: "button", class: "btn go wide", onclick: () => { page = 1; draw(); } }, "Next")));
+    else app.append(el("div", { class: "onb" },
+      el("h1", null, "What's your goal?"), el("p", null, "This only changes how your daily plan is worded."),
+      el("div", { class: "goal" }, [["catch", "Catch up before the next test"], ["deep", "Really understand it"], ["explore", "Just exploring"]].map(([k, t]) =>
+        el("button", { type: "button", class: "opt", onclick: () => { S.goal = k; S.onboarded = true; save(); go("home"); } }, el("span", { class: "k" }, k === "catch" ? "1" : k === "deep" ? "2" : "3"), t)))));
+  };
+  draw();
+}
+
+/* ================= HOME ================= */
+function nextLesson() { return LESSONS.L3; }
+function viewHome() {
+  const wrap = el("div", { class: "wrap" });
+  const st = streakNow();
+  wrap.append(el("header", { class: "top" },
+    el("div", { class: "brand", html: ART.ICON.island + "<span>Semi Quest</span>" }),
+    el("span", { class: "chip", title: "Electrons earned", html: ART.ICON.echip + `<span>${S.e}</span>` }),
+    el("span", { class: "chip", title: "Day streak", html: ART.ICON.flame(st) + `<span>${st}</span>` }),
+    el("button", { type: "button", class: "iconbtn", "aria-label": "Parts binder", onclick: () => go("binder"), html: ART.ICON.book })));
+  const isl = el("div", { class: "island" }, el("div", { class: "ttl" }, el("b", null, "Silicon Island"), el("span", null, "drag to spin it")));
+  wrap.append(isl);
+  // plan
+  const L = nextLesson(), done = lessonState("L3"), rv = S.reviews.L3;
+  const goalTxt = S.goal === "catch" ? "Catch-up plan" : S.goal === "deep" ? "Deep-dive plan" : "Today's plan";
+  let plan;
+  if (!done) plan = el("div", { class: "sheet plan" }, el("div", { class: "grow" }, el("div", { class: "pk" }, goalTxt.toUpperCase() + ` · ~${L.mins} MIN`), el("div", { class: "pt" }, L.title), el("div", { class: "ps" }, "Builds the Junction bridge")), el("button", { type: "button", class: "btn go", onclick: () => go("lesson-L3") }, "Start"));
+  else if (reviewDue("L3")) plan = el("div", { class: "sheet plan" }, el("div", { class: "grow" }, el("div", { class: "pk" }, "REVIEW READY · ~2 MIN"), el("div", { class: "pt" }, "PN junction"), el("div", { class: "ps" }, "Reviewing on time is what makes it stick")), el("button", { type: "button", class: "btn purple", onclick: () => go("review-L3") }, "Review"));
+  else plan = el("div", { class: "sheet plan" }, el("div", { class: "grow" }, el("div", { class: "pk" }, "ALL DONE FOR NOW"), el("div", { class: "pt" }, "Next review: " + (rv ? fmtDate(rv.due) : "soon")), el("div", { class: "ps" }, "Other lectures are still in v2 while they're rebuilt")), el("button", { type: "button", class: "btn sm", onclick: () => go("lesson-L3") }, "Replay"));
+  wrap.append(plan);
+  // path
+  const offs = [0, 62, 92, 62, 0, -62, -92, -62];
+  let k = 0;
+  COURSE.worlds.forEach(w => {
+    const world = el("section", { class: "world", style: { "--wc": w.color } });
+    const cov = w.test ? w.test.covers : w.lec, got = cov.filter(id => lessonState(id)).length, pct = Math.round(100 * got / cov.length);
+    world.append(el("div", { class: "wband" }, el("div", { class: "grow" }, el("div", { class: "wn" }, w.name), el("div", { class: "ws" }, w.sub + " · Lectures " + w.lec[0].slice(1) + "–" + w.lec[w.lec.length - 1].slice(1))),
+      w.test ? el("div", { class: "ready" }, (w.test.id === "F" ? "Final" : "Test " + w.test.id.slice(1)) + " ready " + pct + "%", el("div", { class: "bar" }, el("i", { style: { width: pct + "%" } }))) : null));
+    const path = el("div", { class: "path" });
+    const addNode = (node, label) => { const x = offs[k++ % offs.length]; path.append(el("div", { class: "nodewrap", style: { transform: `translateX(${x}px)` } }, node, label)); };
+    w.lec.forEach(id => {
+      const t = COURSE.titles[id], has = !!LESSONS[id], stt = lessonState(id);
+      if (has) {
+        const cur = !stt;
+        const node = el("button", { type: "button", class: "node " + (stt ? "done" : "cur"), "aria-label": t, onclick: () => stt ? sheet(t, `Lecture ${id.slice(1)} · ${stt === "mastered" ? "Mastered" : "Practiced"}. ${S.reviews[id] ? "Next review " + fmtDate(S.reviews[id].due) + "." : ""}`, [{ label: "Replay lesson", cls: "go", fn: () => go("lesson-" + id) }, { label: "Close" }]) : go("lesson-" + id) },
+          el("span", { class: "ring" }), H(ART.ICON.star(stt ? "#f2b632" : "#fff")), stt === "mastered" ? el("span", { class: "mastery", html: ART.ICON.check }) : null, cur ? el("span", { class: "bubble", style: { "--wc2": w.color } }, "Start") : null);
+        addNode(node, el("div", { class: "nlabel" }, t, el("small", null, "Lecture " + id.slice(1) + (stt ? " · " + stt : " · new"))));
+        if (S.reviews[id]) {
+          const due = reviewDue(id);
+          addNode(el("button", { type: "button", class: "node review" + (due ? " due" : ""), "aria-label": "Review " + t, onclick: () => due ? go("review-" + id) : sheet("Review: " + t, `Unlocks <b>${fmtDate(S.reviews[id].due)}</b>. Waiting a bit before reviewing is what makes it stick. You can practice early, but it won't count toward mastery.`, [{ label: "Practice early", cls: "purple", fn: () => go("review-" + id) }, { label: "Close" }]) }, H(ART.ICON.review(due ? "#fff" : "#463a9c"))),
+            el("div", { class: "nlabel" }, "Review", el("small", null, due ? "ready now" : fmtDate(S.reviews[id].due))));
+        }
+      } else {
+        addNode(el("button", { type: "button", class: "node legacy", "aria-label": t, onclick: () => sheet(`Lecture ${id.slice(1)} · ${t}`, "This lecture hasn't moved to Silicon Island yet. You can still practice it in Semi Quest v2.", [{ label: "Open in v2 ↗", cls: "blue", href: "https://broof.study/semi/#level-" + id }, { label: "Close" }]) }, H(ART.ICON.sketchy)),
+          el("div", { class: "nlabel" }, t, el("small", null, "Lecture " + id.slice(1) + " · in v2")));
+      }
+    });
+    if (w.test) addNode(el("button", { type: "button", class: "node chamber locked", "aria-label": w.test.name, onclick: () => sheet(w.test.name, "Mixed questions, a timer and no hints. It opens once every lecture in this world has moved to the island. Until then, the v2 boss covers the same material.", [{ label: "Try the v2 boss ↗", cls: "blue", href: "https://broof.study/semi/#" + w.test.v2 }, { label: "Close" }]) }, H(ART.ICON.door("#fff"))),
+      el("div", { class: "nlabel" }, w.test.name, el("small", null, "opens later")));
+    world.append(path); wrap.append(world);
+  });
+  wrap.append(el("div", { class: "foot" }, el("p", null, "Dashed lectures still live in ", el("a", { href: "https://broof.study/semi/", target: "_blank", rel: "noopener" }, "Semi Quest v2"), "."),
+    el("button", { type: "button", onclick: () => sheet("Reset progress?", "This clears your electrons, streak, cards and island buildings on this device.", [{ label: "Reset", cls: "red", fn: () => { S = DEF(); save(); go("welcome"); } }, { label: "Cancel" }]) }, "Reset progress")));
+  app.innerHTML = ""; app.append(wrap);
+  const just = S.justBuilt; S.justBuilt = null; save();
+  const isle = T3.island(isl, { built: S.built, justBuilt: just, next: lessonState("L3") ? null : "bridge" });
+  cleanup.push(() => isle.destroy());
+  if (just) setTimeout(() => isl.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+}
+
+/* ================= BINDER ================= */
+function viewBinder() {
+  const wrap = el("div", { class: "wrap" });
+  wrap.append(el("header", { class: "top" }, el("button", { type: "button", class: "iconbtn", "aria-label": "Back", onclick: () => go("home"), html: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#26221d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>` }), el("div", { class: "brand" }, "Parts binder")));
+  wrap.append(el("p", { style: { color: "var(--ink2)", margin: "0 2px" } }, "Every lesson adds the real part it's about. ", el("b", null, S.cards.length + " of " + PARTS.length), " collected."));
+  wrap.append(el("div", { class: "binder" }, PARTS.map(p => {
+    const got = S.cards.includes(p.id);
+    if (!got) return el("div", { class: "pcard locked" }, el("div", { class: "pa", html: `<svg viewBox="0 0 60 40" width="60"><rect x="6" y="10" width="48" height="20" rx="10" fill="none" stroke="#a59c8c" stroke-width="2" stroke-dasharray="4 3"/></svg>` }), el("div", { class: "pn" }, p.name), el("div", { class: "pl" }, "UNLOCKS IN LECTURE " + p.lec.slice(1)));
+    return el("div", { class: "pcard" }, el("div", { class: "pa", html: ART.pkg({ mini: true }) }), el("div", { class: "pl" }, p.kind.toUpperCase() + " · LECTURE " + p.lec.slice(1)), el("div", { class: "pn" }, p.name), el("ul", null, p.specs.map(s => el("li", null, s)), el("li", null, "Found in: " + p.found)));
+  })));
+  app.innerHTML = ""; app.append(wrap);
+}
+
+/* ================= LESSON RUNNER ================= */
+function playLesson(L, mode) {
+  const steps = mode === "review" ? L.review : L.steps;
+  const early = mode === "review" && !reviewDue(L.id);
+  let i = 0, earned = 0, firstTry = 0, qCount = 0, conf = 3, lab = null, labHolder = null, t0 = Date.now();
+  const beatsInOrder = [...new Set(steps.map(s => s.beat))];
+  const wrap = el("div", { class: "lesson" });
+  const prog = el("div", { class: "prog" }, beatsInOrder.map(b => el("div", { class: "seg", style: { "--n": steps.filter(s => s.beat === b).length, "--bc": BEATS[b].color }, "data-b": b }, el("i"))));
+  wrap.append(el("div", { class: "lhead" }, el("button", { type: "button", class: "iconbtn", "aria-label": "Quit lesson", html: ART.ICON.x, onclick: () => sheet("Leave this lesson?", "Your progress in this lesson won't be saved.", [{ label: "Keep going", cls: "go" }, { label: "Leave", cls: "red", fn: () => go("home") }]) }), prog));
+  const stage = el("main", { class: "stage" }); wrap.append(stage);
+  const foot = el("div", { class: "lfoot" }); const fin = el("div", { class: "in" }); foot.append(fin);
+  const fb = el("div", { class: "fb" }); const btn = el("button", { type: "button", class: "btn go wide" }, "Check"); fin.append(fb, btn);
+  app.innerHTML = ""; app.append(wrap, foot);
+  cleanup.push(() => { foot.remove(); if (lab) lab.destroy(); });
+  const setProg = () => beatsInOrder.forEach(b => { const idx = steps.map((s, j) => s.beat === b ? j : -1).filter(j => j >= 0), done = idx.filter(j => j < i).length; prog.querySelector(`[data-b="${b}"] i`).style.width = (100 * done / idx.length) + "%"; });
+  let onBtn = null;
+  const setBtn = (label, cls, enabled, fn) => { btn.textContent = label; btn.className = "btn wide " + cls; btn.disabled = !enabled; onBtn = fn; };
+  btn.onclick = () => { if (!btn.disabled && onBtn) onBtn(); };
+  document.onkeydown = e => { if (e.key === "Enter" && !btn.disabled && !(e.target.tagName === "BUTTON")) { e.preventDefault(); btn.click(); } else if (/^[1-4]$/.test(e.key) && stage.keys) stage.keys(+e.key - 1); };
+  const feedback = (kind, title, x, fx, gain) => {
+    foot.className = "lfoot " + kind;
+    fb.innerHTML = "";
+    const icon = kind === "ok" ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1f6e42" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>` : kind === "bad" ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9b2f25" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>` : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d4a9a" stroke-width="2.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>`;
+    const body = el("div", { style: { flex: "1", minWidth: "0" } }, el("div", { class: "ft" }, title, gain ? el("span", { class: "gain" }, "+" + gain + " e⁻") : null), x ? el("div", { class: "fx", html: x }) : null);
+    if (fx) { const f = el("div", { class: "fbfig" }); const r = typeof fx === "function" ? fx(f) : fx; if (typeof r === "string") f.innerHTML = r; body.append(f); }
+    fb.append(el("div", { class: "badge", html: icon }), body);
+  };
+  const clearFb = () => { foot.className = "lfoot"; fb.innerHTML = ""; };
+  const award = n => { earned += n; return n; };
+
+  function splash(b, next) {
+    const B = BEATS[b];
+    stage.innerHTML = ""; clearFb(); stage.keys = null; stage.dataset.i = "splash";
+    stage.append(el("div", { class: "splash", style: { "--bc": B.color } }, el("div", { class: "n" }, "PART " + (beatsInOrder.indexOf(b) + 1) + " OF " + beatsInOrder.length), el("div", { class: "big", html: ART.ICON[B.icon] }), el("h2", null, B.name), el("p", null, B.tag)));
+    setBtn("Let's go", "go", true, next);
+  }
+  function show() {
+    setProg();
+    if (i >= steps.length) return finish();
+    const s = steps[i];
+    if (mode !== "review" && (i === 0 || steps[i - 1].beat !== s.beat) && !s._splashed) { s._splashed = true; return splash(s.beat, show); }
+    s._splashed = false;
+    renderStep(s);
+  }
+  const nextStep = () => { i++; window.scrollTo({ top: 0, behavior: "smooth" }); show(); };
+
+  function renderStep(s) {
+    clearFb(); stage.innerHTML = ""; stage.keys = null; stage.dataset.i = i; stage.dataset.mode = mode;
+    const B = BEATS[s.beat];
+    const card = el("article", { class: "card", style: { "--bc": B.color } });
+    card.append(el("div", { class: "beatchip", style: { "--bc": B.color } }, el("span", { class: "dot" }), B.name.toUpperCase()));
+    let figApi = null, figHost = null, missionDone = !s.mission && !s.cta;
+    const ctx = {
+      mission: v => { if (!v || missionDone) return; missionDone = true; const m = card.querySelector(".mission"); if (m) { m.classList.add("done"); m.querySelector(".box").innerHTML = ART.ICON.check.replace('width="26" height="26"', 'width="18" height="18"'); } award(5); if (s.kind === "play") { feedback("ok", "Mission done", s.done || "", null, 5); setBtn("Continue", "go", true, nextStep); } },
+      cta: (label, fn) => { const b = el("button", { type: "button", class: "btn blue", style: { marginTop: "10px" }, onclick: () => { b.disabled = true; fn(); } }, label); ctaRow.append(b); },
+    };
+    const ctaRow = el("div");
+    if (s.cap) card.append(el("p", { class: "cap", html: s.cap }));
+    if (s.mission) card.append(el("div", { class: "mission" }, el("span", { class: "box" }), s.mission));
+    // figure
+    if (s.lab) {
+      if (!lab) { labHolder = el("div"); lab = T3.diodeLab(labHolder); }
+      figHost = el("div", { class: "vis" }); figHost.append(labHolder); card.append(figHost);
+      const want = s.lab;
+      requestAnimationFrame(() => lab.setState(want));
+      if (s.cta) ctx.cta(s.cta, () => { lab.setState(s.ctaLab); setTimeout(() => ctx.mission(true), 900); });
+      if (s.bias) {
+        const val = el("span", { class: "val" }); const rng = el("input", { type: "range", min: "-3", max: "0.8", step: "0.01", value: lab.state.V ?? 0, "aria-label": "Voltage across the diode" });
+        const upd = () => { const v = +rng.value; lab.setBias(v); val.textContent = (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2) + " V"; if (v > .58) ctx.mission(true); };
+        rng.oninput = upd; upd();
+        card.append(el("div", { class: "ctrl" }, el("label", null, "V"), el("span", { style: { fontSize: "13px", fontWeight: "800", color: "var(--ink2)" } }, "reverse"), rng, el("span", { style: { fontSize: "13px", fontWeight: "800", color: "var(--ink2)" } }, "forward"), val));
+      } else if (lab) lab.setBias(0);
+    } else if (s.fig) {
+      if (s.raw) { figHost = el("div"); card.append(figHost); }
+      else { figHost = el("div", { class: "vis" + (s.paper ? " paper" : "") }); card.append(figHost); }
+      const r = typeof s.fig === "function" ? s.fig(figHost, ctx) : s.fig;
+      if (typeof r === "string") figHost.innerHTML = r; else figApi = r;
+    }
+    card.append(ctaRow);
+    if (s.q) card.append(el("div", { class: "q", html: s.q }));
+    stage.append(card);
+    const single = s.beat === "lock";
+    const isQ = !["play", "conf"].includes(s.kind);
+    if (isQ && s.kind !== "predict") qCount++;
+    let miss = 0, finished = false;
+    const done = (ok, revealFn) => {
+      finished = true;
+      if (s.kind !== "predict") { if (ok && miss === 0) firstTry++; }
+      const g = ok ? (miss === 0 ? (single ? 15 : 10) : 4) : 0; if (g) award(g);
+      const title = ok ? ["Nice!", "Exactly.", "You got it.", "Spot on."][i % 4] : "Not quite";
+      feedback(ok ? "ok" : "bad", title, s.x, s.fx, g);
+      setBtn("Continue", ok ? "go" : "red", true, nextStep);
+    };
+    const tries = (n) => single ? 1 : (n > 2 ? 2 : 1);
+    if (s.kind === "play") {
+      setBtn("Continue", "go", missionDone, nextStep);
+      if (missionDone && s.done && !s.mission) feedback("info", "Look", s.done);
+      return;
+    }
+    if (s.kind === "predict" || s.kind === "mcq" || s.kind === "tf") {
+      const opts = s.kind === "tf" ? ["True", "False"] : s.o, ans = s.kind === "tf" ? (s.tf ? 0 : 1) : s.a;
+      let sel = -1;
+      const bs = opts.map((t, j) => el("button", { type: "button", class: "opt", onclick: () => pick(j) }, el("span", { class: "k" }, j + 1), el("span", { html: t })));
+      const pick = j => { if (finished || bs[j].disabled) return; sel = j; bs.forEach((b, k) => b.classList.toggle("sel", k === j)); setBtn("Check", "go", true, check); };
+      stage.keys = j => bs[j] && pick(j);
+      const check = () => {
+        if (sel < 0) return;
+        if (s.kind === "predict") { finished = true; bs.forEach(b => b.disabled = true); bs[ans].classList.add("right"); if (sel !== ans) bs[sel].classList.add("wrong"); const g = award(sel === ans ? 10 : 5); feedback("info", sel === ans ? "Good instinct!" : "Interesting guess", s.x, null, g); setBtn("Continue", "blue", true, nextStep); return; }
+        if (sel === ans) { bs[sel].classList.remove("sel"); bs[sel].classList.add("right"); bs.forEach(b => b.disabled = true); done(true); return; }
+        miss++; bs[sel].classList.remove("sel"); bs[sel].classList.add("wrong"); bs[sel].disabled = true; sel = -1;
+        if (miss >= tries(opts.length)) { bs[ans].classList.add("right"); bs.forEach(b => b.disabled = true); done(false); }
+        else { setBtn("Check", "go", false, check); nudge("Not that one. Try again."); }
+      };
+      card.append(el("div", { class: "opts" }, bs));
+      setBtn("Check", "go", false, check);
+    } else if (s.kind === "pick") {
+      let sel = -1;
+      const bs = s.pick.map((svgS, j) => { const b = el("button", { type: "button", class: "pick", "aria-label": "Option " + "ABC"[j], onclick: () => pick(j) }, el("span", { class: "tag" }, "ABC"[j])); b.insertAdjacentHTML("beforeend", svgS); return b; });
+      const pick = j => { if (finished || bs[j].disabled) return; sel = j; bs.forEach((b, k) => b.classList.toggle("sel", k === j)); setBtn("Check", "go", true, check); };
+      stage.keys = j => bs[j] && pick(j);
+      const check = () => {
+        if (sel < 0) return;
+        if (sel === s.a) { bs[sel].classList.remove("sel"); bs[sel].classList.add("right"); bs.forEach(b => b.disabled = true); done(true); return; }
+        miss++; bs[sel].classList.remove("sel"); bs[sel].classList.add("wrong"); bs[sel].disabled = true; sel = -1;
+        if (miss >= tries(s.pick.length)) { bs[s.a].classList.add("right"); bs.forEach(b => b.disabled = true); done(false); }
+        else { setBtn("Check", "go", false, check); nudge("Look again."); }
+      };
+      card.append(el("div", { class: "picks" + (s.pick.length === 3 ? "" : "") }, bs));
+      setBtn("Check", "go", false, check);
+    } else if (s.kind === "spot") {
+      const svgEl = figHost.querySelector("svg"); svgEl.classList.add("spot-live");
+      const ans = [].concat(s.spot);
+      card.insertBefore(el("div", { class: "hint-tap" }, "↑ tap on the picture"), card.querySelector(".q"));
+      svgEl.addEventListener("click", ev => {
+        if (finished) return; const z = ev.target.closest("[data-zone]"); if (!z || z.classList.contains("z-bad")) return;
+        const id = z.dataset.zone;
+        if (ans.includes(id)) { svgEl.querySelectorAll(`[data-zone="${id}"]`).forEach(n => n.classList.add("z-ok")); svgEl.classList.remove("spot-live"); done(true); return; }
+        miss++; svgEl.querySelectorAll(`[data-zone="${id}"]`).forEach(n => n.classList.add("z-bad"));
+        if (miss >= (single ? 1 : 2)) { ans.forEach(a => svgEl.querySelectorAll(`[data-zone="${a}"]`).forEach(n => n.classList.add("z-ok"))); svgEl.classList.remove("spot-live"); done(false); }
+        else nudge("Not there. One more try.");
+      });
+      setBtn("Tap the picture", "go", false, null);
+    } else if (s.kind === "num") {
+      const inp = el("input", { type: "text", inputmode: "decimal", placeholder: "your answer", "aria-label": "Answer", autocomplete: "off" });
+      inp.oninput = () => setBtn("Check", "go", inp.value.trim() !== "", check);
+      const check = () => {
+        const v = parseFloat(inp.value.replace(/,/g, "").replace(/\s/g, "").replace(/[×x]10\^?/i, "e"));
+        if (!isFinite(v)) { nudge("Type a number, like 0.7"); return; }
+        const ok = Math.abs(v - s.num) <= Math.abs(s.num) * (s.tol || .03);
+        if (ok) { inp.disabled = true; done(true); return; }
+        miss++;
+        if (miss >= 3) { inp.disabled = true; s.x = `Answer: <b>${s.num} ${s.u || ""}</b>. ` + s.x; done(false); }
+        else { nudge(miss === 1 ? "Not quite. " + (s.hint || "Check your logs.") : "Close? Answer to 2–3 significant figures."); setBtn("Check", "go", true, check); }
+      };
+      card.append(el("div", { class: "numrow" }, inp, s.u ? el("span", { class: "u" }, s.u) : null));
+      setBtn("Check", "go", false, check);
+      setTimeout(() => inp.focus({ preventScroll: true }), 50);
+    } else if (s.kind === "conf") {
+      card.append(el("div", { class: "conf" }, s.o.map(([t, sub, d], j) => el("button", { type: "button", class: "opt", onclick: () => { conf = d; nextStep(); } }, el("span", null, t), el("small", null, sub)))));
+      setBtn("Pick one above", "go", false, null);
+    }
+    function nudge(t) { let n = card.querySelector(".nudge"); if (!n) { n = el("div", { class: "nudge" }); card.append(n); } n.textContent = t; }
+  }
+
+  function finish() {
+    const secs = Math.round((Date.now() - t0) / 1000), acc = qCount ? Math.round(100 * firstTry / qCount) : 100;
+    const prev = S.lessons[L.id] || {};
+    let state = prev.state || "practiced";
+    if (mode === "review" && !early && acc >= 75) state = "mastered";
+    if (mode !== "review" || !early) S.reviews[L.id] = { due: Date.now() + conf * DAY };
+    S.lessons[L.id] = { state, acc, at: Date.now() };
+    S.e += earned; bumpStreak();
+    const newCard = !S.cards.includes(L.card), newB = !S.built.includes(L.building);
+    if (newCard) S.cards.push(L.card);
+    if (newB) { S.built.push(L.building); S.justBuilt = L.building; }
+    save();
+    foot.remove(); if (lab) { lab.destroy(); lab = null; }
+    setProg();
+    const part = PARTS.find(p => p.id === L.card);
+    stage.innerHTML = "";
+    stage.append(el("div", { class: "results" },
+      el("div", { html: `<svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="42" fill="#f2b632" stroke="#26221d" stroke-width="4"/><path d="M48 22l7.6 15.4 17 2.5-12.3 12 2.9 16.9L48 60.8l-15.2 8 2.9-16.9-12.3-12 17-2.5z" fill="#fff" stroke="#26221d" stroke-width="3" stroke-linejoin="round"/></svg>`, style: { animation: "pop .6s cubic-bezier(.2,1.6,.4,1)" } }),
+      el("h1", null, mode === "review" ? "Review done" : "Lesson complete"),
+      el("div", { class: "sub" }, L.title + " · Lecture " + L.n),
+      el("div", { class: "stats" }, el("div", { class: "stat" }, el("div", { class: "k" }, "ELECTRONS"), el("div", { class: "v", style: { color: "var(--blue)" } }, "+" + earned)), el("div", { class: "stat" }, el("div", { class: "k" }, "FIRST TRY"), el("div", { class: "v" }, acc + "%")), el("div", { class: "stat" }, el("div", { class: "k" }, "TIME"), el("div", { class: "v" }, Math.floor(secs / 60) + ":" + String(secs % 60).padStart(2, "0")))),
+      el("div", { class: "sheet reward" }, el("div", { class: "art", html: ART.pkg({ mini: true }) }), el("div", null, el("div", { class: "rk" }, newCard ? "NEW PART CARD" : "PART CARD"), el("div", { class: "rt" }, part.name), el("div", { class: "rs" }, part.found))),
+      newB ? el("div", { class: "sheet reward" }, el("div", { class: "art", html: ART.bridgeArt() }), el("div", null, el("div", { class: "rk" }, "BUILT ON YOUR ISLAND"), el("div", { class: "rt" }, "Junction bridge"), el("div", { class: "rs" }, "Go watch it go up."))) : null,
+      el("div", { class: "sheet reward" }, el("div", { class: "art", html: `<svg viewBox="0 0 110 70"><rect x="8" y="10" width="94" height="52" rx="10" fill="#e9e5fb" stroke="#26221d" stroke-width="2.5"/><path d="M40 36a15 15 0 1 1 4 10" fill="none" stroke="#463a9c" stroke-width="4" stroke-linecap="round"/><path d="M40 26v10h10" fill="none" stroke="#463a9c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>` }),
+        el("div", null, el("div", { class: "rk" }, "NEXT REVIEW"), el("div", { class: "rt" }, S.reviews[L.id] ? fmtDate(S.reviews[L.id].due) : "—"), el("div", { class: "rs" }, state === "mastered" ? "Mastered! Reviews now space out further." : early ? "Early practice doesn't count toward mastery." : "Pass it on time to master this lesson."))),
+      el("button", { type: "button", class: "btn go wide", style: { marginTop: "18px" }, onclick: () => go("home") }, newB ? "See your island" : "Back to the island")));
+    window.scrollTo({ top: 0 });
+  }
+  show();
+}
+
+function viewCopy() {
+  const wrap = el("div", { class: "onb" }, el("h1", null, "Deploy helper"));
+  const msg = el("p", null, "Loading…"); const ta = el("textarea", { style: { width: "100%", height: "200px", fontFamily: "var(--mono)", fontSize: "11px" }, readonly: true });
+  const b = el("button", { type: "button", class: "btn go wide" }, "Copy source");
+  wrap.append(msg, b, ta); app.innerHTML = ""; app.append(wrap);
+  fetch("src.txt").then(r => r.text()).then(t => { ta.value = t; msg.textContent = t.length + " characters ready."; b.onclick = () => navigator.clipboard.writeText(t).then(() => { msg.textContent = "Copied " + t.length + " characters."; }, () => { ta.select(); document.execCommand("copy"); msg.textContent = "Copied (fallback) " + t.length + " characters."; }); });
+}
+/* ================= ROUTER ================= */
+function route() {
+  teardown(); window.scrollTo({ top: 0 });
+  const h = location.hash.slice(1);
+  if (!S.onboarded && h !== "welcome" && h !== "copy-source") { if (h.startsWith("lesson-") || h === "binder") { S.onboarded = true; save(); } else return viewWelcome(); }
+  if (h === "copy-source" && window.SQ_COPY) return viewCopy();
+  if (h === "welcome") return viewWelcome();
+  if (h === "binder") return viewBinder();
+  let m = h.match(/^lesson-(L\d+)$/); if (m && LESSONS[m[1]]) return playLesson(LESSONS[m[1]], "lesson");
+  m = h.match(/^review-(L\d+)$/); if (m && LESSONS[m[1]]) return playLesson(LESSONS[m[1]], "review");
+  viewHome();
+}
+window.addEventListener("hashchange", route);
+route();
+window.__SI = { get S() { return S; }, LESSONS, reset() { S = DEF(); save(); } };
+})();
+
+</script></body></html>
