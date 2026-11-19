@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semi Quest · EECE 2077 catch-up game</title>
+<meta name="description" content="A bite-sized game covering Semiconductor Devices (EECE 2077) Lectures 1–20: bands, diodes, BJTs, MOSFETs, LEDs, lasers.">
+<meta name="theme-color" content="#0a0f1f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0f1f'/%3E%3Cpath d='M8 20H26C36 20 32 34 42 34H56' stroke='%234cc9f0' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M8 34H26C36 34 32 48 42 48H56' stroke='%23ffb703' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0a0f1f;--bg2:#0e1530;--panel:#121b38;--panel2:#18234a;--line:#26335f;--line2:#33437a;
+  --text:#e9eeff;--muted:#93a1c8;--dim:#66749c;
+  --e:#4cc9f0;--h:#ffb703;--ok:#2ee59d;--bad:#ff5d73;--warn:#ffcf5c;
+  --wc:#4cc9f0;
+  --r:16px;
+  --font:"Avenir Next","Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--text);font:16px/1.5 var(--font);min-height:100vh;
+  background:
+    radial-gradient(1100px 600px at 85% -10%,rgba(76,201,240,.12),transparent 60%),
+    radial-gradient(900px 600px at -10% 30%,rgba(255,183,3,.07),transparent 60%),
+    radial-gradient(circle at 1px 1px,rgba(255,255,255,.05) 1px,transparent 1.5px) 0 0/22px 22px,
+    var(--bg);
+  -webkit-font-smoothing:antialiased}
+#app{max-width:760px;margin:0 auto;padding:16px 16px 120px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{cursor:default}
+b{font-weight:700}
+sub,sup{font-size:.72em;line-height:0}
+:focus-visible{outline:2px solid var(--wc);outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 14px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo svg{width:64px;height:40px;flex:none;overflow:visible}
+.lg-c{fill:none;stroke:var(--e);stroke-width:3;stroke-linecap:round}
+.lg-v{fill:none;stroke:var(--h);stroke-width:3;stroke-linecap:round}
+.lg-e{fill:var(--e)} .lg-h{fill:var(--h)}
+.lg-t{font-weight:800;letter-spacing:.14em;font-size:20px}
+.lg-s{color:var(--muted);font-size:12.5px}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:17px;flex:none}
+.icon-btn:hover{border-color:var(--line2)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.stat b{font-size:22px;color:var(--text);margin-right:2px;font-family:var(--mono)}
+.stat small{display:block;font-size:11.5px;color:var(--dim);margin-top:2px}
+.stat .bar{height:5px;background:var(--bg2);border-radius:9px;margin-top:6px;overflow:hidden}
+.stat .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--e),var(--ok));border-radius:9px}
+
+.cont{display:block;width:100%;text-align:left;border:1px solid color-mix(in srgb,var(--wc) 55%,transparent);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;position:relative;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--wc) 20%,var(--panel)),var(--panel) 70%)}
+.cont:hover{transform:translateY(-1px)}
+.cont-k{font-size:11.5px;letter-spacing:.14em;color:var(--wc);font-weight:700}
+.cont-t{font-size:21px;font-weight:750;margin:2px 0 4px;padding-right:70px}
+.cont-s{color:var(--muted);font-size:14px}
+.cont-go{position:absolute;right:16px;top:18px;background:var(--wc);color:#08101f;font-weight:800;border-radius:999px;padding:6px 12px;font-size:14px}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:26px}
+.act{display:flex;align-items:center;gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 12px}
+.act:hover:not(:disabled){border-color:var(--line2);background:var(--panel2)}
+.act:disabled{opacity:.5}
+.act b{display:block;font-size:14px}.act small{color:var(--muted);font-size:12px}
+.a-i{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;background:var(--bg2);font-weight:800;color:var(--e)}
+
+/* world map */
+.world{margin:6px 0 4px}
+.w-head{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--wc);border-radius:14px;padding:12px 14px}
+.w-num{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:19px;background:color-mix(in srgb,var(--wc) 22%,transparent);color:var(--wc);flex:none}
+.w-name{font-weight:780;font-size:18px}
+.w-sub{color:var(--muted);font-size:13px}
+.w-prog{margin-left:auto;font-family:var(--mono);color:var(--wc);font-weight:700}
+.map{position:relative;margin:0 4px}
+.path{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.p-bg{fill:none;stroke:var(--line);stroke-width:10;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.p-fg{fill:none;stroke:var(--wc);stroke-width:2.5;vector-effect:non-scaling-stroke;stroke-dasharray:2 10;stroke-linecap:round;opacity:.8;animation:flow 1.6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.node{position:absolute;width:64px;height:64px;border-radius:50%;border:3px solid var(--wc);background:var(--bg2);display:grid;place-items:center;z-index:2;box-shadow:0 6px 0 rgba(0,0,0,.35);transition:transform .12s}
+.node:hover{transform:translateY(-2px) scale(1.04)}
+.node .n{font-weight:800;font-size:22px;font-family:var(--mono);color:var(--wc);line-height:1}
+.node.done{background:var(--wc)} .node.done .n{color:#08101f}
+.node .stars{position:absolute;bottom:-9px;display:flex;gap:2px}
+.node .stars i{width:11px;height:11px;background:var(--line2);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.node .stars i.on{background:#ffd23f}
+.node.next{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 6px 0 rgba(0,0,0,.35),0 0 0 0 color-mix(in srgb,var(--wc) 60%,transparent)}50%{box-shadow:0 6px 0 rgba(0,0,0,.35),0 0 0 12px transparent}}
+.node.boss{width:80px;height:80px;border-radius:22px;transform:rotate(45deg);border-width:3px;background:linear-gradient(135deg,var(--panel2),var(--bg2))}
+.node.boss .n{transform:rotate(-45deg);font-size:20px;letter-spacing:.04em}
+.node.boss:hover{transform:rotate(45deg) scale(1.05)}
+.node.boss.done{background:var(--wc)}
+.node-l{position:absolute;transform:translateX(-50%);width:max-content;max-width:150px;text-align:center;font-size:12.5px;color:#b9c4e6;line-height:1.25;z-index:1;pointer-events:none;background:rgba(10,15,31,.92);border:1px solid var(--line);border-radius:8px;padding:3px 7px}
+.boss-l{color:var(--wc);font-weight:700;letter-spacing:.02em}
+.junction{display:flex;align-items:center;gap:12px;color:var(--dim);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:6px 0 12px}
+.junction svg{width:120px;height:26px;flex:none}
+.foot{color:var(--dim);font-size:12.5px;border-top:1px solid var(--line);margin-top:30px;padding-top:14px}
+
+/* buttons */
+.btn{border:1px solid var(--line2);background:var(--panel2);border-radius:12px;padding:10px 16px;font-weight:650}
+.btn:hover:not(:disabled){border-color:var(--wc)}
+.btn.primary{background:var(--wc);color:#07101e;border-color:transparent;font-weight:800}
+.btn.primary:disabled{background:var(--line);color:var(--muted)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:10px}
+.btn.big{padding:13px 22px;font-size:16px}
+.row{display:flex;gap:10px;align-items:center;margin-top:12px}
+.row.end{justify-content:flex-end}.row.wrap{flex-wrap:wrap}
+
+/* runner */
+.run-top{display:flex;align-items:center;gap:12px;padding:4px 0 10px;position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 75%,transparent)}
+.run-title{flex:1;min-width:0}
+.run-title small{display:block;color:var(--wc);font-size:11px;letter-spacing:.12em;font-weight:700}
+.run-title b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:17px}
+.run-xp{font-family:var(--mono);color:var(--ok);font-weight:700;font-size:14px}
+.combo{font-size:13px;font-weight:800;color:#ffd23f;opacity:0;transition:opacity .2s}
+.combo.on{opacity:1}
+.prog{display:flex;gap:4px;margin:2px 0 14px}
+.prog i{flex:1;height:6px;border-radius:9px;background:var(--line)}
+.prog i.done{background:var(--wc)}.prog i.miss{background:color-mix(in srgb,var(--bad) 70%,var(--line))}
+.prog i.cur{background:color-mix(in srgb,var(--wc) 45%,var(--line))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.25)}
+.card.enter{animation:in .28s ease-out}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.card-k{color:var(--dim);font-size:12px;letter-spacing:.06em;margin-bottom:10px}
+.idea{border-left:3px solid var(--wc);background:color-mix(in srgb,var(--wc) 8%,transparent);border-radius:0 12px 12px 0;padding:10px 14px;margin-bottom:16px;font-size:16.5px}
+.idea-t{display:inline-block;font-size:10.5px;letter-spacing:.16em;font-weight:800;color:var(--wc);margin-bottom:2px}
+.idea b{color:#fff}
+.q-text{font-weight:650;font-size:17px;margin-bottom:12px}
+.opts{display:grid;gap:8px}
+.opts.two{grid-template-columns:1fr 1fr}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;transition:border-color .12s,transform .12s}
+.opt:hover:not(:disabled){border-color:var(--wc);transform:translateX(2px)}
+.opt .k{font-family:var(--mono);font-size:12px;color:var(--dim);border:1px solid var(--line2);border-radius:6px;padding:0 6px;margin-top:2px;flex:none}
+.opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--bg2))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--bg2));opacity:.75;text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 60%,transparent)}
+.opt:disabled:not(.right):not(.wrong){opacity:.55}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.num-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.num-in{flex:1;min-width:180px;background:var(--bg2);border:1.5px solid var(--line2);border-radius:12px;padding:11px 13px;color:var(--text);font:16px var(--mono)}
+.num-in:focus{outline:none;border-color:var(--wc)}
+.num-in.right{border-color:var(--ok)}.num-in.wrong{border-color:var(--bad)}
+.unit{color:var(--muted);font-family:var(--mono)}
+.fb{display:none;margin-top:14px;border-radius:12px;padding:12px 14px;font-size:15px}
+.fb.show{display:block;animation:in .2s}
+.fb.good{background:color-mix(in srgb,var(--ok) 11%,transparent);border:1px solid color-mix(in srgb,var(--ok) 40%,transparent)}
+.fb.bad{background:color-mix(in srgb,var(--bad) 10%,transparent);border:1px solid color-mix(in srgb,var(--bad) 40%,transparent)}
+.fb.warn{background:color-mix(in srgb,var(--warn) 10%,transparent);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent)}
+.fb-h{font-weight:800}
+.fb.good .fb-h{color:var(--ok)}.fb.bad .fb-h{color:var(--bad)}.fb.warn .fb-h{color:var(--warn)}
+.fb-ans{margin-top:4px}
+.fb-x{margin-top:6px;color:#cfd8f7}
+.fb-x span{display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:800;color:var(--muted);margin-right:8px;text-transform:uppercase}
+.run-foot{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:12px max(16px,calc(50% - 364px)) calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 35%)}
+.run-foot:empty{display:none}
+.foot-hint{color:var(--dim);font-size:12.5px;margin-right:auto}
+
+/* sort + match */
+.sort-slots{list-style:none;counter-reset:s;padding:0;margin:0 0 10px;display:grid;gap:6px}
+.slot{counter-increment:s;display:flex;align-items:center;gap:10px;border:1.5px dashed var(--line2);border-radius:10px;padding:8px 10px;min-height:42px}
+.slot::before{content:counter(s);font-family:var(--mono);color:var(--wc);font-weight:800;width:18px}
+.slot.filled{border-style:solid;background:var(--bg2)}
+.slot.ok{border-color:var(--ok)}
+.slot .ph{color:var(--dim);font-size:13px}
+.sort-pool{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line2);background:var(--bg2);border-radius:999px;padding:5px 11px;font-size:13px}
+.chip.big{border-radius:10px;padding:8px 12px;font-size:14.5px;text-align:left}
+.chip:hover:not(:disabled){border-color:var(--wc)}
+.chip.used{opacity:.25}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.m-hint{color:var(--muted);font-size:13px;margin-bottom:8px}
+.match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m-col{display:grid;gap:8px;align-content:start}
+.m-item{text-align:left;background:var(--bg2);border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-size:14.5px}
+.m-item.sel{border-color:var(--text);box-shadow:0 0 0 3px color-mix(in srgb,var(--text) 18%,transparent)}
+.m-item.right{border-color:var(--ok)!important}.m-item.wrong{border-color:var(--bad)!important}
+
+/* results */
+.results{text-align:center;padding:34px 18px 10px}
+.r-k{color:var(--wc);letter-spacing:.18em;font-size:12px;font-weight:800}
+.results h2{font-size:28px;margin:6px 0 2px}
+.r-sub{color:var(--muted)}
+.big-stars{display:flex;justify-content:center;gap:12px;margin:22px 0}
+.big-stars i{width:58px;height:58px;background:var(--line2);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.big-stars i.on{background:#ffd23f;animation:pop .5s both}
+@keyframes pop{0%{transform:scale(0) rotate(-40deg)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.r-stats{display:flex;justify-content:center;gap:16px;margin-bottom:18px}
+.r-stats div{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 18px}
+.r-stats b{display:block;font-size:24px;font-family:var(--mono)}
+.r-stats small{color:var(--muted);font-size:12px}
+.r-vault{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 auto 6px}
+.r-vk{font-weight:750;margin-bottom:8px;color:var(--wc)}
+.f-list{display:flex;flex-wrap:wrap;gap:7px}
+.f{font:13.5px/1.4 var(--mono);background:var(--bg2);border:1px solid var(--line2);border-radius:9px;padding:5px 9px;color:#dfe7ff}
+.results .row{justify-content:center}
+
+/* boss */
+.boss-hud{display:flex;align-items:center;gap:12px;padding:4px 0 14px}
+.boss-hud.hit .hp-bar{animation:shake .3s}
+.hp{flex:1}.hp small{color:var(--wc);font-weight:800;letter-spacing:.06em}
+.hp-bar{height:12px;background:var(--bg2);border:1px solid var(--line2);border-radius:9px;overflow:hidden;margin-top:3px}
+.hp-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--bad),#ff8a3d);transition:width .4s}
+.hearts{font-size:22px;letter-spacing:2px}
+.hearts span{color:var(--line2)}.hearts span.on{color:var(--bad)}
+.hearts.lost{animation:shake .4s}
+.boss-intro{text-align:center;padding:30px 10px}
+.boss-intro p{color:var(--muted);max-width:460px;margin:6px auto 14px}
+.boss-intro .m-list{display:inline-block;text-align:left}
+.boss-face{font-size:44px;font-weight:900;font-family:var(--mono);color:var(--wc);margin:14px auto 4px;width:96px;height:96px;display:grid;place-items:center;border:3px solid var(--wc);border-radius:26px;transform:rotate(45deg)}
+.boss-face>*{transform:rotate(-45deg)}
+.timer{height:6px;background:var(--bg2);border-radius:9px;overflow:hidden;margin-bottom:12px}
+.timer i{display:block;height:100%;width:100%;background:var(--wc);transition:width .1s linear}
+
+/* vault */
+.v-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.chk{color:var(--muted);font-size:14px;display:flex;align-items:center;gap:6px}
+.v-world{margin-bottom:18px}
+.v-world h3{margin:0 0 8px;color:var(--wc);font-size:17px}
+.v-level{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}
+.v-lh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:650;font-size:14px;margin-bottom:8px}
+.v-level.locked .f-list{filter:blur(5px);opacity:.5;user-select:none;pointer-events:none}
+
+/* overlay */
+.overlay{position:fixed;inset:0;background:rgba(5,8,18,.75);backdrop-filter:blur(4px);z-index:50;display:grid;place-items:center;padding:16px}
+.modal{background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:22px;max-width:480px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.m-k{color:var(--e);letter-spacing:.18em;font-size:12px;font-weight:800}
+.modal h2{margin:4px 0 10px;font-size:23px}
+.m-list{margin:0;padding-left:18px;color:#cfd8f7}
+.m-list li{margin:6px 0}
+.xp-float{position:fixed;z-index:60;transform:translate(-50%,0);font-weight:800;color:var(--ok);font-family:var(--mono);pointer-events:none;animation:up 1.1s ease-out forwards;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+@keyframes up{to{transform:translate(-50%,-46px);opacity:0}}
+.fx{position:fixed;inset:0;z-index:70;pointer-events:none}
+
+/* labs */
+.lab{background:var(--bg2);border:1px solid var(--line2);border-radius:16px;padding:12px}
+.lab-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.lab-tag{font-size:10px;font-weight:800;letter-spacing:.16em;background:var(--wc);color:#07101e;border-radius:6px;padding:2px 6px}
+.lab-title{font-weight:700;font-size:14.5px}
+.lab-stage{background:#070b18;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lab-svg{display:block;width:100%;height:auto;font-family:var(--font)}
+.lab-controls{display:grid;gap:10px;margin:12px 2px 6px}
+.ctl-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.slider{display:block}
+.sl-top{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}
+.sl-lab{color:var(--muted)}
+.sl-val{font-family:var(--mono);font-weight:700}
+.sl-val em{font-style:normal;color:var(--wc);font-family:var(--font);font-weight:600;margin-left:4px}
+input[type=range]{width:100%;accent-color:var(--wc);height:28px}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:3px}
+.seg-b{border:0;background:transparent;border-radius:8px;padding:6px 12px;font-size:13.5px;color:var(--muted)}
+.seg-b.on{background:var(--wc);color:#07101e;font-weight:750}
+.lab-readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin:6px 0}
+.ro{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 9px;font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.ro b{color:var(--text);font-family:var(--mono);font-size:12.5px;text-align:right}
+.ro.wide{grid-column:1/-1;color:var(--text);font-size:13.5px}
+.missions{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px}
+.mission{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:#cfd8f7}
+.m-box{width:18px;height:18px;border-radius:6px;border:2px solid var(--line2);flex:none;margin-top:2px;display:grid;place-items:center;font-size:12px}
+.mission.done{color:var(--ok)}
+.mission.done .m-box{background:var(--ok);border-color:var(--ok)}
+.mission.done .m-box::after{content:"✓";color:#07101e;font-weight:900}
+/* svg styles */
+.lab-svg text{fill:#cfd8f7;font-size:12px}
+.lab-svg .lbl{font-size:12.5px;font-weight:700;fill:#e9eeff}
+.lab-svg .lbl.dim{fill:var(--muted);font-weight:500}
+.lab-svg .axl{font-size:10.5px;fill:var(--muted)}
+.lab-svg tspan.sub{font-size:.72em}
+.ec,.ec-p{stroke:var(--e);stroke-width:2.5;fill:none}
+.ev,.ev-p{stroke:var(--h);stroke-width:2.5;fill:none}
+.ei{stroke:var(--dim);stroke-width:1.2;stroke-dasharray:5 4;fill:none}
+.ef{stroke:#f4f7ff;stroke-width:1.6;stroke-dasharray:8 4}
+.lab-svg .ef-t{fill:#f4f7ff}
+.cb-fill{fill:rgba(76,201,240,.10)} .vb-fill{fill:rgba(255,183,3,.10)}
+.dot-e{fill:var(--e)} .dot-h{fill:none;stroke:var(--h);stroke-width:2}
+.ax{stroke:var(--line2);stroke-width:1.2}
+.grid{stroke:var(--line2);stroke-width:1;stroke-dasharray:3 4;fill:none}
+.curve{fill:none;stroke:#f4f7ff;stroke-width:2.4}
+.curve-h{fill:none;stroke:var(--h);stroke-width:2.6}
+.curve-diff{fill:none;stroke:var(--e);stroke-width:1.8;stroke-dasharray:6 4}
+.curve-drift{fill:none;stroke:var(--h);stroke-width:1.8;stroke-dasharray:6 4}
+.lab-svg .drift-t{fill:var(--h)} .lab-svg .diff-t{fill:var(--e)}
+.pt{fill:var(--wc);stroke:#07101e;stroke-width:2}
+.p-fill{fill:rgba(255,183,3,.16)} .n-fill{fill:rgba(76,201,240,.13)}
+.dep-fill{fill:rgba(233,238,255,.10);stroke:rgba(233,238,255,.35);stroke-dasharray:3 3}
+.junc{stroke:#f4f7ff;stroke-width:1.5}
+.lab-svg .ion-p{fill:var(--e);font-weight:800;font-size:15px}
+.lab-svg .ion-m{fill:var(--h);font-weight:800;font-size:15px}
+.lab-svg .ion-m.sm{font-size:11px;font-weight:600;opacity:.8}
+.barrier{stroke:var(--ok);stroke-width:2}
+.wire{stroke:var(--line2);stroke-width:2}
+.em path,.em line,.em circle{stroke:var(--dim);stroke-width:2;fill:none}
+.em path:first-child{fill:rgba(255,255,255,.04)}
+.em.on path,.em.on line,.em.on circle{stroke:var(--wc)}
+.em.on path:first-child{fill:color-mix(in srgb,var(--wc) 35%,transparent)}
+.metal-fill{fill:#3a4363} .ox-fill{fill:#c9d4ff;opacity:.16}
+.absorbed{fill:rgba(5,8,18,.82)}
+.cutline{stroke:#fff;stroke-width:2}
+.glow{filter:drop-shadow(0 0 10px rgba(255,255,255,.35))}
+.q4{fill:rgba(46,229,157,.06)}
+.loadline{stroke:var(--ok);stroke-width:1.6;stroke-dasharray:5 4}
+.powbox{fill:rgba(46,229,157,.18);stroke:var(--ok);stroke-width:1}
+
+@media (max-width:560px){
+  #app{padding:12px 12px 120px}
+  .stats,.actions{grid-template-columns:1fr 1fr 1fr;gap:7px}
+  .stat{padding:8px 9px}.stat b{font-size:18px}
+  .act{flex-direction:column;align-items:flex-start;gap:6px;padding:10px}
+  .act small{display:none}
+  .lg-s{font-size:11px}
+  .cont-t{font-size:18px}
+  .node-l{max-width:124px;font-size:11.5px}
+  .match{grid-template-columns:1fr}
+  .match .m-col:last-child{border-top:1px dashed var(--line2);padding-top:10px}
+  .opts.two{grid-template-columns:1fr 1fr}
+  .card{padding:14px;border-radius:16px}
+  .idea{font-size:15.5px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+<noscript><p style="padding:20px">Semi Quest needs JavaScript turned on.</p></noscript>
+<script>
+/* SEMI QUEST — content. One level per lecture of EECE 2077 (Fall 2026).
+   Step keys: c = idea text; q = question; o/a = options/answer index; tf = true/false;
+   num/u/tol/tolAbs = numeric answer; sort = items in correct order; match = [left,right] pairs;
+   lab = interactive lab id; x = explanation; h = hint shown after first miss. */
+const WORLDS = [
+{
+ id: "w1", name: "Bands & Carriers", color: "#4cc9f0", lec: "Lectures 1–2",
+ tag: "Where free charge comes from, and how it moves.",
+ levels: [
+ {
+  id: "L1", n: 1, t: "Bands & Carrier Concentrations", s: "Aug 27 · Ch. 3",
+  b: "Find out where free electrons and holes come from, and how many there are.",
+  steps: [
+   { c: "To conduct, a material needs charges that are **free to move**. How a material bonds decides how much energy that takes: ~zero for metals, a little for semiconductors (Si, GaAs, GaN), a lot for insulators (SiO_2, Al_2O_3).",
+     q: "Why is SiO_2 an insulator?",
+     o: ["It has no conduction or valence band", "It has both bands, but the gap is so wide that almost no carriers are generated at 300 K", "Its electrons are too heavy to move", "It is full of holes"], a: 1,
+     x: "Every solid has bands. An insulator's gap is just too big for thermal energy (kT ≈ 0.026 eV) to bridge." },
+   { c: "Push many Si atoms together and the **Pauli exclusion principle** stops electrons from sharing a state. The discrete 3s/3p levels spread into **bands**: the filled valence band (E_V), the empty conduction band (E_C), and the gap E_g ≈ 1.12 eV between them.",
+     q: "Which principle turns discrete atomic levels into bands?",
+     o: ["Pauli exclusion principle", "Heisenberg uncertainty", "Ohm's law", "Conservation of charge"], a: 0,
+     x: "N atoms means N copies of each level. Pauli forbids identical states, so the copies split into a band of closely spaced levels." },
+   { c: "At 300 K a few electrons jump from E_V to E_C: **thermal generation**. Each one leaves behind a **hole**, a missing electron in a bond. Neighbors pass the vacancy along, so it moves like a +q carrier. Both carriers conduct.",
+     q: "True or false: a hole is a real positively charged particle living inside the Si atom.", tf: false,
+     x: "A hole is just the absence of an electron. It acts like +q because neighboring bonds trade the vacancy around." },
+   { c: "Generation never stops, so why don't carriers pile up forever? Electrons and holes wander, meet, and **recombine**. Generation and recombination balance at the equilibrium values n_0 and p_0 (the 0 means thermal equilibrium).",
+     q: "In undoped Si at 300 K, the carrier count stays constant because…",
+     o: ["Generation stops after a while", "Generation is balanced by recombination", "Electrons leak out of the crystal", "Holes block new electrons"], a: 1,
+     x: "Two competing rates. Heat both creates pairs and speeds up how fast they find each other." },
+   { c: "Carrier concentration = (states available) × (chance each is filled). The chance is the **Fermi–Dirac function** f(E) = 1/(1 + e^{(E − E_F)/kT}). At E = E_F it equals exactly ½.",
+     q: "What is the probability that a state exactly at the Fermi level is occupied?",
+     o: ["0", "1/2", "1", "Depends on doping"], a: 1,
+     x: "E_F is defined as the 50% point, at any temperature and any doping." },
+   { c: "**Doping**: a column V atom (P, As) has one extra electron to give → **n-type**. A column III atom (B) steals an electron from a Si bond, creating a hole → **p-type**. At 300 K essentially all dopants are ionized.",
+     q: "You add arsenic (As) to Si. It…",
+     o: ["Has one less electron → creates a hole", "Has one more electron → donates a free electron (n-type)", "Has one more electron → creates a hole", "Changes nothing"], a: 1,
+     x: "As is column V: five valence electrons, four used in bonds, one donated." },
+   { lab: "fermi",
+     c: "Lab time. Change the doping and watch E_F slide toward E_C (n-type) or E_V (p-type). Keep an eye on the **minority** carrier: it collapses as the majority grows." },
+   { c: "**Mass-action law**: n_0 p_0 = n_i^2. For Si at 300 K, n_i ≈ 1.5×10^10 cm^-3. Raising one carrier lowers the other: more majority carriers means minority carriers get recombined away faster.",
+     q: "Si is doped with 10^17 cm^-3 boron at 300 K. What is n_0?", num: 2250, u: "cm⁻³",
+     h: "p_0 ≈ N_A. Then n_0 = n_i^2 / p_0.",
+     x: "p_0 ≈ 10^17, so n_0 = (1.5×10^10)^2 / 10^17 = 2.25×10^3 cm^-3. Still electrons, just far fewer." },
+   { c: "How far E_F moves from the intrinsic level E_i: **E_i − E_F = kT·ln(p_0/n_i)** for p-type, or E_F − E_i = kT·ln(n_0/n_i) for n-type. In this course kT = **0.0259 eV** at 300 K.",
+     q: "Same 10^17 cm^-3 B-doped Si: how far below E_i does E_F sit?", num: 0.407, u: "eV", tol: 0.03,
+     h: "0.0259 × ln(10^17 / 1.5×10^10)",
+     x: "0.0259 × ln(6.67×10^6) = 0.0259 × 15.7 ≈ 0.41 eV below E_i." },
+   { c: "Energies in this course are in **eV**: the energy one electron charge gains across 1 V. 1 eV = 1.6×10^-19 J. Much nicer than writing joules on a band diagram.",
+     q: "A hole is accelerated through 4 V. How much energy does it gain?",
+     o: ["4 eV", "0.25 eV", "1.6×10^-19 eV", "4 J"], a: 0,
+     x: "Charge magnitude e × 4 V = 4 eV (= 6.4×10^-19 J)." }
+  ],
+  v: ["f(E) = 1/(1 + e^{(E−E_F)/kT})", "n_0 = N_C e^{−(E_C−E_F)/kT}", "p_0 = N_V e^{−(E_F−E_V)/kT}", "n_0 p_0 = n_i^2", "E_F − E_i = kT ln(n_0/n_i)", "kT = 0.0259 eV at 300 K", "n_i(Si) = 1.5×10^10 cm^-3", "1 eV = 1.6×10^-19 J"]
+ },
+ {
+  id: "L2", n: 2, t: "Carrier Dynamics", s: "Sep 1 · Ch. 4",
+  b: "Generation, recombination, drift and diffusion: the four things every device does.",
+  steps: [
+   { c: "Recombination needs an electron to **find** a hole. More doping means more partners nearby, so the lifetime τ gets shorter. In class: τ ∝ 1/(majority concentration).",
+     q: "GaAs with p_0 = 10^15 cm^-3 has τ = 10^-8 s. Estimate τ at p_0 = 10^17 cm^-3.", num: 1e-10, u: "s",
+     h: "100× more holes → recombination happens 100× faster.",
+     x: "τ scales as 1/p_0: 10^-8 / 100 = 10^-10 s." },
+   { c: "Electron and hole lifetimes in a sample are **equal**, even when n ≠ p. Dopants never take their carriers back, so every generated electron that disappears takes exactly one generated hole with it.",
+     q: "True or false: in heavily p-type Si, the hole lifetime is much longer than the electron lifetime.", tf: false,
+     x: "Each recombination removes one electron AND one hole, so the excess lifetimes must match." },
+   { c: "Photons with E ≥ E_g create electron–hole pairs: **one pair per photon**, even if E_photon is twice E_g. Under steady light the excess settles at **Δn = Δp = g_op·τ**.",
+     q: "2×10^20 photons/s are absorbed uniformly in 2 cm³ of GaAs with τ = 10^-8 s. Find the excess hole concentration Δp.", num: 1e12, u: "cm⁻³",
+     h: "g_op = photons per second per cm³. Then Δp = g_op τ.",
+     x: "g_op = 2×10^20 / 2 = 10^20 cm^-3 s^-1. Δp = 10^20 × 10^-8 = 10^12 cm^-3, just 0.1% of the doping." },
+   { c: "Only **direct-bandgap** materials (GaAs, GaN, InP) recombine efficiently by emitting light. **Indirect** ones (Si, Ge, SiC) need a phonon to fix the momentum mismatch, so light emission is improbable.",
+     q: "Best material for an efficient LED?", o: ["Si", "Ge", "GaAs", "SiC"], a: 2,
+     x: "GaAs is direct-gap. Si, Ge and SiC are indirect: the energy mostly becomes heat." },
+   { lab: "drift",
+     c: "**Drift** = carriers pushed by an E-field. Soda-pop picture: electrons are water and roll **down** the bands; holes are bubbles and float **up**. Positive voltage pushes the bands **down**." },
+   { c: "Drift current: **J = q(nμ_n + pμ_p)E**. Mobility μ (cm²/V·s) is how fast a carrier moves per unit field. Scattering off ionized dopants and lattice vibrations lowers μ.",
+     q: "Si bar: L = 0.1 cm, A = 100 µm², N_A = 10^17 cm^-3 boron, μ_p = 500 cm²/V·s, 1 V applied. Drift current?", num: 8e-5, u: "A",
+     h: "Convert area: 100 µm² = 10^-6 cm². σ = q p μ_p, then I = σ A V / L.",
+     x: "σ = 1.6×10^-19 × 10^17 × 500 = 8 S/cm. I = 8 × 10^-6 × 1 / 0.1 = 8×10^-5 A = 80 µA." },
+   { c: "**Diffusion** = carriers spreading from high to low concentration by random thermal motion. No E-field needed, just a gradient: **J_n = qD_n dn/dx**. Einstein relation: **D = μ·kT/q**.",
+     q: "μ = 1000 cm²/V·s and the electron concentration drops by 10^17 cm^-3 across 0.01 cm. Diffusion current density?", num: 41.4, u: "A/cm²",
+     h: "D = 1000 × 0.0259. Then J = q D Δn/Δx.",
+     x: "D = 25.9 cm²/s. J = 1.6×10^-19 × 25.9 × 10^17 / 0.01 ≈ 41 A/cm²." },
+   { c: "Inject extra carriers at one spot and they diffuse while recombining, so the excess decays: **δp(x) = Δp·e^{−x/L_p}**. Diffusion length **L_p = √(D_p τ_p)** is how far they get, on average, before recombining.",
+     q: "Increasing doping makes the diffusion length L_n…",
+     o: ["Longer: more carriers push harder", "Shorter: both D (mobility) and τ drop", "Unchanged"], a: 1,
+     x: "Crowded hallway (lower μ, so lower D) AND faster recombination (lower τ). Both shrink L." },
+   { c: "Quick sort. Drift is driven by an E-field and needs charge. Diffusion is driven by a concentration gradient and temperature.",
+     q: "Which current requires a concentration gradient?", o: ["Drift", "Diffusion", "Both", "Neither"], a: 1,
+     x: "Diffusion spreads things out. A charged particle in a field drifts whether or not there's a gradient." },
+   { c: "Units are your friend. J (A/cm²) ÷ q gives a particle flux (1/cm²·s). Divide flux by the carrier density (1/cm³) and you get a velocity (cm/s).",
+     q: "Units of mobility μ?", o: ["cm²/s", "cm²/V·s", "V/cm", "1/cm³"], a: 1,
+     x: "μ = velocity / field = (cm/s)/(V/cm) = cm²/V·s. D has cm²/s." }
+  ],
+  v: ["τ ∝ 1/N (majority)", "Δn = Δp = g_op τ", "J_drift = q(nμ_n + pμ_p)E", "J_n,diff = qD_n dn/dx", "D = μ kT/q", "L = √(Dτ)", "δp(x) = Δp e^{−x/L_p}", "σ = q(nμ_n+pμ_p), R = L/(σA)"]
+ }
+ ],
+ boss: { id: "B1", name: "The Recombinator", flavor: "It eats free carriers for breakfast. Prove your basics are solid.",
+  q: [
+   { q: "Increasing the doping concentration changes which carriers?", o: ["Majority only", "Minority only", "Both", "Neither"], a: 2, x: "Majority goes up, minority goes down (n_0 p_0 = n_i^2)." },
+   { q: "Recombination affects which parameter(s)?", o: ["Carrier lifetime", "Diffusion length", "Both", "Neither"], a: 2, x: "Faster recombination shortens τ, and L = √(Dτ) shrinks with it." },
+   { q: "To make Si p-type, the dopant should have how many valence electrons?", o: ["Three", "Four", "Five", "Six"], a: 0, x: "Column III (e.g. boron): one short of Si's four, so it creates a hole." },
+   { q: "Which band holds the thermally generated electrons that can move?", o: ["Valence band", "Conduction band", "The bandgap"], a: 1, x: "Freed electrons live in the conduction band; the holes they leave are in the valence band." },
+   { q: "Why is the Fermi level closer to E_C in n-type Si?", o: ["Electrons are lighter", "More electrons in E_C, so the 50% point must move toward E_C", "The bandgap shrinks", "Holes push it up"], a: 1, x: "E_F marks a 50% chance of finding an electron. Lots of electrons up top drags that point upward." }
+  ] }
+},
+{
+ id: "w2", name: "The Diode", color: "#2ec4b6", lec: "Lectures 3–6",
+ tag: "The prof's big claim: everything else is built on this.",
+ levels: [
+ {
+  id: "L3", n: 3, t: "PN Junction: Contact Potential", s: "Sep 8 · Ch. 5.2",
+  b: "Join p and n. Watch a depletion region, an E-field and a built-in voltage appear.",
+  steps: [
+   { c: "Join p and n: holes diffuse into the n side, electrons into the p side. They leave behind **ionized dopants** (N_A^- on the p side, N_D^+ on the n side) that can't move. This charged zone is the **depletion region** (space-charge region).",
+     q: "What is inside the depletion region?",
+     o: ["Phosphorus atoms plus free electrons", "Only ionized dopant atoms (no free carriers)", "Only free carriers", "Nothing at all"], a: 1,
+     x: "The free carriers diffused away (and recombined). Fixed ionized dopants are left behind." },
+   { c: "The exposed charges make an E-field pointing from n to p, and a built-in voltage **V_0**. At thermal equilibrium the **Fermi levels line up**, and the bands bend by qV_0.",
+     q: "At thermal equilibrium, the Fermi level across a pn junction is…",
+     o: ["Flat (constant) everywhere", "Higher on the n side", "Bent by qV_0", "Undefined inside W"], a: 0,
+     x: "Always align Fermi levels at equilibrium. The bands bend; E_F does not." },
+   { c: "Contact potential: **V_0 = (kT/q)·ln(N_A N_D / n_i^2)**. More doping on either side → a bigger barrier.",
+     q: "Si with N_A = 10^17 and N_D = 10^15 cm^-3. Find V_0.", num: 0.695, u: "V", tol: 0.02,
+     h: "0.0259 × ln(10^32 / (1.5×10^10)^2)",
+     x: "0.0259 × ln(10^32 / 2.25×10^20) = 0.0259 × 26.8 ≈ 0.695 V." },
+   { c: "Depletion width: **W = √[(2εV_0/q)(1/N_A + 1/N_D)]**, with ε = 11.8 × 8.85×10^-14 F/cm for Si. Always work in cm.",
+     q: "Si junction with N_A = 10^17, N_D = 10^15 cm^-3 (V_0 = 0.695 V). Find W in micrometers.", num: 0.957, u: "µm", tol: 0.04,
+     h: "ε ≈ 1.044×10^-12 F/cm. Answer comes out in cm; 1 µm = 10^-4 cm.",
+     x: "W = √(2 × 1.044×10^-12 × 0.695 / 1.6×10^-19 × 1.01×10^-15) ≈ 9.6×10^-5 cm ≈ 0.96 µm." },
+   { c: "Charge balance: **N_A x_p0 = N_D x_n0**. The **lightly doped side** has to deplete deeper to uncover the same amount of charge.",
+     q: "For this 10^17 / 10^15 junction, most of W lies…", o: ["On the p side", "On the n side", "Split evenly"], a: 1,
+     x: "x_n0 = W·N_A/(N_A+N_D) ≈ 0.95 µm, while x_p0 ≈ 0.01 µm." },
+   { lab: "junction",
+     c: "Build your own junction. Change the dopings and the bias, and watch V_0, W and the band bending respond." },
+   { c: "The E-field is zero outside the depletion region and peaks at the **metallurgical junction**. Wherever there's an E-field, the bands slope.",
+     q: "Where is |E| largest?", o: ["At the depletion edges", "At the metallurgical junction", "Deep in the n region", "It's constant across W"], a: 1,
+     x: "Poisson: the field builds up linearly as you cross more fixed charge, peaking where p meets n." },
+   { c: "At equilibrium, current still flows both ways. Majority carriers **diffuse** over the barrier. Minority carriers generated near the edge get swept back by **drift**. The two cancel.",
+     q: "The drift current at equilibrium comes from…",
+     o: ["Majority carriers from the dopants", "Minority carriers thermally generated near the depletion edge and swept across by E", "Electrons from the wire", "Tunneling"], a: 1,
+     x: "A minority carrier that wanders to the edge is grabbed by the field. That's why drift is small and voltage-independent." },
+   { c: "Reverse bias adds to the barrier: with +0.3 V on the n side (p grounded), the total band bending becomes q(V_0 + 0.3).",
+     q: "True or false: if you short a diode with a wire, its built-in V_0 drives a steady current around the loop.", tf: false,
+     x: "No energy source, no current. The contact potentials at the metal contacts cancel V_0 around the loop." }
+  ],
+  v: ["V_0 = (kT/q) ln(N_A N_D / n_i^2)", "W = √[(2ε(V_0 − V)/q)(1/N_A + 1/N_D)]", "x_n0 = W N_A/(N_A+N_D)", "x_p0 = W N_D/(N_A+N_D)", "N_A x_p0 = N_D x_n0", "ε_Si = 11.8 × 8.85×10^-14 F/cm", "Fermi levels line up at equilibrium"]
+ },
+ {
+  id: "L4", n: 4, t: "PN Diode Currents", s: "Sep 10 · Ch. 5.3",
+  b: "Why a diode is exponential one way and flat the other.",
+  steps: [
+   { c: "**Forward bias** (+ on p): the barrier drops to V_0 − V. Majority-carrier **diffusion** grows exponentially. **Drift** stays the same: it's limited by how fast minority carriers are generated, not by voltage.",
+     q: "Under forward bias, the drift current…", o: ["Grows exponentially", "Stays about the same", "Reverses direction", "Disappears"], a: 1,
+     x: "Drift = minority carriers generated near the edge. Voltage doesn't change their generation rate." },
+   { c: "**Reverse bias** (− on p): the barrier grows to V_0 + V_R and W widens. Diffusion dies quickly; only the small, constant drift current I_0 is left.",
+     q: "Why does reverse current saturate?",
+     o: ["The depletion region blocks everything", "It's set by minority-carrier generation near the junction, which doesn't depend on voltage", "Breakdown", "Series resistance"], a: 1,
+     x: "More field doesn't make more minority carriers. It just sweeps the same few across." },
+   { lab: "diodeIV",
+     c: "Drive the diode. Slide the voltage and watch diffusion and drift trade places." },
+   { c: "Ideal diode equation: **I = I_0(e^{qV/kT} − 1)**. Split it into its parts: I_diff = I_0 e^{qV/kT} and I_drift = I_0, which is always there.",
+     q: "I_0 = 4.5×10^-14 A. Diffusion current at +0.7 V?", num: 0.0246, u: "A",
+     h: "I_diff = I_0 e^{0.7/0.0259}",
+     x: "4.5×10^-14 × e^{27.0} ≈ 4.5×10^-14 × 5.5×10^11 ≈ 24.6 mA." },
+   { c: "Same diode, now at −2 V reverse bias.",
+     q: "A diode with I_0 = 4.5×10^-14 A sits at −2 V reverse bias. What is the drift current?", o: ["≈ 0", "4.5×10^-14 A", "24.6 mA", "−2 A"], a: 1,
+     x: "Drift never goes away: I_drift = I_0. Diffusion ≈ I_0 e^{−77} ≈ 0." },
+   { c: "Injected carriers become **minority carriers** on the far side. Forward bias piles up an excess at the depletion edge that decays as e^{−x/L}. Reverse bias pulls the edge concentration down to ~0.",
+     q: "Match each bias to its minority-carrier profile at the depletion edge.",
+     match: [["Forward bias", "Excess at the edge, decaying with distance"], ["Reverse bias", "Zero at the edge"], ["Zero bias", "Flat: drift and diffusion balance"]],
+     x: "Forward = diffusion injects carriers. Reverse = drift sucks them out. Zero = balanced." },
+   { c: "Reverse saturation current: **I_0 = qA[(D_p/L_p)p_n + (D_n/L_n)n_p]**, where p_n = n_i^2/N_D and n_p = n_i^2/N_A. The **lightly doped side** dominates.",
+     q: "p⁺n Si diode: N_A = 10^17, N_D = 10^15 cm^-3, A = 10^-6 cm², D_p = 25, L_p = 10^-2 cm, D_n = 18, L_n = 10^-3 cm. Find I_0.", num: 9.65e-17, u: "A",
+     h: "p_n = 2.25×10^5, n_p = 2.25×10^3. Plug both terms in, multiply by qA.",
+     x: "qA[(2500)(2.25×10^5) + (18000)(2.25×10^3)] = 1.6×10^-25 × 6.0×10^8 ≈ 9.6×10^-17 A. The hole (n-side) term dominates." },
+   { c: "**Recurring theme: more doping → less current**, forward AND reverse. Doping cuts the minority carriers (I_0 ∝ n_i^2/N) and raises the barrier V_0.",
+     q: "You raise the doping on both sides. Forward current at a fixed V…",
+     o: ["Increases: more carriers", "Decreases: higher barrier, fewer minority carriers", "Stays the same"], a: 1,
+     x: "The prof's picture: a million people outside a building still can't jump three stories. Barrier height beats numbers." },
+   { c: "Inside W we assume no recombination. Outside, hole and electron currents trade off through recombination, but their sum stays constant.",
+     q: "True or false: inside the depletion region, the electron and hole currents are each constant.", tf: true,
+     x: "No recombination in W, so each component is constant there. Out in the neutral regions they swap." }
+  ],
+  v: ["I = I_0(e^{qV/kT} − 1)", "I_diff = I_0 e^{qV/kT}, I_drift = I_0", "I_0 = qA[(D_p/L_p)p_n + (D_n/L_n)n_p]", "p_n = n_i^2/N_D, n_p = n_i^2/N_A", "Δp_n = p_n(e^{qV/kT} − 1)", "δp(x_n) = Δp_n e^{−x_n/L_p}", "Doping ↑ → I_0 ↓ and V_0 ↑"]
+ },
+ {
+  id: "L5", n: 5, t: "Metal–Semiconductor & Capacitance", s: "Sep 15 · Ch. 5.5, 5.7",
+  b: "Schottky vs Ohmic contacts, and the two kinds of diode capacitance.",
+  steps: [
+   { c: "**Work function** qφ = vacuum level − E_F. **Electron affinity** qχ = vacuum level − E_C. When metal touches semiconductor, Fermi levels align and the semiconductor bands bend. The metal is like super-heavy doping, so it barely bends.",
+     q: "A metal's work function is the energy from…", o: ["E_C to vacuum", "E_F to vacuum", "E_V to E_C", "E_F to E_C"], a: 1,
+     x: "Work function = how much energy pulls an electron from the Fermi level out to the vacuum level." },
+   { c: "Rule of thumb. **n-type**: φ_m > φ_s → Schottky (rectifying); φ_m < φ_s → Ohmic. **p-type** flips: φ_m < φ_s → Schottky; φ_m > φ_s → Ohmic.",
+     q: "Classify each contact.",
+     match: [["n-type, φ_m > φ_s", "Schottky"], ["n-type, φ_m < φ_s", "Ohmic"], ["p-type, φ_m < φ_s", "Schottky "], ["p-type, φ_m > φ_s", "Ohmic "]],
+     x: "Draw it: if majority carriers face a barrier going from semiconductor to metal, it's Schottky. No barrier, Ohmic." },
+   { c: "A second way to get Ohmic: dope the semiconductor **very heavily**. The depletion region gets so thin that carriers simply tunnel through it.",
+     q: "Two ways to make an Ohmic contact to n-Si:",
+     o: ["Pick a low-φ_m metal, OR dope n⁺⁺ so carriers tunnel", "Use a thick oxide", "Use a high-φ_m metal on lightly doped Si", "Reverse-bias the contact"], a: 0,
+     x: "No barrier at all, or a barrier so thin it's transparent." },
+   { c: "Why bother with Schottky diodes? They're easy on wide-gap materials (SiC, GaN) where p-type doping is hard. They're also fast: current is majority carriers, so there's no stored minority charge.",
+     q: "Schottky diodes are popular in GaN and SiC mainly because…",
+     o: ["p-type doping is hard in those materials", "Metals are cheaper than dopants", "They emit light", "They have no barrier"], a: 0,
+     x: "Make the diode with a metal instead of fighting p-type doping." },
+   { c: "Schottky contact on p-Si: **φ_s = χ + E_g/2 + kT ln(N_A/n_i)**. The contact potential is V_0 = φ_s − φ_m.",
+     q: "Tungsten (φ_m = 4.6 eV) on Si (χ = 4.0 eV, E_g = 1.12 eV) doped N_A = 10^18 cm^-3. Find V_0.", num: 0.425, u: "V", tol: 0.05,
+     h: "φ_s = 4.0 + 0.56 + 0.0259 ln(10^18/1.5×10^10)",
+     x: "φ_s ≈ 4.0 + 0.56 + 0.47 ≈ 5.03 eV, so V_0 ≈ 5.03 − 4.6 ≈ 0.43 V (the class key rounds to 0.42 V)." },
+   { c: "Reverse bias → **depletion (junction) capacitance**: a parallel-plate capacitor with gap W, so **C_j = εA/W**. More reverse bias → wider W → smaller C_j.",
+     q: "Si diode, area 100×100 µm². At −4 V its depletion width is 2.49 µm. Find C_j.", num: 4.2e-13, u: "F",
+     h: "A = 10^-4 cm², W = 2.49×10^-4 cm, ε ≈ 1.044×10^-12 F/cm.",
+     x: "C = 1.044×10^-12 × 10^-4 / 2.49×10^-4 ≈ 0.42 pF." },
+   { c: "Forward bias → **diffusion (storage) capacitance**, C = dQ/dV of the stored minority charge. It grows exponentially with forward voltage and dominates there.",
+     q: "Which capacitance dominates a forward-biased diode?", o: ["Junction (depletion)", "Diffusion (storage)", "Neither"], a: 1,
+     x: "A small dV causes a huge dQ of injected carriers." },
+   { c: "Switching from forward to reverse isn't instant: the stored minority charge has to be removed first, which shows up as a reverse current spike. Going from reverse to forward has no such delay.",
+     q: "True or false: turning off a forward-biased diode takes time because the stored charge has to recombine or be swept out.", tf: true,
+     x: "That stored-charge delay is why fast circuits like Schottky diodes (no minority storage)." }
+  ],
+  v: ["n-type: φ_m > φ_s → Schottky, φ_m < φ_s → Ohmic", "p-type: φ_m < φ_s → Schottky, φ_m > φ_s → Ohmic", "qφ_B = q(φ_m − χ) (n-type)", "φ_s(p) = χ + E_g/2 + kT ln(N_A/n_i)", "C_j = εA/W (reverse)", "C_diff = dQ/dV (forward)"]
+ },
+ {
+  id: "L6", n: 6, t: "Non-ideal Diodes & Breakdown", s: "Sep 17 · Ch. 5.4–5.6",
+  b: "Zener vs avalanche breakdown, turn-on voltage, and ideality factor.",
+  steps: [
+   { c: "Push reverse bias far enough and current suddenly shoots up: **breakdown**. Two mechanisms: **Zener** (tunneling, low voltage) and **avalanche** (impact ionization, high voltage, like lightning).",
+     q: "Zener breakdown relies on…", o: ["Impact ionization", "Band-to-band tunneling", "Thermal generation", "Forward diffusion"], a: 1,
+     x: "Steep bands put the p-side valence band right across a thin gap from the n-side conduction band. Electrons tunnel." },
+   { c: "Tunneling needs a thin barrier. Heavy doping on both sides makes W narrow and the bands steep.",
+     q: "To design a Zener diode you…", o: ["Dope both sides heavily", "Dope both sides lightly", "Use a wide-bandgap material", "Make the junction long"], a: 0,
+     x: "Heavy doping → thin W → short tunneling distance." },
+   { c: "Avalanche: a carrier gains enough energy in the field to knock loose a new e–h pair, and those do the same. Multiplication factor **M = 1/(1 − (|V|/V_BR)^n)**, with n ≈ 3–6.",
+     q: "|V|/V_BR = 0.9 and n = 3. Find M.", num: 3.69, tol: 0.03,
+     x: "1/(1 − 0.9^3) = 1/(1 − 0.729) ≈ 3.7. Avalanche photodiodes use this gain on purpose." },
+   { c: "Breakdown is set by the **lightly doped side**, where the voltage spreads over the longest distance. More doping → higher peak field → **lower** breakdown voltage.",
+     q: "Increasing doping makes the avalanche breakdown voltage…", o: ["Higher", "Lower", "Unchanged"], a: 1,
+     x: "The critical field is reached at a smaller reverse voltage. Same direction for Zener." },
+   { c: "A wider bandgap is harder to ionize or tunnel through, so breakdown voltage goes up. That's why high-voltage rectifiers use SiC and GaN (gaps ≈ 3+ eV), usually as Schottky diodes.",
+     q: "Best choice for a high-voltage rectifier?", o: ["Ge", "Si", "GaN", "InSb"], a: 2,
+     x: "Widest gap of the four." },
+   { c: "Real diodes don't turn on at 0 V. Turn-on comes as V approaches V_0, which rises with doping. For p⁺n⁺ it approaches the bandgap (Si ≈ 1.1 V, GaAs ≈ 1.4 V).",
+     q: "True or false: in normal forward operation, the junction voltage V can exceed V_0.", tf: false,
+     x: "If the barrier vanished you'd get enormous current. Series resistance limits things first." },
+   { c: "**Ideality factor** n (1 ≤ n ≤ 2): I ∝ e^{qV/nkT}. At low forward bias, recombination inside the depletion region pushes n toward 2. At high current, series resistance (I²R heating) bends the curve.",
+     q: "Recombination in the depletion region at low forward bias pushes the ideality factor…", o: ["Toward 1", "Toward 2", "To zero"], a: 1,
+     x: "Carriers that recombine in W cost extra charge exchange, which shows up as n → 2." },
+   { c: "Test 1 asked this one directly.",
+     q: "Higher doping makes the Zener breakdown voltage magnitude…", o: ["Increase", "Decrease", "Stay constant"], a: 1,
+     x: "Narrower W and a stronger field mean tunneling starts at a lower reverse voltage." }
+  ],
+  v: ["M = 1/(1 − (|V|/V_BR)^n), n ≈ 3–6", "E ≈ V/W (rough average)", "I = I_0(e^{qV/nkT} − 1), 1 ≤ n ≤ 2", "Zener: heavy doping, tunneling, low V_BR", "Avalanche: impact ionization, high V_BR", "Doping ↑ → V_BR ↓; E_g ↑ → V_BR ↑"]
+ }
+ ],
+ boss: { id: "B2", name: "The Depletion Dragon", flavor: "Test 1 material. It guards the gate to transistors.",
+  q: [
+   { q: "Which mechanism dominates the current in a forward-biased pn diode?", o: ["Drift", "Diffusion", "Both", "Neither"], a: 1, x: "Lower barrier → majority carriers diffuse over." },
+   { q: "Which mechanism dominates in a reverse-biased pn diode?", o: ["Drift", "Diffusion", "Both", "Neither"], a: 0, x: "Only minority-carrier drift (I_0) is left." },
+   { q: "What happens to the reverse saturation current as doping increases?", o: ["Increases", "Decreases", "Remains constant", "Cannot be determined"], a: 1, x: "Minority carriers p_n = n_i^2/N_D shrink." },
+   { q: "Most of a p⁺n diode's depletion width lies on the…", o: ["p⁺ side", "n side", "Split evenly"], a: 1, x: "The lightly doped side depletes deeper." },
+   { q: "An ideal Si pn⁺ diode has I_0 = 4.5×10^-14 A. Drift current at +0.7 V?", o: ["0", "4.5×10^-14 A", "24.6 mA", "0.7 A"], a: 1, x: "Drift is always I_0, even in forward bias." },
+   { q: "Avalanche breakdown voltage as doping increases?", o: ["Increases", "Decreases", "Unchanged"], a: 1, x: "The critical field arrives at a lower voltage." },
+   { q: "Junction capacitance as reverse bias increases?", o: ["Increases", "Decreases", "Unchanged"], a: 1, x: "W grows, so C_j = εA/W falls." }
+  ] }
+},
+{
+ id: "w3", name: "BJTs", color: "#ffb703", lec: "Lectures 7–10",
+ tag: "Two diodes, one thin base, and amplification.",
+ levels: [
+ {
+  id: "L7", n: 7, t: "BJT Fundamentals & Switching", s: "Sep 24 · Ch. 7.1, 7.2, 7.6",
+  b: "Build a PNP from two diodes and find out where the gain comes from.",
+  steps: [
+   { c: "A PNP BJT is two diodes sharing a thin n region. **Emitter–base** is forward biased and *emits* holes by diffusion. **Base–collector** is reverse biased and *collects* them by drift.",
+     q: "The collector collects by being…",
+     o: ["Forward biased, by diffusion", "Reverse biased, by drift", "Forward biased, by drift", "Reverse biased, by diffusion"], a: 1,
+     x: "A reverse-biased junction sweeps over any minority carrier that reaches its edge: drift." },
+   { c: "The emitter is p⁺, so hole injection across EB hugely outweighs electron injection. Because the base is thin (W_b ≪ L_p), the electron supply on the base side is cut short too.",
+     q: "p⁺n junction: N_A = 10^17, N_D = 10^15 cm^-3, D_p = 25, L_p = 10^-2 cm, D_n = 18, L_n = 10^-3 cm. Find the injection ratio J_p/J_n.", num: 13.9, tol: 0.03,
+     h: "J_p/J_n = (D_p p_n / L_p) / (D_n n_p / L_n), with p_n/n_p = N_A/N_D = 100.",
+     x: "100 × (25/18) × (0.001/0.01) ≈ 13.9. In a real BJT the thin base truncates the electron supply, so the ratio gets far bigger." },
+   { c: "Holes cross the thin, lightly doped base by **diffusion**. Few of them get tackled (recombine), so base current is small. Thin base = shorter run. Light doping = fewer tacklers.",
+     q: "Why must the base be narrow?",
+     o: ["So holes cross before recombining → small I_B, big gain", "To raise the base resistance", "To increase capacitance", "To raise breakdown voltage"], a: 0,
+     x: "A football player running 10 yards versus 100: fewer chances to be tackled." },
+   { c: "Figures of merit: emitter injection efficiency **γ = i_Ep/(i_Ep + i_En)**, base transport factor **B = i_C/i_Ep**, current transfer ratio **α = Bγ = i_C/i_E**, amplification **β = i_C/i_B = α/(1 − α)**.",
+     q: "α = 0.99. What is β?", num: 99, tol: 0.02,
+     x: "β = 0.99/0.01 = 99. Tiny changes in α near 1 make big changes in β." },
+   { c: "Current bookkeeping: I_E = I_B + I_C.",
+     q: "β = 100 and I_C = 100 mA. What is I_E?", num: 0.101, u: "A", tol: 0.005,
+     x: "I_B = I_C/β = 1 mA, so I_E = 101 mA." },
+   { c: "Charge-neutrality view: each electron fed into the base lives τ_p before recombining. Meanwhile holes zip across in transit time τ_t. So **β = τ_p/τ_t**: many holes pass for each electron.",
+     q: "β = 100. You inject 4 extra electrons into the base. How many holes are emitted?", o: ["4", "400", "404", "0"], a: 2,
+     x: "400 holes pass through to the collector while those 4 electrons survive, plus 4 more holes to finally recombine with them." },
+   { c: "Four operating modes depend on how each junction is biased.",
+     q: "Match each mode to its bias.",
+     match: [["Cutoff", "EB reverse (or 0), BC reverse"], ["Normal active", "EB forward, BC reverse"], ["Saturation", "EB forward, BC forward"], ["Inverted", "EB reverse, BC forward"]],
+     x: "Normal active = amplifier. Cutoff and saturation = switch off and on." },
+   { c: "Every device sits in a circuit with an output resistance, so the operating point is where the device curve meets the **load line**: I = (V_supply − V)/R.",
+     q: "Common emitter: I_B = 0.1 mA, β = 100, R_out = 500 Ω, supply V_CE = 20 V. Voltage across the BC junction?", num: 15, u: "V", tol: 0.02,
+     x: "I_C = 10 mA, so 5 V drops across R_out. The remaining 15 V sits across the reverse-biased BC junction." },
+   { c: "Spec-sheet curves: I_C vs V_CE flattens once the BC junction is reverse biased.",
+     q: "True or false: I_C saturates with V_CE because the reverse-biased BC junction collects by drift, which doesn't depend on voltage.", tf: true,
+     x: "The slight upward slope that remains is base narrowing (coming in Lecture 10)." }
+  ],
+  v: ["γ = i_Ep/(i_Ep + i_En)", "B = i_C/i_Ep", "α = Bγ = i_C/i_E", "β = i_C/i_B = α/(1 − α)", "I_E = I_B + I_C", "β = τ_p/τ_t", "Load line: I = (V_s − V)/R"]
+ },
+ {
+  id: "L8", n: 8, t: "BJT Currents & HBTs", s: "Sep 29 · Ch. 7.4, 7.9",
+  b: "Solve the base, get the terminal currents, and see why HBTs win.",
+  steps: [
+   { c: "In the base, holes obey the diffusion equation. Boundary conditions: an excess **Δp_E = p_n(e^{qV_EB/kT} − 1)** at the emitter edge, and Δp_C ≈ −p_n ≈ 0 at the reverse-biased collector edge.",
+     q: "What does the hole concentration across the base look like?",
+     o: ["Zero everywhere", "Excess at the emitter side, ~zero at the collector side (nearly linear)", "Zero at the emitter, excess at the collector"], a: 1,
+     x: "That gradient drives the diffusion that carries current across the base." },
+   { lab: "base",
+     c: "Stretch the base. Compare W_b/L_p small vs large and watch β." },
+   { c: "Terminal currents from class: I_E = qA(D_p/L_p)Δp_E·ctnh(W_b/L_p), I_C = qA(D_p/L_p)Δp_E·csch(W_b/L_p), I_B = qA(D_p/L_p)Δp_E·tanh(W_b/2L_p).",
+     q: "In those equations, D_p, L_p and p_n come from which region?", o: ["Emitter", "Base", "Collector"], a: 1,
+     x: "Everything is base parameters. The base is what makes a BJT a BJT." },
+   { c: "All three share the diode factor (e^{qV_EB/kT} − 1), so they rise together. The hyperbolic terms set the ratios. For W_b/L_p = 0.01: ctnh ≈ 100, csch ≈ 100, tanh(x/2) ≈ 0.005.",
+     q: "Find β = I_C/I_B for W_b/L_p = 0.01.", num: 20000, tol: 0.03,
+     h: "β = csch(x)/tanh(x/2) ≈ 100/0.005",
+     x: "≈ 20,000 (with γ = 1). For small x, β ≈ 2(L_p/W_b)^2." },
+   { c: "Now plug in real numbers for a symmetric p⁺np⁺ transistor.",
+     q: "Symmetric p⁺np⁺ with N_D = 5×10^14 cm^-3 in the base, V_EB = 0.3 V. Excess holes at the emitter edge of the base, Δp_E?", num: 4.8e10, u: "cm⁻³", tol: 0.12,
+     h: "p_n = n_i^2/N_D, then multiply by e^{0.3/0.0259}.",
+     x: "p_n = 4.5×10^5, so Δp_E ≈ 4.5×10^5 × e^{11.6} ≈ 4.8×10^10 cm^-3. (The class key rounds to 4.5×10^10.)" },
+   { c: "Same transistor. You're told qA(D_p/L_p)p_n = 0.2 pA and W_b/L_p = 0.01.",
+     q: "I_E at V_EB = 0.3 V?", num: 2.1e-6, u: "A", tol: 0.07,
+     h: "I_E ≈ 0.2 pA × e^{0.3/0.0259} × ctnh(0.01)",
+     x: "0.2×10^-12 × 1.07×10^5 × 100 ≈ 2.1 µA. Then I_B ≈ I_E/20,000 ≈ 105 pA." },
+   { c: "You can find output resistance from the maximum current.",
+     q: "With V_EC = 10 V, the maximum current you can get is 1 mA. Output resistance?", num: 10000, u: "Ω", tol: 0.02,
+     x: "10 V / 1 mA = 10 kΩ." },
+   { c: "**HBT**: make the emitter from a wider-bandgap material (e.g., AlGaAs on GaAs). The extra ΔE_g blocks base electrons from back-injecting into the emitter, exponentially, which pushes γ toward 1.",
+     q: "HBTs use a wide-gap emitter to…", o: ["Improve emitter injection efficiency γ", "Increase base resistance", "Lower breakdown voltage", "Emit light"], a: 0,
+     x: "ΔE_g sits in the exponent of the Fermi distribution, so the back-injected electron current collapses." },
+   { c: "Test 2, Problem 2(f): rank the currents in a p⁺np BJT (normal active).",
+     q: "Order from LARGEST to SMALLEST.",
+     sort: ["Holes diffusing from emitter into base", "Holes drifting into the collector", "Recombination in the base", "Reverse-saturation drift at BC", "Electrons diffusing from base into the p⁺ emitter"],
+     x: "Recombination ties with the electrons supplied for it. The last one is smallest: I_0 falls with doping, and the emitter is p⁺." }
+  ],
+  v: ["Δp_E = p_n(e^{qV_EB/kT} − 1)", "I_E = qA(D_p/L_p)Δp_E ctnh(W_b/L_p)", "I_C = qA(D_p/L_p)Δp_E csch(W_b/L_p)", "I_B = qA(D_p/L_p)Δp_E tanh(W_b/2L_p)", "β ≈ 2(L_p/W_b)^2 (γ = 1)", "NPN: swap in D_n, L_n, n_p", "HBT: wide-gap emitter → γ → 1"]
+ },
+ {
+  id: "L9", n: 9, t: "Coupled-Diode (Ebers–Moll) Model", s: "Oct 1 · Ch. 7.5",
+  b: "A circuit model for any bias: two diodes and two current sources.",
+  steps: [
+   { c: "Goal: a simple circuit model that works for **any** bias. Solve normal mode (EB injects) and inverted mode (CB injects) separately, then **add them** by superposition.",
+     q: "Why is it called the coupled-diode model?",
+     o: ["Two diodes whose currents are linked through the shared base", "It uses coupled inductors", "It couples the BJT to its load"], a: 0,
+     x: "Each junction's injection shows up as collected current at the other one." },
+   { c: "Ebers–Moll: **I_E = I_ES(e^{qV_EB/kT} − 1) − α_I I_CS(e^{qV_CB/kT} − 1)** and **I_C = α_N I_ES(e^{qV_EB/kT} − 1) − I_CS(e^{qV_CB/kT} − 1)**. Reciprocity: α_N I_ES = α_I I_CS.",
+     q: "For an asymmetric p⁺np BJT, the normal and inverted transfer ratios α_N and α_I are…", o: ["The same", "Different"], a: 1,
+     x: "Emitter and collector dopings differ, so the reverse saturation currents and transfer ratios differ." },
+   { c: "The model is 2 diodes plus 2 **current sources**. A current source stands for a reverse-biased junction collecting whatever the other side injects: drift, independent of the voltage across it.",
+     q: "True or false: the current sources represent diffusion currents that grow exponentially with the voltage across them.", tf: false,
+     x: "They're set by the OTHER junction's voltage. That's exactly why they're modeled as current sources." },
+   { lab: "modes",
+     c: "Flip the junction biases and discover all four operating modes in the model." },
+   { c: "Trust the model.",
+     q: "Symmetric pnp, EB and CB both forward biased by the same voltage. I_B is…",
+     o: ["Very large: two forward diodes feeding the base", "Medium", "Very small: no gradient across the base, only recombination", "Can't tell"], a: 2,
+     x: "Equal excess on both sides means a flat profile, so no diffusion across the base. With a thin base there's little recombination too." },
+   { c: "If the base gets very wide, the two junctions stop talking to each other.",
+     q: "If W_b became very large, which elements disappear?", o: ["The two current sources: you're left with two plain diodes", "The two diodes", "Nothing"], a: 0,
+     x: "No coupling, no transistor action, no amplification." },
+   { q: "The base current of a well-designed BJT is dominated by…", c: "Think about what the base contact actually supplies.",
+     o: ["Drift", "Diffusion", "Recombination", "Reverse saturation"], a: 2,
+     x: "The base contact supplies electrons to replace the ones lost recombining with crossing holes." },
+   { c: "Charge neutrality holds in the base at all times.",
+     q: "True or false: even though the BJT amplifies, the extra holes and extra electrons in the base are equal in number.", tf: true,
+     x: "Add 1 electron and you get 1 extra hole at any instant. Over the electron's lifetime, β holes pass through." }
+  ],
+  v: ["I_E = I_ES(e^{qV_EB/kT} − 1) − α_I I_CS(e^{qV_CB/kT} − 1)", "I_C = α_N I_ES(e^{qV_EB/kT} − 1) − I_CS(e^{qV_CB/kT} − 1)", "α_N I_ES = α_I I_CS", "I_B = I_E − I_C", "Diodes = injection; current sources = collection"]
+ },
+ {
+  id: "L10", n: 10, t: "BJT Advanced: Hybrid-π & Speed", s: "Oct 6 · Ch. 7.7, 7.8",
+  b: "What limits a transistor's speed, plus base narrowing and heat.",
+  steps: [
+   { c: "The **hybrid-π** is the small-signal (AC) model for normal active mode. Every element answers one of two questions: what slows the BJT down, and what turns input voltage into output current?",
+     q: "Match each hybrid-π element to what it represents.",
+     match: [["r_b", "Thin, lightly doped base is resistive"], ["1/G_se", "Recombination in the base"], ["C_je", "EB depletion capacitance"], ["C_se", "EB storage (diffusion) capacitance"], ["C_jc", "BC depletion capacitance"], ["g_m v_eb", "Transconductance current (A/V)"]],
+     x: "Test 2 asked for C_je, C_se and C_jc by name." },
+   { c: "**g_m = dI_C/dV_EB**. The DC curve is exponential, but over a small AC swing it's locally linear. Its slope, g_m, grows with bias current.",
+     q: "Why does g_m increase with I_B?", o: ["Higher up the exponential, the slope is steeper", "Resistance rises", "Capacitance falls"], a: 0,
+     x: "More forward bias puts you higher on e^{qV/kT}, where the local slope is bigger." },
+   { c: "Storage capacitance needs stored minority charge, which needs forward bias.",
+     q: "Why is there no storage capacitance at the BC junction?", o: ["It's reverse biased, so no stored minority charge", "It's too small to matter", "It's shorted out"], a: 0,
+     x: "Only the forward-biased EB junction stores charge (C_se)." },
+   { c: "Series resistance comes from lightly doped, long, thin regions.",
+     q: "Why does the model have r_c but no r_e?", o: ["The p⁺ emitter has negligible resistance; the lightly doped collector doesn't", "Emitters are always grounded", "Collectors are thinner"], a: 0,
+     x: "R = ρL/A, and heavily doped means low ρ." },
+   { c: "RC time constant: τ = RC charges a capacitor to 63.2%; the cutoff frequency is f = 1/(2πRC). The ultimate BJT limit is the **base transit time τ_t = W_b^2/(2D_p)**.",
+     q: "W_b = 1 µm and D_p = 10 cm²/s. Find τ_t.", num: 5e-10, u: "s",
+     h: "W_b = 10^-4 cm.",
+     x: "(10^-4)^2 / 20 = 5×10^-10 s. Thinner base = faster: W_b appears squared." },
+   { c: "**Base narrowing (Early effect)**: more V_CE → wider BC depletion → thinner effective base → higher β, so I_C slopes up. A large Early voltage V_A means a weak effect.",
+     q: "Why does I_C rise slightly with V_CE?", o: ["Base narrowing raises β", "Avalanche breakdown", "Heating"], a: 0,
+     x: "Graded base doping (a big V_A) reduces it." },
+   { c: "At very high injection the base floods with carriers and γ, B, α and β all drop. Power is dissipated mainly where holes fall down the big potential step.",
+     q: "In normal active mode, where is most of the heat dissipated?", o: ["EB junction", "BC depletion region", "The emitter contact"], a: 1,
+     x: "Holes drop a lot of energy crossing the reverse-biased BC region and hand it to the lattice as phonons." },
+   { c: "The resistive base causes larger V_EB at the emitter edges, so current crowds there and heats it.",
+     q: "To avoid emitter current crowding, BJTs use…", o: ["Planar electrodes", "Interdigitated emitter and base electrodes", "Thicker bases"], a: 1,
+     x: "Many narrow interleaved fingers keep every part of the emitter close to a base contact." }
+  ],
+  v: ["g_m = ∂I_C/∂V_EB (grows with I_C)", "τ = RC → 63.2% charged", "f_c = 1/(2πRC)", "τ_t = W_b^2/(2D_p)", "Hybrid-π: r_b, 1/G_se, C_je, C_se, C_jc, g_m v_eb", "Large V_A = weak base narrowing"]
+ }
+ ],
+ boss: { id: "B3", name: "The Base Tackler", flavor: "Test 2 material. It tackles every hole that loiters in the base.",
+  q: [
+   { q: "TRUE or FALSE: collector current changes linearly with base current.", o: ["True", "False"], a: 0, x: "That linearity is what makes the BJT a great amplifier." },
+   { q: "TRUE or FALSE: hole drift across the BC junction grows exponentially with V_EB.", o: ["True", "False"], a: 0, x: "The BC junction collects whatever EB injects, and injection is exponential in V_EB." },
+   { q: "TRUE or FALSE: if 400 holes are collected, then 400 holes were emitted.", o: ["True", "False"], a: 1, x: "A few extra holes were emitted and recombined in the base." },
+   { q: "TRUE or FALSE: at any instant there are 100 more holes than electrons in the base (β = 100).", o: ["True", "False"], a: 1, x: "Charge neutrality: extra holes = extra electrons." },
+   { q: "Single most important design feature to turn a p⁺n diode into a p⁺np BJT?", o: ["Narrow base width W_b", "Heavy base doping", "Wide-gap collector", "Large area"], a: 0, x: "W_b ≪ L_p, so holes cross before recombining." },
+   { q: "Coupled-diode model, cutoff mode (both junctions reverse biased): I_B ≈ ?", o: ["0 (only tiny leakage)", "Very large", "β × I_E"], a: 0, x: "Both diodes are off, so nothing is injected." },
+   { q: "C_se in the hybrid-π model is…", o: ["EB diffusion (storage) capacitance", "BC depletion capacitance", "EB depletion capacitance"], a: 0, x: "s = storage, e = emitter." }
+  ] }
+},
+{
+ id: "w4", name: "FETs & MOSFETs", color: "#b388ff", lec: "Lectures 11–14",
+ tag: "Voltage-controlled channels: JFET, MESFET, HEMT, MOSFET.",
+ levels: [
+ {
+  id: "L11", n: 11, t: "JFET, MESFET, HEMT", s: "Oct 13 · Ch. 6.2, 5.8, 6.3",
+  b: "Squeeze a channel with depletion regions, and swap the gate for a Schottky or a 2DEG.",
+  steps: [
+   { c: "A **FET** uses a gate voltage to control a channel's conductivity. Unlike the BJT, it's a **majority-carrier** (unipolar), voltage-controlled device with very high input impedance.",
+     q: "BJT vs FET: which statement is correct?",
+     o: ["FET is voltage-controlled with a tiny gate current", "FET is current-controlled", "BJT is unipolar", "FET relies on minority carriers"], a: 0,
+     x: "BJT = current-controlled, bipolar. FET = voltage-controlled, unipolar." },
+   { c: "**JFET**: an n-channel between p⁺ gates. Reverse-bias the gates (negative V_G for n-channel) and the depletion regions grow into the channel, so less current flows. Gate current is only reverse saturation, so it's tiny.",
+     q: "To turn off an n-channel JFET, apply…", o: ["Positive gate voltage", "Negative gate voltage", "No gate voltage"], a: 1,
+     x: "More reverse bias on the gate–channel junctions → wider depletion → narrower channel." },
+   { c: "Gates are p⁺ for a reason.",
+     q: "Why is the JFET gate heavily doped?", o: ["So depletion extends into the lightly doped channel", "To lower the capacitance", "So it can emit light"], a: 0,
+     x: "The lightly doped side is the side that depletes. You want that to be the channel." },
+   { lab: "jfet",
+     c: "Squeeze the channel. Raise V_D until it pinches off, then use V_G to shut it completely." },
+   { c: "Raising V_D tapers the depletion (more reverse bias at the drain end) until the channel **pinches off** and current saturates. Pinch-off voltage **V_P = qa^2N_d/(2ε)**, where a is the channel half-width.",
+     q: "a = 2.45 µm and N_d = 10^15 cm^-3. Find V_P.", num: 4.6, u: "V", tol: 0.03,
+     h: "a = 2.45×10^-4 cm, ε = 1.044×10^-12 F/cm.",
+     x: "1.6×10^-19 × (2.45×10^-4)^2 × 10^15 / (2 × 1.044×10^-12) ≈ 4.6 V." },
+   { c: "Load lines work for FETs too. With E = 5 V and R = 200 Ω, the device curve crosses the load line at V_D = E/3.",
+     q: "What is I_D at that operating point?", num: 0.0167, u: "A", tol: 0.03,
+     x: "I = (5 − 1.67)/200 ≈ 16.7 mA." },
+   { c: "**MESFET**: replace the pn gate with a Schottky gate on n-GaAs. Wins: higher electron mobility (~8500 vs ~1350 cm²/V·s in Si), a wider bandgap, and only the metal needs fine patterning, so gates can be small.",
+     q: "Shrink every gate in a chain of MESFETs by 5×. The RC delay improves by…", o: ["5×", "10×", "25×", "125×"], a: 2,
+     x: "R ∝ channel length drops 5×, and C ∝ gate area drops 5× too. 5 × 5 = 25×." },
+   { c: "**HEMT**: an AlGaAs/GaAs heterojunction traps electrons in a thin quantum well, a **2DEG**. The donors sit in the AlGaAs, so the electrons scatter less and mobilities reach 10^4–10^5 cm²/V·s.",
+     q: "The HEMT's big advantage is…", o: ["Very high mobility from the 2DEG", "Lowest cost", "No gate needed", "It emits light"], a: 0,
+     x: "Higher μ → higher current density → faster charging of the next stage." },
+   { c: "MESFET gates must block current.",
+     q: "Which kind of metal–semiconductor contact can form a MESFET gate?", o: ["Rectifying (Schottky)", "Ohmic"], a: 0,
+     x: "An ohmic gate would just conduct: no depletion control, no amplification." }
+  ],
+  v: ["V_P = qa^2N_d/(2ε)", "W = √(2ε(V_0 − V)/(qN_d)) (p⁺n)", "I_D,sat ≈ I_DSS(1 + V_G/V_P)^2 (V_G < 0, V_P > 0)", "g_m = ∂I_D/∂V_G", "ρ = 1/(qnμ)", "Smaller gate: R↓ and C↓ → RC↓↓"]
+ },
+ {
+  id: "L12", n: 12, t: "Ideal MOSFET", s: "Oct 15 · Ch. 6.4",
+  b: "Accumulation, depletion, inversion, and the price you pay for V_T.",
+  steps: [
+   { c: "NMOS: p-substrate, n⁺ source and drain, thin oxide, and a gate. At V_G = 0 nothing flows: back-to-back pn junctions are in the way.",
+     q: "Why can't current flow from source to drain at V_G = 0?", o: ["Back-to-back pn junctions block it", "The oxide blocks it", "There are no electrons"], a: 0,
+     x: "At least one of the two junctions is always reverse biased." },
+   { c: "Gate + oxide + semiconductor form a capacitor. Charge on the gate induces opposite charge in the Si. The states always come in this order: you can't skip one.",
+     q: "Put the NMOS states in order as V_G increases.",
+     sort: ["Accumulation", "Flat band", "Depletion", "Inversion"],
+     x: "You have to pass through depletion (and pay for it) before inversion can start." },
+   { lab: "mos",
+     c: "Sweep the gate. Watch the bands bend, see the charge appear, and follow the capacitance." },
+   { c: "Negative V_G pulls holes up under the gate. That's more conductive, but it's still p-type between two n⁺ regions.",
+     q: "Negative gate voltage on an NMOS gives…", o: ["Inversion", "Accumulation of holes: still off", "Breakdown"], a: 1,
+     x: "A channel of holes doesn't help: still back-to-back junctions." },
+   { c: "**Strong inversion**: the surface must be as n-type as the bulk is p-type, so the bands bend by **2φ_F**, where **qφ_F = kT ln(N_A/n_i)**.",
+     q: "Find φ_F for N_A = 10^16 cm^-3.", num: 0.347, u: "V", tol: 0.02,
+     x: "0.0259 × ln(10^16 / 1.5×10^10) = 0.0259 × 13.4 ≈ 0.347 V." },
+   { c: "Charge vs surface potential: accumulation grows exponentially, depletion like a **square root** (you're uncovering dopants), and inversion exponentially again. The depletion width maxes out at **W_m = 2√(εφ_F/qN_A)** once inversion takes over.",
+     q: "In depletion, the charge grows with surface potential as a…", o: ["Linear function", "Exponential", "Square root", "Quadratic"], a: 2,
+     x: "Q_d = qN_A W and W ∝ √φ_s." },
+   { c: "Ideal threshold voltage: **V_T = Q_d/C_i + 2φ_F**, with Q_d = qN_A W_m and C_i = ε_ox/t_ox. Both terms are “the price you pay” to turn the device on.",
+     q: "N_A = 10^16 cm^-3, t_ox = 50 nm, ε_ox = 3.4×10^-13 F/cm, φ_F = 0.347 V, W_m = 300 nm. Find V_T.", num: 1.40, u: "V", tol: 0.03,
+     h: "C_i = 3.4×10^-13 / 5×10^-6 cm. Q_d = 1.6×10^-19 × 10^16 × 3×10^-5.",
+     x: "C_i = 6.8×10^-8 F/cm², Q_d = 4.8×10^-8 C/cm² → 0.706 + 0.694 ≈ 1.40 V." },
+   { c: "A thinner oxide means bigger C_i, so a smaller Q_d/C_i term.",
+     q: "Same device: what oxide thickness lowers V_T by 0.5 V?", num: 14.6, u: "nm", tol: 0.04,
+     h: "Keep 2φ_F. You need Q_d/C_i = 0.706 − 0.5 = 0.206 V.",
+     x: "t_ox scales with that term: 50 × 0.206/0.706 ≈ 14.6 nm (about 35 nm thinner)." },
+   { c: "Why not make the oxide ever thinner? Defects and **tunneling** leakage. The industry switched to **high-k** dielectrics (HfO_2, ε_r ≈ 18 vs 3.9 for SiO_2).",
+     q: "Why use HfO_2 instead of thinner SiO_2?", o: ["Higher k gives more C at a thickness that doesn't tunnel", "It's cheaper", "It's a conductor"], a: 0,
+     x: "C = ε/t. Raise ε instead of shrinking t." }
+  ],
+  v: ["qφ_F = kT ln(N_A/n_i)", "Strong inversion: φ_s = 2φ_F", "W_m = 2√(ε_s φ_F/(qN_A))", "Q_d = qN_A W_m", "C_i = ε_ox/t_ox", "V_T(ideal) = Q_d/C_i + 2φ_F"]
+ },
+ {
+  id: "L13", n: 13, t: "Real MOSFET, CMOS, Capacitance", s: "Oct 20 · Ch. 6.4–6.5",
+  b: "Work functions, interface charge, inverters and the C–V curve.",
+  steps: [
+   { c: "A real V_T adds two effects: the work-function difference φ_ms and oxide/interface charge Q_i (usually positive). **V_T = φ_ms − Q_i/C_i + Q_d/C_i + 2φ_F**, with Q_d = qN_A W_m taken as a positive magnitude.",
+     q: "Positive interface charge Q_i makes an NMOS V_T…", o: ["Larger", "Smaller", "Unchanged"], a: 1,
+     x: "Positive charge already attracts electrons and bends the bands down, so you need less gate voltage." },
+   { c: "Now a real device.",
+     q: "n⁺-poly gate (φ_ms ≈ −0.95 V), N_A = 10^16 cm^-3, φ_F = 0.35 V, W_m = 300 nm, C_i = 200 nF/cm², Q_i = 0. Find V_T.", num: -0.01, u: "V", tolAbs: 0.04,
+     h: "Q_d/C_i = 4.8×10^-8 / 2×10^-7.",
+     x: "Q_d/C_i = 0.24 V, so V_T = −0.95 + 0.70 + 0.24 ≈ −0.01 V. Practically normally on, which is why real processes add adjustments." },
+   { c: "SHIFT or FLIP, NMOS → PMOS: the ideal terms (Q_d/C_i and 2φ_F) **flip sign**. They're always the price you pay, so they're negative for PMOS. φ_ms **shifts** with the materials, and the −Q_i/C_i term **doesn't change** (interface charge is still positive).",
+     q: "For a PMOS, the ideal V_T terms Q_d/C_i and 2φ_F are…", o: ["Both positive", "Both negative", "One of each"], a: 1,
+     x: "PMOS turns on with negative gate voltage. The price must always push V_T further from zero." },
+   { c: "**CMOS inverter**: NMOS (source to ground) plus PMOS (source to V_DD). The gates tie together as the input and the drains tie together as the output. One device is always off, so there's almost no static current.",
+     q: "V_in = 0 V on a 5 V CMOS inverter. V_out?", o: ["0 V", "5 V", "2.5 V"], a: 1,
+     x: "NMOS is off, PMOS is on, so the output is pulled up to 5 V." },
+   { c: "Linear region: I_D = μ_nC_i(Z/L)[(V_G − V_T)V_D − V_D^2/2]. Saturation: **I_D = (μ_nC_iZ/2L)(V_G − V_T)^2**. For fast switching you want short L, wide Z, thin oxide, low V_T and high μ.",
+     q: "μ_n = 500 cm²/V·s, C_i = 3.45×10^-7 F/cm², Z/L = 10, V_G − V_T = 1 V. Find I_D(sat).", num: 8.6e-4, u: "A", tol: 0.04,
+     x: "0.5 × 500 × 3.45×10^-7 × 10 × 1^2 ≈ 0.86 mA." },
+   { c: "Inversion charge grows exponentially with **surface** potential, but you control the **gate** voltage.",
+     q: "Above threshold, I_D vs V_G is roughly linear (not exponential) because…", o: ["Q = CV: inversion charge tracks gate voltage linearly", "Mobility increases", "Tunneling"], a: 0,
+     x: "Once inverted, each extra volt on the gate adds C_i × ΔV of channel charge." },
+   { c: "MOS C–V (low frequency): in accumulation C = C_i (maximum). In depletion, C_i in series with C_d drops it. In inversion it climbs back to C_i.",
+     q: "C_i = 3.45×10^-7 F/cm² and C_d (at W_m = 300 nm) = 3.48×10^-8 F/cm². Minimum capacitance per area?", num: 3.16e-8, u: "F/cm²", tol: 0.03,
+     h: "Series capacitors: C_i C_d / (C_i + C_d).",
+     x: "≈ 3.16×10^-8 F/cm². The smaller capacitor dominates a series pair." },
+   { c: "Max capacitance happens when charge sits right against the oxide.",
+     q: "Where does the gate see its maximum capacitance (low frequency)?", o: ["In accumulation or strong inversion", "Right at threshold", "In depletion"], a: 0,
+     x: "Both put charge at the oxide surface, so it looks like a metal–insulator–metal capacitor." }
+  ],
+  v: ["V_T = φ_ms − Q_i/C_i + Q_d/C_i + 2φ_F (Q_d = qN_A W_m)", "PMOS: ideal terms flip sign", "I_D,lin = μ_nC_i(Z/L)[(V_G−V_T)V_D − V_D^2/2]", "I_D,sat = (μ_nC_iZ/2L)(V_G − V_T)^2", "g_m,sat = μ_nC_i(Z/L)(V_G − V_T)", "C_min = C_iC_d/(C_i + C_d)", "C_d = ε_s/W_m"]
+ },
+ {
+  id: "L14", n: 14, t: "Advanced MOS: Power, Memory, Scaling", s: "Oct 22",
+  b: "Power MOSFETs, DRAM vs SRAM vs Flash, yield, and FinFETs.",
+  steps: [
+   { c: "Power MOSFETs use short channels and thousands of cells in parallel to carry huge currents (tens of A). They've replaced BJTs for power switching; BJTs still shine in RF and analog. **BiCMOS** puts both on one chip.",
+     q: "BiCMOS: a FET with g_m = 10^-3 A/V drives the base of a BJT with β = 100. Change in output current for a 1 V gate change?", num: 0.1, u: "A", tol: 0.02,
+     x: "The FET gives 1 mA of base current; the BJT multiplies it by 100 → 0.1 A." },
+   { c: "Three MOS-based memories, three trade-offs.",
+     q: "Match each memory to how it works.",
+     match: [["DRAM", "1 transistor + 1 capacitor, must be refreshed"], ["SRAM", "Cross-coupled inverters, no refresh, bigger cell"], ["Flash", "Floating gate holds charge with no power"]],
+     x: "DRAM = dense but leaky. SRAM = fast but large. Flash = non-volatile but slow to write." },
+   { c: "Flash writes by pushing hot electrons onto an isolated floating gate.",
+     q: "Electrons stored on an NMOS floating gate make V_T…", o: ["Higher", "Lower", "Unchanged"], a: 0,
+     x: "That negative charge has to be overcome by extra positive gate voltage. Reading V_T tells you the bit." },
+   { c: "Flash has limits.",
+     q: "Why not use Flash as working memory for a 1 GHz processor?", o: ["Limited write endurance (~millions of cycles) and slow µs writes", "It's volatile", "It's too fast"], a: 0,
+     x: "At a billion writes per second, a million-cycle limit is gone in about a millisecond." },
+   { c: "Chips take hundreds of process steps, and every one has to succeed.",
+     q: "A process has 50 steps, each with 90% yield. Overall yield in percent?", num: 0.515, u: "%", tol: 0.05,
+     x: "0.9^50 ≈ 0.005 → about 0.5%. That's why real step yields are ~99.99%." },
+   { c: "Shorter gates → lower R and C → faster, lower-power devices. The limits are leakage, heat and wiring RC. The fixes: low-k dielectrics between wires, trench isolation, and 3D gates.",
+     q: "FinFETs and gate-all-around FETs mainly improve…", o: ["Gate control over the channel → less leakage", "Color purity", "Breakdown voltage"], a: 0,
+     x: "Wrapping the gate around the channel lets it shut the channel off more completely." },
+   { c: "Newest idea: stack the devices.",
+     q: "A CFET (complementary FET) saves area by…", o: ["Stacking the NMOS on top of the PMOS", "Removing the gate", "Using BJTs"], a: 0,
+     x: "A vertical CMOS pair halves the footprint of an inverter." }
+  ],
+  v: ["Yield = (step yield)^N", "DRAM: 1T1C, refresh", "SRAM: cross-coupled inverters, no refresh", "Flash: floating gate shifts V_T", "FinFET / GAA: better gate control", "CFET: NMOS stacked on PMOS"]
+ }
+ ],
+ boss: { id: "B4", name: "The Gate Keeper", flavor: "Test 3 territory. Get past the oxide.",
+  q: [
+   { q: "For an NMOS, what happens to the semiconductor under the gate at threshold?", o: ["It inverts from p-type to n-type", "The source junction becomes forward biased", "The oxide breaks down"], a: 0, x: "Then it's n⁺ / n / n⁺ from source to drain." },
+   { q: "TRUE or FALSE: at threshold you've already paid the maximum voltage price for depletion charge.", o: ["True", "False"], a: 0, x: "W hits W_m and inversion takes over all new charge." },
+   { q: "TRUE or FALSE: increasing substrate doping means the bands must bend more to reach threshold.", o: ["True", "False"], a: 0, x: "φ_F grows with N_A, and so does Q_d." },
+   { q: "Saturation in a JFET happens because…", o: ["The gate–drain depletion pinches off the channel", "The gate becomes forward biased", "Series resistance takes over"], a: 0, x: "Pinch-off at the drain end." },
+   { q: "In a CMOS inverter, which terminals tie together for the output?", o: ["Both drains", "Both sources", "Both gates"], a: 0, x: "Gates = input, drains = output." },
+   { q: "Main reason MESFETs beat Si JFETs in speed?", o: ["Higher GaAs electron mobility and small gates", "Lower cost", "Thicker oxide"], a: 0, x: "μ_n ≈ 8500 vs ≈ 1350, plus simple fabrication allows tiny gates." },
+   { q: "For a PMOS with negative V_D, increasing |V_D| eventually causes…", o: ["Pinch-off (saturation)", "Accumulation", "Forward bias of the gate"], a: 0, x: "Same physics as NMOS with all polarities flipped." }
+  ] }
+},
+{
+ id: "w5", name: "Light", color: "#ff5d8f", lec: "Lectures 15–20",
+ tag: "Absorb it, emit it, amplify it, image it. Still just diodes.",
+ levels: [
+ {
+  id: "L15", n: 15, t: "Optoelectronics: Absorption & Emission", s: "Oct 29 · Ch. 8.1",
+  b: "Photon energy, Beer–Lambert absorption, and which materials glow.",
+  steps: [
+   { c: "Photon energy vs wavelength: **E(eV) = 1240/λ(nm)**. A semiconductor absorbs photons with E ≥ E_g. Lower-energy photons pass straight through.",
+     q: "Longest wavelength that Si (E_g = 1.12 eV) can absorb?", num: 1107, u: "nm", tol: 0.02,
+     x: "1240/1.12 ≈ 1107 nm (about 1.1 µm). That's why Si looks opaque to visible light but transparent in the IR." },
+   { lab: "photon",
+     c: "Dial a bandgap. See what color it emits and which part of the spectrum it absorbs." },
+   { c: "Night-vision goggles see infrared photons below 1.0 eV.",
+     q: "Through night-vision goggles (photons < 1.0 eV), a Si wafer looks…", o: ["Dark and opaque", "Transparent like glass"], a: 1,
+     x: "Below E_g, no absorption." },
+   { c: "Lifetime recap: lifetimes drop as doping rises and are equal for e and h. Light adds carriers, and drift current scales with the total carrier count.",
+     q: "n_i = 10^9, N_d = 10^15 cm^-3. You optically generate 10^17 cm^-3 EHPs (equal mobilities). Drift current increases by about how many times?", num: 201, tol: 0.03,
+     h: "Before: ≈ 10^15 total carriers. After: count electrons AND holes.",
+     x: "After: n ≈ 1.01×10^17 and p ≈ 10^17, about 2×10^17 total vs 10^15 before → ~200×." },
+   { c: "**Beer–Lambert**: I(x) = I_0 e^{−αx}. Attenuation in dB = 10·log_10(I_0/I) for power or intensity. Use 20·log only for voltage or current.",
+     q: "α = 100 cm^-1 for 1 µm light in Si. Thickness needed for 30 dB attenuation, in µm?", num: 691, u: "µm", tol: 0.03,
+     h: "30 dB → I/I_0 = 10^-3. Solve e^{−αx} = 10^-3.",
+     x: "x = ln(1000)/100 = 0.069 cm ≈ 690 µm." },
+   { c: "Watts are joules per second, and every photon carries E = (eV value) × 1.6×10^-19 J.",
+     q: "A 10 W source of green photons (2.3 eV each). Photons per second?", num: 2.72e19, u: "photons/s", tol: 0.03,
+     x: "One photon = 2.3 × 1.6×10^-19 = 3.68×10^-19 J. 10 / 3.68×10^-19 ≈ 2.7×10^19 per second." },
+   { c: "Ways to make light: blackbody (hot, inefficient), plasma, cathodoluminescence, high-field electroluminescence, and **e–h recombination** in direct-gap semiconductors (LEDs): the most efficient.",
+     q: "LEDs are made mainly from which columns of the periodic table?", o: ["IV", "II–VI", "III–V"], a: 2,
+     x: "III–V (GaAs, GaN, InP): direct gaps and strong, durable covalent bonds. II–VI bonds are more ionic and less stable." },
+   { c: "Two ways to tune emission: change the material or alloy (the bandgap), or use **quantum confinement**. A thin quantum well raises the allowed levels: E_n ∝ n^2/L^2.",
+     q: "Making a quantum well thinner shifts its emission toward…", o: ["Longer λ (redder)", "Shorter λ (bluer)"], a: 1,
+     x: "Smaller L → higher confined energies → bigger effective gap → shorter wavelength." },
+   { c: "Narrow-gap materials generate carriers thermally with ease.",
+     q: "Why do narrow-gap IR detectors need active cooling?", o: ["To suppress thermal generation that swamps the signal", "To raise mobility", "To prevent breakdown"], a: 0,
+     x: "Small E_g means lots of thermally generated pairs at 300 K." }
+  ],
+  v: ["E(eV) = 1240/λ(nm)", "λ_max = 1240/E_g", "I(x) = I_0 e^{−αx}", "dB = 10 log_10(P_0/P)", "Δn = g_op τ", "E_photon(J) = E(eV) × 1.6×10^-19", "Quantum well: E_n ∝ n^2/L^2"]
+ },
+ {
+  id: "L16", n: 16, t: "Solar Cells & Photodiodes", s: "Nov 5 · Ch. 8.1",
+  b: "Same diode, two jobs: harvest power (4th quadrant) or sense light (3rd).",
+  steps: [
+   { c: "Light on a pn junction: pairs generated inside W, or within a diffusion length of it, get swept by the built-in field and **collected**. Pairs generated deep in the bulk just recombine.",
+     q: "Which photogenerated carriers contribute current?", o: ["Those in W or within L of it", "Only those deep in the bulk", "All carriers anywhere"], a: 0,
+     x: "Only minority carriers that reach the field get collected." },
+   { c: "Photocurrent flows **opposite** to forward diode current: **I = I_0(e^{qV/kT} − 1) − I_op**, with I_op = qAg_op(L_p + L_n + W). The I–V curve shifts down.",
+     q: "One absorbed photon delivers how much charge through the external wire?", o: ["2q", "1q", "0"], a: 1,
+     x: "The electron goes around the circuit and recombines with its partner hole. One charge per pair." },
+   { lab: "solar",
+     c: "Run a solar cell. Turn up the light, pick a load, and hunt for maximum power." },
+   { c: "Short-circuit current is just I_op.",
+     q: "Si cell, 2×2 cm², I_0 = 32 nA, W = 1 µm, L_n = L_p = 2 µm, g_op = 10^18 cm^-3 s^-1. Find I_sc.", num: 3.2e-4, u: "A", tol: 0.04,
+     h: "I_op = q A g_op (W + L_n + L_p), lengths in cm.",
+     x: "1.6×10^-19 × 4 × 10^18 × 5×10^-4 = 3.2×10^-4 A = 0.32 mA." },
+   { c: "Open circuit: no current flows, so set I = 0 and solve for V.",
+     q: "Same cell. V_oc = (kT/q)·ln(1 + I_op/I_0) = ?", num: 0.239, u: "V", tol: 0.03,
+     x: "0.0259 × ln(1 + 10^4) ≈ 0.24 V. V_oc is always less than V_0." },
+   { c: "Recurring theme again.",
+     q: "More doping makes the optically generated current…", o: ["Increase", "Decrease", "Stay the same"], a: 1,
+     x: "L_p, L_n and W all shrink. Doping up → current down, every time in this course." },
+   { c: "Efficiency killers: a thick top layer absorbs blue light before the junction, metal fingers shade the cell, and photon energy above E_g is lost as heat. The best cells are **multi-junction** stacks joined by tunnel junctions, often under concentrators.",
+     q: "A typical commercial Si cell converts sunlight with roughly what efficiency?", o: ["5%", "≈15%", "50%", "90%"], a: 1,
+     x: "Mainstream Si sits in the mid-teens to ~20%. Multi-junction cells aim past 50%." },
+   { c: "**Photodiode**: reverse biased (3rd quadrant), rated by responsivity in A/W. A **PIN** adds an intrinsic layer for a wider W and more collection. An **APD** adds avalanche gain.",
+     q: "Responsivity 0.47 A/W, damage threshold 18 mW. Maximum photocurrent in mA?", num: 8.46, u: "mA", tol: 0.06,
+     x: "0.47 × 18 mW ≈ 8.5 mA (the class key rounds to ~10 mA)." },
+   { c: "APDs need avalanche, not tunneling.",
+     q: "Can a heavily doped p⁺n⁺ diode work as an avalanche photodiode?", o: ["Yes", "No: heavy doping triggers Zener tunneling first"], a: 1,
+     x: "APDs need lighter doping so impact ionization happens before tunneling." },
+   { c: "HBT phototransistor: holes generated in the BC depletion region get collected directly; the electrons stay in the base and trigger β times more hole flow.",
+     q: "β = 1000. Ten photons are absorbed in the BC depletion region. How many charges flow?", o: ["10", "10,000", "10,010", "0"], a: 2,
+     x: "10 photo-holes collected, plus 10,000 amplified holes before the 10 electrons recombine." }
+  ],
+  v: ["I = I_0(e^{qV/kT} − 1) − I_op", "I_op = qAg_op(L_n + L_p + W)", "V_oc = (kT/q) ln(1 + I_op/I_0)", "Solar: 4th quadrant, P = IV", "Photodiode: 3rd quadrant", "Responsivity = I_ph/P_opt (A/W)"]
+ },
+ {
+  id: "L17", n: 17, t: "LEDs & Solid-State Lighting", s: "Nov 10 · Ch. 8.2",
+  b: "Direct gaps, double heterojunctions, efficiency, and white light.",
+  steps: [
+   { c: "An LED is a forward-biased pn junction in a **direct-gap** material. Injected carriers recombine radiatively at λ ≈ 1240/E_g. A bigger E_g also means a higher turn-on voltage.",
+     q: "InGaN with E_g = 2.6 eV emits at what wavelength?", num: 477, u: "nm", tol: 0.02,
+     x: "1240/2.6 ≈ 477 nm: blue." },
+   { c: "Good LED design: a **double heterojunction**. A narrow-gap active layer sits between wider-gap layers, which confines carriers (more recombination) and lets light escape without being re-absorbed.",
+     q: "Advantages of a double heterojunction:", o: ["Better carrier confinement", "Transparent cladding, so light isn't re-absorbed", "Both", "Neither"], a: 2,
+     x: "Both. Plus the emission happens away from defect-rich surfaces." },
+   { c: "Efficiency = internal QE × injection × outcoupling. Outcoupling is poor in high-index chips: **Fresnel reflection** R = ((n − 1)/(n + 1))^2 and **total internal reflection** beyond θ_c = sin^{-1}(1/n).",
+     q: "GaP has n = 3.4. Critical angle θ_c in degrees?", num: 17.1, u: "°", tol: 0.02,
+     x: "sin^{-1}(1/3.4) ≈ 17°. Only light inside that narrow cone escapes." },
+   { c: "The class estimate for GaP: about 70% passes the Fresnel reflection, about 2% of the light falls inside each face's escape cone, and the chip has 6 faces.",
+     q: "External efficiency estimate, in percent?", num: 8.4, u: "%", tol: 0.03,
+     x: "0.70 × 0.02 × 6 ≈ 8.4%. That's why chips get shaped, textured or given lenses." },
+   { c: "**White LEDs** are a blue InGaN chip plus a yellow YAG:Ce phosphor. Converting blue (~2.75 eV) to yellow (~2.25 eV) loses the difference (Stokes loss). Art-grade LEDs add more phosphor to fill in the color gaps.",
+     q: "Percent of energy lost converting 2.75 eV blue to 2.25 eV yellow?", num: 18.2, u: "%", tol: 0.04,
+     x: "0.5/2.75 ≈ 18%." },
+   { c: "Luminous efficacy (lm/W) weights power by the eye's sensitivity, which peaks in the **green**. Green LEDs are also the hardest to make well (the “green gap”).",
+     q: "A blue and a green LED put out the same optical watts. Which looks brighter?", o: ["Blue", "Green", "Same"], a: 1,
+     x: "Your eye's response peaks near 555 nm. The sun's spectrum peaks in the green too." },
+   { c: "Voltage needed = photon energy + band offsets + IR drop.",
+     q: "Quantum-well LED: photon 2.6 eV, total band offsets 0.4 eV, series R = 10 Ω, I = 10 mA. Total voltage?", num: 3.1, u: "V", tol: 0.02,
+     x: "2.6 + 0.4 + (0.01 × 10) = 3.1 V." },
+   { c: "Fiber loss limits how far LED light can carry data.",
+     q: "LEDs in data links are suited to…", o: ["Short links (cars, stereos, industrial controls)", "Transoceanic internet links"], a: 0,
+     x: "Long-haul fiber needs narrow-linewidth lasers." }
+  ],
+  v: ["λ(nm) = 1240/E_g", "EQE = η_int × η_inj × η_out", "R = ((n − 1)/(n + 1))^2", "θ_c = sin^{-1}(1/n)", "Stokes loss = ΔE/E_blue", "V ≈ E_g/q + offsets + IR"]
+ },
+ {
+  id: "L18", n: 18, t: "OLEDs, OPV & Organic TFTs", s: "Nov 12 · Ch. 8.X",
+  b: "Conjugated molecules, HOMO/LUMO, OLED stacks, and active-matrix displays.",
+  steps: [
+   { c: "Organic = molecules with C–H bonds. Semiconducting organics have **conjugated** bonding: alternating single and double C–C bonds that delocalize π electrons.",
+     q: "Conjugated bonding means…", o: ["Alternating single and double carbon bonds", "Only single bonds", "Ionic bonds"], a: 0,
+     x: "Benzene is the classic example: every C still ends up with 4 bonds." },
+   { c: "Instead of bands, organics have a **HOMO** (≈ valence band) and a **LUMO** (≈ conduction band). A bigger conjugated molecule has a smaller HOMO–LUMO gap and emits at a longer wavelength.",
+     q: "Three dyes glow blue, green and red. The smallest molecule emits…", o: ["Red", "Green", "Blue"], a: 2,
+     x: "Smallest molecule → biggest gap → shortest wavelength." },
+   { c: "Excitations are **excitons** (bound e–h pairs) that hop from molecule to molecule, so mobilities are ~100–1000× lower than in inorganic semiconductors. C–H bonds (~3.5 eV) are weak next to GaN's (~8.9 eV).",
+     q: "Why do organic devices degrade faster?", o: ["Weak C–H bonds break under heat, UV and moisture", "Too much mobility", "They're too heavy"], a: 0,
+     x: "A blue photon (~2.7 eV) is not far below a C–H bond energy." },
+   { c: "OLED stacks are bandgap-engineered staircases for carriers.",
+     q: "Order a typical OLED stack, starting from the anode.",
+     sort: ["Transparent anode (ITO)", "Hole injection layer", "Hole transport layer", "Emitting layer", "Electron transport layer", "Metal cathode"],
+     x: "Holes come up from the anode side and electrons down from the cathode side. They meet in the emitter." },
+   { c: "Getting past a barrier is exponentially harder as the barrier grows: chance ∝ e^{−barrier}.",
+     q: "Why add a hole injection layer?", o: ["It splits one big barrier into small steps that are far easier to climb", "It blocks holes", "It emits light"], a: 0,
+     x: "Two steps of 2 beat one jump of 4 by a lot, because the cost is exponential." },
+   { c: "Transport layers do double duty.",
+     q: "Besides stepping the barrier, the hole transport layer also…", o: ["Blocks electrons from passing the emitting layer", "Emits blue light", "Acts as the cathode"], a: 0,
+     x: "Keeping both carriers trapped in the emitter means more recombination there." },
+   { c: "A transparent electrode can't absorb visible light.",
+     q: "A transparent anode must pass all light longer than 400 nm. Minimum bandgap (eV)?", num: 3.1, u: "eV", tol: 0.02,
+     x: "1240/400 = 3.1 eV. ITO (~4 eV) qualifies." },
+   { c: "Displays: an LCD pixel acts like a capacitor (1 TFT each). An OLED pixel needs **constant current**, so it needs at least 2 TFTs. a-Si is too slow for that, so OLEDs use poly-Si or oxide (IZO) TFTs.",
+     q: "A 9-million-pixel monochrome AMOLED needs how many TFTs (minimum)?", num: 1.8e7, tol: 0.01,
+     x: "2 per pixel → 18 million." },
+   { c: "Active matrix: address a pixel by its row line and column line.",
+     q: "Same 3000 × 3000 display: how many external control lines (rows + columns)?", num: 6000, tol: 0.01,
+     x: "3000 + 3000 = 6000, versus 9 million if each pixel were wired directly." },
+   { c: "OPV: polymer + fullerene blends make a junction everywhere in one layer.",
+     q: "The main appeal of organic photovoltaics?", o: ["Low cost, flexible, semitransparent", "Highest efficiency", "Best long-term stability"], a: 0,
+     x: "They trade efficiency and lifetime for cost and form factor." }
+  ],
+  v: ["HOMO ≈ E_V, LUMO ≈ E_C", "Bigger molecule → smaller gap → redder", "Exciton = bound e–h pair", "Barrier steps beat one big jump (∝ e^{−E})", "AMOLED: ≥ 2 TFTs per pixel", "Matrix lines = rows + columns"]
+ },
+ {
+  id: "L19", n: 19, t: "Lasers & Silicon Photonics", s: "Nov 17 · Ch. 8.3",
+  b: "Stimulated emission, population inversion, mirrors, and moving data with light.",
+  steps: [
+   { c: "LASER = Light Amplification by Stimulated Emission of Radiation. Its output is directional, monochromatic and coherent.",
+     q: "Match each process to its description.",
+     match: [["Absorption", "Photon in, electron jumps up"], ["Spontaneous emission", "Random direction and time (an LED)"], ["Stimulated emission", "A photon triggers a clone: same phase and direction"], ["Non-radiative recombination", "Energy lost as heat"]],
+     x: "Lasers depend on stimulated emission beating absorption." },
+   { c: "You need **population inversion**: more e–h pairs ready to recombine than valence electrons ready to absorb. You get it with strong injection into a thin, undoped active layer, confined by a **double heterojunction**.",
+     q: "True or false: a simple homojunction diode is the best way to reach population inversion.", tf: false,
+     x: "Without heterojunction confinement, the injected carriers diffuse away." },
+   { c: "Gain alone makes an optical amplifier (an SOA). A laser also needs **feedback**: mirrors that recycle light in a resonant cavity of precise length so the photons stay in phase.",
+     q: "Which two changes turn an LED into a laser?", o: ["Double heterojunction + mirrors/cavity", "Thicker substrate + lens", "More phosphor + heat sink"], a: 0,
+     x: "Same answer as the in-class problem: confinement for inversion, mirrors for feedback." },
+   { lab: "laser",
+     c: "Drive a laser diode. Find threshold and watch the spectrum collapse to a spike." },
+   { c: "Laser mirrors are **DBRs**: alternating high/low-index dielectric layers, each **λ_0/4n** thick. The reflections add in phase, giving near-perfect, lossless reflectance. More pairs → higher, wider stop band.",
+     q: "Quarter-wave SiO_2 layer (n = 1.46) for λ_0 = 633 nm: thickness in nm?", num: 108.4, u: "nm", tol: 0.02,
+     x: "633/(4 × 1.46) ≈ 108.4 nm (and 67.3 nm for TiO_2)." },
+   { c: "Make each layer **λ/2** thick instead and the reflections cancel: the stack becomes transparent at that wavelength (the anti-reflection idea).",
+     q: "Lecture 19 problem (c): TiO_2 (n = 2.35) thickness for perfect transmission at 600 nm?", num: 127.7, u: "nm", tol: 0.02,
+     h: "Half-wave: d = λ/(2n).",
+     x: "600/(2 × 2.35) ≈ 127.7 nm (and 205.5 nm for SiO_2). These match the posted solution." },
+   { c: "Metal mirrors absorb a little on every bounce.",
+     q: "Why not just use aluminum mirrors (R ≈ 90%)?", o: ["Losses compound over many bounces (0.9^n) and high power damages them", "Too reflective", "Too cheap"], a: 0,
+     x: "Dielectric stacks have almost zero absorption." },
+   { c: "The L–I curve has three zones.",
+     q: "Below threshold current, a laser diode emits…", o: ["Nothing", "Spontaneous emission (like an LED)", "Stimulated emission"], a: 1,
+     x: "Only at exactly 0 mA is there no emission. Lasing takes over at I_th." },
+   { c: "For fast data, leave the laser on and modulate it with an interferometer or ring resonator: a pn junction in the waveguide injects carriers to change the refractive index. Fibers are SiO_2, with the lowest loss ≈ 0.15 dB/km at 1.55 µm.",
+     q: "A detector responds out to 1550 nm. Its absorber bandgap in eV?", num: 0.8, u: "eV", tol: 0.02,
+     x: "1240/1550 ≈ 0.8 eV." },
+   { c: "Silicon photonics can guide, detect and modulate light on-chip.",
+     q: "What does silicon photonics still lack on-chip?", o: ["An efficient light source (Si is indirect)", "Waveguides", "Detectors"], a: 0,
+     x: "Hence tricks like Raman lasers and bonded III–V lasers." }
+  ],
+  v: ["Laser needs: direct gap, population inversion, feedback cavity", "DBR layer: d = λ_0/(4n)", "Half-wave d = λ_0/(2n) → transparent", "Threshold current I_th (not a voltage)", "Fiber: min loss ≈ 0.15 dB/km @ 1.55 µm", "λ_cutoff = 1240/E_g"]
+ },
+ {
+  id: "L20", n: 20, t: "Imaging: CCD & CMOS", s: "Nov 19 · Ch. 9.X · preview",
+  b: "Tomorrow's lecture, previewed: how a camera chip counts photons.",
+  steps: [
+   { c: "Under an MOS gate biased into **depletion**, photogenerated electrons get trapped in a potential well against the oxide. Collected charge ∝ light intensity × frame time.",
+     q: "If you raise the frame rate, low-light performance…", o: ["Improves", "Gets worse: less time to collect charge", "Doesn't change"], a: 1,
+     x: "That's why high-speed cameras need lots of light." },
+   { c: "Which carrier ends up in the well?",
+     q: "Positive gate voltage over p-Si makes a well that traps…", o: ["Electrons", "Holes"], a: 0,
+     x: "Positive gate → bands bend down at the surface → electrons collect there." },
+   { c: "**CCD**: clock the gate voltages to shift charge packets from well to well toward an amplifier at the edge, one row at a time. That double serial readout is slow. **Blooming**: too much light overflows wells into their neighbors.",
+     q: "What causes blooming?", o: ["Wells overflow and charge spills into neighbors", "Lens flare", "Slow clocks"], a: 0,
+     x: "Lateral overflow drains next to each pixel reduce it." },
+   { c: "**CMOS imager**: each pixel has a photodiode plus transistor(s). A 1T passive pixel has a high fill factor but is noisy; a 3T active pixel amplifies inside the pixel (less noise, lower fill factor).",
+     q: "The minimum two devices in a CMOS pixel are…", o: ["A photodiode and a transistor switch", "An LED and a resistor", "A capacitor and an inductor"], a: 0,
+     x: "One senses the light, one connects it to the column line." },
+   { c: "**Bayer filter**: 2 green : 1 red : 1 blue, because your eye is most sensitive to green. Microlenses steer light past the metal and transistors onto the photodiode. **Backside illumination** takes the wiring out of the light path.",
+     q: "In a Bayer array, what percent of the subpixels are green?", num: 50, u: "%", tol: 0.01,
+     x: "Half green, a quarter each red and blue." },
+   { c: "The big lens matters too.",
+     q: "Why do you always need at least one big lens in front of the array?", o: ["Without it every pixel sees light from every direction: a blur", "It adds color", "It powers the chip"], a: 0,
+     x: "The lens maps each direction in the scene to one pixel." }
+  ],
+  v: ["Collected Q ∝ g_op × t_frame", "CCD: serial charge transfer, slow readout", "CMOS: photodiode + transistor(s) per pixel", "Bayer: 50% G, 25% R, 25% B", "Microlenses & BSI raise fill factor"]
+ }
+ ],
+ boss: { id: "B5", name: "FINAL: Drift or Diffusion?", final: true, timer: 15,
+  flavor: "The prof's favorite question, in lightning form. 15 seconds each.",
+  q: [
+   { q: "Exists at 300 K in a diode at thermal equilibrium (no voltage applied).", o: ["Drift", "Diffusion", "Both", "Neither"], a: 2, x: "Both flow and cancel exactly." },
+   { q: "How carriers cross the base of a BJT.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 1, x: "There's no E-field in the neutral base, only a gradient." },
+   { q: "Separates photogenerated carriers inside a solar cell so they can be collected.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 0, x: "The built-in field of the depletion region." },
+   { q: "Drives the source-to-drain current in a MOSFET.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 0, x: "V_D creates a lateral field along the inverted channel." },
+   { q: "How a BJT collector actually “collects” current.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 0, x: "The reverse-biased BC junction sweeps carriers across." },
+   { q: "A solar cell with no voltage and no light: what drives a NET current?", o: ["Drift", "Diffusion", "Both", "Neither"], a: 3, x: "Both components exist, but they cancel. No net current flows." },
+   { q: "A JFET would have infinite current gain if not for this gate current.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 0, x: "The reverse-biased gate leaks I_0, which is minority-carrier drift." },
+   { q: "Drives current from the emitter into the base of a pnp BJT.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 1, x: "A forward-biased junction is diffusion over a lowered barrier." },
+   { q: "Requires charged particles and an electric field.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 0, x: "That's the definition of drift." },
+   { q: "Requires a concentration gradient.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 1, x: "That's the definition of diffusion." },
+   { q: "Dominates the current of a forward-biased LED.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 1, x: "An LED is a forward-biased diode: carriers diffuse in and recombine radiatively." },
+   { q: "The dark current of a reverse-biased photodiode.", o: ["Drift", "Diffusion", "Both", "Neither"], a: 0, x: "Dark current = reverse saturation current = drift." }
+  ] }
+}
+];
+
+/* SEMI QUEST — helpers + interactive labs */
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "html") e.innerHTML = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (k === "style" && typeof v === "object") Object.assign(e.style, v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat(9)) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return e;
+}
+function sv(tag, attrs, ...kids) {
+  const e = document.createElementNS(SVGNS, tag);
+  if (attrs) for (const k in attrs) { const v = attrs[k]; if (v == null) continue; if (k === "text") setSvgText(e, String(v)); else e.setAttribute(k, v); }
+  for (const c of kids.flat(9)) if (c != null) e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return e;
+}
+function setSvgText(e, s) {
+  if (s.indexOf("_") < 0) { e.textContent = s; return; }
+  const re = /_([A-Za-z0-9,]+)/g; let last = 0, m, down = false;
+  const add = (txt, sub) => {
+    if (!txt) return;
+    const t = document.createElementNS(SVGNS, "tspan");
+    if (sub) { t.setAttribute("class", "sub"); t.setAttribute("dy", "3"); down = true; }
+    else if (down) { t.setAttribute("dy", "-3"); down = false; }
+    t.textContent = txt; e.append(t);
+  };
+  while ((m = re.exec(s))) { add(s.slice(last, m.index), false); add(m[1], true); last = re.lastIndex; }
+  add(s.slice(last), false);
+}
+const SUPS = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺" };
+function supStr(s) { return String(s).split("").map(c => SUPS[c] || c).join(""); }
+function sig(v, d = 3) { if (v === 0) return "0"; const r = Number(v.toPrecision(d)); return String(r); }
+function fmtNum(v, d = 3) {
+  if (!isFinite(v)) return "∞";
+  const a = Math.abs(v);
+  if (a !== 0 && (a >= 1e4 || a < 1e-2)) {
+    let e = Math.floor(Math.log10(a)); let m = v / Math.pow(10, e);
+    m = Number(m.toPrecision(d)); if (Math.abs(m) >= 10) { m /= 10; e += 1; }
+    return (m === 1 ? "" : m + "×") + "10" + supStr(e);
+  }
+  return sig(v, d);
+}
+function eng(v, unit) { // engineering prefix
+  const a = Math.abs(v);
+  const P = [[1e-15, "f"], [1e-12, "p"], [1e-9, "n"], [1e-6, "µ"], [1e-3, "m"], [1, ""], [1e3, "k"]];
+  if (a === 0) return "0 " + unit;
+  let best = P[0];
+  for (const p of P) if (a >= p[0] * 0.9995) best = p;
+  return sig(v / best[0], 3) + " " + best[1] + unit;
+}
+const kT = 0.0259, NI = 1.5e10, Q = 1.6e-19, EPS = 11.8 * 8.85e-14;
+
+function slider(o) {
+  const val = el("span", { class: "sl-val" });
+  const input = el("input", { type: "range", min: o.min, max: o.max, step: o.step, value: o.value, "aria-label": o.label });
+  const upd = () => { val.innerHTML = o.fmt(Number(input.value)); };
+  input.addEventListener("input", () => { upd(); o.oninput(Number(input.value)); });
+  upd();
+  const wrap = el("label", { class: "slider" }, el("span", { class: "sl-top" }, el("span", { class: "sl-lab", html: o.label }), val), input);
+  return { el: wrap, input, set(v) { input.value = v; upd(); } };
+}
+function toggle(opts, value, onchange) {
+  const wrap = el("div", { class: "seg", role: "group" });
+  const btns = opts.map(([v, label]) => {
+    const b = el("button", { type: "button", class: "seg-b" + (v === value ? " on" : ""), html: label, onclick: () => { btns.forEach(x => x.classList.remove("on")); b.classList.add("on"); onchange(v); } });
+    return b;
+  });
+  wrap.append(...btns);
+  return wrap;
+}
+/* Lab shell: missions + stage + controls + readout */
+function labShell(ctx, title, missions) {
+  const done = missions.map(() => false);
+  const items = missions.map(m => el("li", { class: "mission" }, el("span", { class: "m-box" }), el("span", { html: m[0] })));
+  const stage = el("div", { class: "lab-stage" });
+  const controls = el("div", { class: "lab-controls" });
+  const readout = el("div", { class: "lab-readout" });
+  const root = el("div", { class: "lab" },
+    el("div", { class: "lab-head" }, el("span", { class: "lab-tag" }, "LAB"), el("span", { class: "lab-title", html: title })),
+    stage, controls, readout,
+    el("ul", { class: "missions" }, items));
+  function check(state) {
+    missions.forEach((m, i) => {
+      if (!done[i] && m[1](state)) { done[i] = true; items[i].classList.add("done"); ctx.onMission && ctx.onMission(i, done.filter(Boolean).length, missions.length); }
+    });
+  }
+  return { root, stage, controls, readout, check, done };
+}
+function subify(s) { return String(s).replace(/_([A-Za-z0-9,]+)/g, "<sub>$1</sub>"); }
+function ro(pairs) { return pairs.map(([k, v]) => `<div class="ro"><span>${subify(k)}</span><b>${subify(v)}</b></div>`).join(""); }
+function axes(g, x0, y0, w, h, xl, yl) {
+  g.append(sv("line", { x1: x0, y1: y0 + h, x2: x0 + w, y2: y0 + h, class: "ax" }), sv("line", { x1: x0, y1: y0, x2: x0, y2: y0 + h, class: "ax" }));
+  if (xl) g.append(sv("text", { x: x0 + w, y: y0 + h + 14, class: "axl", "text-anchor": "end", text: xl }));
+  if (yl) g.append(sv("text", { x: x0 + 4, y: y0 + 10, class: "axl", text: yl }));
+}
+function poly(pts) { return pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" "); }
+
+const LABS = {};
+
+/* ---------- L1: Fermi level vs doping ---------- */
+LABS.fermi = (ctx) => {
+  const st = { type: "n", logN: 15 };
+  const L = labShell(ctx, "Doping & the Fermi level (Si, 300 K)", [
+    ["Make it <b>n-type</b> with n<sub>0</sub> ≥ 10¹⁷ cm⁻³", s => s.type === "n" && s.n0 >= 9.99e16],
+    ["Make it <b>p-type</b> with E<sub>F</sub> at least 0.35 eV below E<sub>i</sub>", s => s.type === "p" && s.d <= -0.35]
+  ]);
+  const W = 340, H = 220, top = 34, bot = 186, pxeV = (bot - top) / 1.12, mid = (top + bot) / 2;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  function draw() {
+    const N = Math.pow(10, st.logN);
+    let n0, p0, d;
+    if (st.type === "n") { n0 = N; p0 = NI * NI / N; d = kT * Math.log(n0 / NI); }
+    else { p0 = N; n0 = NI * NI / N; d = -kT * Math.log(p0 / NI); }
+    Object.assign(st, { n0, p0, d });
+    svg.replaceChildren();
+    svg.append(sv("rect", { x: 0, y: 0, width: 230, height: top, class: "cb-fill" }), sv("rect", { x: 0, y: bot, width: 230, height: H - bot, class: "vb-fill" }));
+    svg.append(sv("line", { x1: 0, y1: top, x2: 230, y2: top, class: "ec" }), sv("line", { x1: 0, y1: bot, x2: 230, y2: bot, class: "ev" }));
+    svg.append(sv("line", { x1: 0, y1: mid, x2: 230, y2: mid, class: "ei" }));
+    const yF = Math.max(top - 6, Math.min(bot + 6, mid - d * pxeV));
+    svg.append(sv("line", { x1: 0, y1: yF, x2: 230, y2: yF, class: "ef" }));
+    svg.append(sv("text", { x: 226, y: top + 4, class: "lbl", "text-anchor": "end", text: "E_C" }), sv("text", { x: 226, y: bot + 4, class: "lbl", "text-anchor": "end", text: "E_V" }), sv("text", { x: 4, y: mid - 4, class: "lbl dim", text: "E_i" }), sv("text", { x: 226, y: yF - 4, class: "lbl ef-t", "text-anchor": "end", text: "E_F" }));
+    const dots = v => Math.max(0, Math.min(18, Math.round((Math.log10(v) - 2) * 1.1)));
+    const ne = dots(n0), nh = dots(p0);
+    for (let i = 0; i < ne; i++) svg.append(sv("circle", { cx: 12 + (i * 11.5) % 176, cy: top - 9 - (Math.floor(i * 11.5 / 176) * 9), r: 4, class: "dot-e" }));
+    for (let i = 0; i < nh; i++) svg.append(sv("circle", { cx: 12 + (i * 11.5) % 176, cy: bot + 9 + (Math.floor(i * 11.5 / 176) * 9), r: 4, class: "dot-h" }));
+    // Fermi function
+    const pts = [];
+    for (let y = 0; y <= H; y += 2) { const E = (mid - y) / pxeV; const f = 1 / (1 + Math.exp((E - d) / kT)); pts.push([250 + 70 * f, y]); }
+    svg.append(sv("line", { x1: 250, y1: 0, x2: 250, y2: H, class: "ax" }), sv("path", { d: poly(pts), class: "curve" }), sv("text", { x: 262, y: 14, class: "axl", text: "f(E): 0 → 1" }));
+    L.readout.innerHTML = ro([["n₀", fmtNum(n0) + " cm⁻³"], ["p₀", fmtNum(p0) + " cm⁻³"], ["E_F − E_i", (d >= 0 ? "+" : "") + d.toFixed(3) + " eV"]]);
+    L.check(st);
+  }
+  const tg = toggle([["n", "n-type (P, As)"], ["p", "p-type (B)"]], "n", v => { st.type = v; draw(); });
+  const s1 = slider({ label: "Doping N", min: 14, max: 19, step: 0.1, value: 15, fmt: v => "10" + supStr(v.toFixed(1).replace(".0", "")) + " cm⁻³", oninput: v => { st.logN = v; draw(); } });
+  L.controls.append(tg, s1.el);
+  draw();
+  return L.root;
+};
+
+/* ---------- L2: drift, soda-pop picture ---------- */
+LABS.drift = (ctx) => {
+  const st = { V: 0 };
+  const L = labShell(ctx, "Drift: the soda-pop picture", [
+    ["Put <b>+2 V or more</b> on the left end. Which way do electrons roll?", s => s.V >= 2],
+    ["Flip it: <b>−2 V or less</b> on the left", s => s.V <= -2]
+  ]);
+  const W = 340, H = 200, k = 14;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  const gBands = sv("g"), gP = sv("g"), gTxt = sv("g");
+  svg.append(gBands, gP, gTxt);
+  L.stage.append(svg);
+  const ecY = x => 62 + st.V * k * (1 - x / W);
+  const parts = [];
+  for (let i = 0; i < 14; i++) parts.push({ e: true, x: Math.random() * W, j: Math.random() * 6 });
+  for (let i = 0; i < 10; i++) parts.push({ e: false, x: Math.random() * W, j: Math.random() * 6 });
+  parts.forEach(p => { p.node = sv("circle", { r: 4.5, class: p.e ? "dot-e" : "dot-h" }); gP.append(p.node); });
+  function drawBands() {
+    gBands.replaceChildren(
+      sv("line", { x1: 0, y1: ecY(0), x2: W, y2: ecY(W), class: "ec" }),
+      sv("line", { x1: 0, y1: ecY(0) + 80, x2: W, y2: ecY(W) + 80, class: "ev" }),
+      sv("text", { x: 6, y: ecY(0) - 22, class: "lbl", text: (st.V > 0 ? "+" : st.V < 0 ? "−" : "") + Math.abs(st.V) + " V" }),
+      sv("text", { x: W - 40, y: ecY(W) - 22, class: "lbl dim", text: "0 V" }));
+    let msg;
+    if (st.V === 0) msg = "Flat bands → no E-field → no drift (just random jiggling).";
+    else msg = st.V > 0 ? "E points → . Electrons roll ← (downhill), holes float → . Current flows →" : "E points ← . Electrons roll → (downhill), holes float ← . Current flows ←";
+    L.readout.innerHTML = `<div class="ro wide"><span>${msg}</span></div>`;
+    L.check(st);
+  }
+  let last = performance.now();
+  function tick(t) {
+    if (svg._started && !svg.isConnected) return;
+    svg._started = true;
+    const dt = Math.min(40, t - last) / 16; last = t;
+    for (const p of parts) {
+      const drift = p.e ? -st.V * 0.55 : st.V * 0.28; // μn > μp
+      p.x += (drift + (Math.random() - 0.5) * 1.4) * dt;
+      if (p.x < 0) p.x += W; if (p.x > W) p.x -= W;
+      const y = p.e ? ecY(p.x) - 8 - p.j : ecY(p.x) + 88 + p.j;
+      p.node.setAttribute("cx", p.x.toFixed(1)); p.node.setAttribute("cy", y.toFixed(1));
+    }
+    requestAnimationFrame(tick);
+  }
+  const s1 = slider({ label: "Voltage on the LEFT end (right end grounded)", min: -3, max: 3, step: 0.5, value: 0, fmt: v => (v > 0 ? "+" : "") + v + " V", oninput: v => { st.V = v; drawBands(); } });
+  L.controls.append(s1.el);
+  drawBands();
+  requestAnimationFrame(tick);
+  return L.root;
+};
+
+/* ---------- L3: pn junction builder ---------- */
+LABS.junction = (ctx) => {
+  const st = { la: 17, ld: 15, V: 0 };
+  const L = labShell(ctx, "PN junction builder (Si, 300 K)", [
+    ["Widen the depletion region past <b>2 µm</b>", s => s.W > 2e-4],
+    ["Make the <b>p side</b> hold most of the depletion width", s => s.xp > s.xn * 1.05],
+    ["Forward-bias it until the barrier drops below <b>0.3 V</b>", s => s.V > 0 && s.Vj < 0.3]
+  ]);
+  const Wd = 340, H = 230;
+  const svg = sv("svg", { viewBox: `0 0 ${Wd} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  const zooms = [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20];
+  function draw() {
+    const Na = Math.pow(10, st.la), Nd = Math.pow(10, st.ld);
+    const V0 = kT * Math.log(Na * Nd / (NI * NI));
+    const Vj = Math.max(V0 - st.V, 0.03);
+    const W = Math.sqrt(2 * EPS * Vj / Q * (1 / Na + 1 / Nd));
+    const xp = W * Nd / (Na + Nd), xn = W * Na / (Na + Nd);
+    const Emax = Q * Na * xp / EPS;
+    Object.assign(st, { V0, Vj, W, xp, xn });
+    const half = zooms.find(z => z * 1e-4 >= Math.max(xp, xn) * 1.35) || 20;
+    const cx = Wd / 2, sc = (Wd / 2 - 10) / (half * 1e-4);
+    const X = x => cx + x * sc;
+    svg.replaceChildren();
+    // block
+    svg.append(sv("rect", { x: 10, y: 10, width: cx - 10, height: 34, class: "p-fill" }), sv("rect", { x: cx, y: 10, width: Wd / 2 - 10, height: 34, class: "n-fill" }));
+    svg.append(sv("rect", { x: X(-xp), y: 10, width: Math.max(1, X(xn) - X(-xp)), height: 34, class: "dep-fill" }));
+    svg.append(sv("line", { x1: cx, y1: 6, x2: cx, y2: 48, class: "junc" }));
+    svg.append(sv("text", { x: 16, y: 32, class: "lbl", text: "p" }), sv("text", { x: Wd - 26, y: 32, class: "lbl", text: "n" }));
+    // ions
+    const nI = 6;
+    for (let i = 0; i < nI; i++) {
+      const xa = X(-xp + (i + 0.5) * xp / nI), xb = X((i + 0.5) * xn / nI);
+      if (X(xn) - X(-xp) > 16) { if (xp * sc > 8) svg.append(sv("text", { x: xa, y: 31, class: "ion-m", "text-anchor": "middle", text: "−" })); if (xn * sc > 8) svg.append(sv("text", { x: xb, y: 31, class: "ion-p", "text-anchor": "middle", text: "+" })); }
+    }
+    // scale bar
+    svg.append(sv("line", { x1: Wd - 10 - sc * half * 1e-4 / 2, y1: 54, x2: Wd - 10, y2: 54, class: "ax" }), sv("text", { x: Wd - 10, y: 66, class: "axl", "text-anchor": "end", text: (half / 2) + " µm" }));
+    // bands
+    const s = Math.min(70, 120 / (Vj + 1.12)), y0 = 86;
+    const psi = x => x <= -xp ? 0 : x <= 0 ? (Q * Na / (2 * EPS)) * (x + xp) ** 2 : x <= xn ? Vj - (Q * Nd / (2 * EPS)) * (xn - x) ** 2 : Vj;
+    const pc = [], pv = [];
+    for (let px = 10; px <= Wd - 10; px += 2) { const x = (px - cx) / sc; const y = y0 + s * psi(x); pc.push([px, y]); pv.push([px, y + 1.12 * s]); }
+    svg.append(sv("path", { d: poly(pc), class: "ec-p" }), sv("path", { d: poly(pv), class: "ev-p" }));
+    const eiP = y0 + 0.56 * s, efP = eiP + kT * Math.log(Na / NI) * s;
+    const eiN = y0 + Vj * s + 0.56 * s, efN = eiN - kT * Math.log(Nd / NI) * s;
+    svg.append(sv("line", { x1: 10, y1: efP, x2: X(-xp), y2: efP, class: "ef" }), sv("line", { x1: X(xn), y1: efN, x2: Wd - 10, y2: efN, class: "ef" }));
+    svg.append(sv("text", { x: 14, y: efP - 4, class: "lbl ef-t", text: Math.abs(st.V) < 0.001 ? "E_F (flat)" : "E_F,p" }), sv("text", { x: Wd - 26, y: efN - 4, class: "lbl ef-t", "text-anchor": "end", text: Math.abs(st.V) < 0.001 ? "E_F" : "E_F,n" }));
+    svg.append(sv("line", { x1: Wd - 18, y1: y0, x2: Wd - 18, y2: y0 + Vj * s, class: "barrier" }), sv("text", { x: Wd - 22, y: y0 + Vj * s / 2 + 4, class: "lbl", "text-anchor": "end", text: "q(V₀−V)" }));
+    L.readout.innerHTML = ro([["V₀", V0.toFixed(3) + " V"], ["Barrier V₀−V", Vj.toFixed(3) + " V"], ["W", sig(W * 1e4) + " µm"], ["x_p0 / x_n0", sig(xp * 1e4, 2) + " / " + sig(xn * 1e4, 2) + " µm"], ["E_max", fmtNum(Emax) + " V/cm"], ["C_j / A", sig(EPS / W * 1e9) + " nF/cm²"]]);
+    L.check(st);
+  }
+  const sa = slider({ label: "N<sub>A</sub> (p side)", min: 14, max: 18, step: 0.1, value: 17, fmt: v => "10" + supStr(v.toFixed(1).replace(".0", "")) + " cm⁻³", oninput: v => { st.la = v; draw(); } });
+  const sd = slider({ label: "N<sub>D</sub> (n side)", min: 14, max: 18, step: 0.1, value: 15, fmt: v => "10" + supStr(v.toFixed(1).replace(".0", "")) + " cm⁻³", oninput: v => { st.ld = v; draw(); } });
+  const sV = slider({ label: "Applied V (p relative to n)", min: -5, max: 0.65, step: 0.05, value: 0, fmt: v => (v > 0 ? "+" : "") + v.toFixed(2) + " V " + (v > 0.001 ? "<em>forward</em>" : v < -0.001 ? "<em>reverse</em>" : "<em>equilibrium</em>"), oninput: v => { st.V = v; draw(); } });
+  L.controls.append(sa.el, sd.el, sV.el);
+  draw();
+  return L.root;
+};
+
+/* ---------- L4: diode I–V ---------- */
+LABS.diodeIV = (ctx) => {
+  const I0 = 4.5e-14;
+  const st = { V: 0.3, view: "lin" };
+  const L = labShell(ctx, "Ideal diode I–V (I₀ = 4.5×10⁻¹⁴ A)", [
+    ["Push the current past <b>1 mA</b>", s => s.I >= 1e-3],
+    ["Go to reverse bias (<b>V ≤ −0.2 V</b>): drift takes over", s => s.V <= -0.2],
+    ["Switch to the <b>log view</b> to see both components", s => s.view === "log"]
+  ]);
+  const W = 340, H = 210, x0 = 40, y0 = 12, pw = 285, ph = 160;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  const Vmin = -1, Vmax = 0.75;
+  const X = v => x0 + (v - Vmin) / (Vmax - Vmin) * pw;
+  function draw() {
+    const V = st.V, Id = I0 * Math.exp(V / kT), I = Id - I0;
+    st.I = I;
+    svg.replaceChildren();
+    const g = sv("g"); svg.append(g);
+    axes(g, x0, y0, pw, ph, "V", st.view === "lin" ? "I (mA)" : "|I| (A, log)");
+    if (st.view === "lin") {
+      const Imax = 30e-3, Imin = -3e-3;
+      const Y = i => y0 + ph - (i - Imin) / (Imax - Imin) * ph;
+      g.append(sv("line", { x1: x0, y1: Y(0), x2: x0 + pw, y2: Y(0), class: "grid" }));
+      const pts = []; for (let v = Vmin; v <= Vmax; v += 0.005) { const i = I0 * (Math.exp(v / kT) - 1); pts.push([X(v), Math.max(y0, Y(i))]); }
+      g.append(sv("path", { d: poly(pts), class: "curve" }));
+      g.append(sv("circle", { cx: X(V), cy: Math.max(y0, Y(I)), r: 6, class: "pt" }));
+      [0, 10, 20, 30].forEach(m => g.append(sv("text", { x: x0 - 4, y: Y(m * 1e-3) + 4, class: "axl", "text-anchor": "end", text: m })));
+    } else {
+      const lo = -16, hi = -1;
+      const Y = i => y0 + ph - (Math.log10(Math.max(Math.abs(i), 1e-17)) - lo) / (hi - lo) * ph;
+      const pD = [], pN = [];
+      for (let v = Vmin; v <= Vmax; v += 0.005) { pD.push([X(v), Math.max(y0, Math.min(y0 + ph, Y(I0 * Math.exp(v / kT))))]); pN.push([X(v), Math.max(y0, Math.min(y0 + ph, Y(I0 * (Math.exp(v / kT) - 1))))]); }
+      g.append(sv("path", { d: poly(pD), class: "curve-diff" }), sv("line", { x1: x0, y1: Y(I0), x2: x0 + pw, y2: Y(I0), class: "curve-drift" }), sv("path", { d: poly(pN), class: "curve" }));
+      g.append(sv("text", { x: x0 + 6, y: Y(I0) - 5, class: "axl drift-t", text: "drift = I₀" }), sv("text", { x: X(0.35), y: Y(I0 * Math.exp(0.35 / kT)) - 8, class: "axl diff-t", text: "diffusion = I₀e^(qV/kT)" }));
+      g.append(sv("circle", { cx: X(V), cy: Math.max(y0, Math.min(y0 + ph, Y(I))), r: 6, class: "pt" }));
+      [-15, -10, -5].forEach(p => g.append(sv("text", { x: x0 - 4, y: Y(Math.pow(10, p)) + 4, class: "axl", "text-anchor": "end", text: "1e" + p })));
+    }
+    [-1, -0.5, 0, 0.5].forEach(v => g.append(sv("text", { x: X(v), y: y0 + ph + 14, class: "axl", "text-anchor": "middle", text: v })));
+    const dom = Math.abs(V) < 0.01 ? "balanced (no net current)" : V > 0 ? (Id > 10 * I0 ? "DIFFUSION" : "diffusion, barely") : "DRIFT (I = −I₀)";
+    L.readout.innerHTML = ro([["I_diff", eng(Id, "A")], ["I_drift", eng(I0, "A")], ["Net I", eng(I, "A")], ["Dominant", dom]]);
+    L.check(st);
+  }
+  const tg = toggle([["lin", "Linear"], ["log", "Log |I|"]], "lin", v => { st.view = v; draw(); });
+  const sV = slider({ label: "Applied voltage V", min: -1, max: 0.75, step: 0.005, value: 0.3, fmt: v => (v > 0 ? "+" : "") + v.toFixed(3) + " V", oninput: v => { st.V = v; draw(); } });
+  L.controls.append(tg, sV.el);
+  draw();
+  return L.root;
+};
+
+/* ---------- L8: base profile & beta ---------- */
+LABS.base = (ctx) => {
+  const st = { lx: -2 };
+  const L = labShell(ctx, "Inside the base: hole profile vs W<sub>b</sub>/L<sub>p</sub>", [
+    ["Get <b>β above 10,000</b>", s => s.beta > 1e4],
+    ["Make <b>W<sub>b</sub> ≥ L<sub>p</sub></b> and watch the gain collapse", s => s.x >= 1]
+  ]);
+  const W = 340, H = 200, x0 = 40, y0 = 14, pw = 280, ph = 150;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  function draw() {
+    const x = Math.pow(10, st.lx);
+    const ctnh = 1 / Math.tanh(x), csch = 1 / Math.sinh(x), th = Math.tanh(x / 2);
+    const beta = csch / th, alpha = 1 / Math.cosh(x);
+    Object.assign(st, { x, beta });
+    svg.replaceChildren();
+    const g = sv("g"); svg.append(g);
+    g.append(sv("rect", { x: x0, y: y0, width: pw, height: ph, class: "n-fill" }));
+    axes(g, x0, y0, pw, ph, "0 → W_b (emitter → collector)", null);
+    const pts = [], lin = [];
+    for (let u = 0; u <= 1.0001; u += 0.01) { pts.push([x0 + u * pw, y0 + ph - ph * Math.sinh(x * (1 - u)) / Math.sinh(x)]); lin.push([x0 + u * pw, y0 + ph * u]); }
+    g.append(sv("path", { d: poly(lin), class: "grid" }), sv("path", { d: poly(pts), class: "curve-h" }));
+    g.append(sv("text", { x: x0 + pw - 6, y: y0 + 14, class: "axl", "text-anchor": "end", text: "Δp_E at the EB edge" }), sv("text", { x: x0 + 6, y: y0 + ph - 6, class: "axl", text: "≈ 0 at the BC edge" }));
+    const lost = fmtNum(100 * (1 - alpha), 2) + "%";
+    L.readout.innerHTML = ro([["W_b/L_p", sig(x, 3)], ["ctnh(x)", fmtNum(ctnh)], ["csch(x)", fmtNum(csch)], ["tanh(x/2)", fmtNum(th)], ["β = I_C/I_B", fmtNum(beta)], ["Holes lost in the base", lost]]);
+    L.check(st);
+  }
+  const s = slider({ label: "Base width W<sub>b</sub>/L<sub>p</sub>", min: -2.3, max: 0.3, step: 0.01, value: -2, fmt: v => sig(Math.pow(10, v), 3), oninput: v => { st.lx = v; draw(); } });
+  L.controls.append(s.el);
+  draw();
+  return L.root;
+};
+
+/* ---------- L9: Ebers–Moll modes ---------- */
+LABS.modes = (ctx) => {
+  const st = { eb: "f", cb: "r" };
+  const names = { fr: ["Normal active", "Amplifier. EB injects, BC collects."], ff: ["Saturation", "Switch ON. Both inject; flat-ish profile; small V_CE."], rr: ["Cutoff", "Switch OFF. Nothing injected; only tiny leakage."], rf: ["Inverted", "Roles swapped. Works, but poor gain in a p⁺np."] };
+  const L = labShell(ctx, "Coupled-diode model: find all four modes", [
+    ["Find <b>normal active</b>", s => s.m === "fr"], ["Find <b>saturation</b>", s => s.m === "ff"], ["Find <b>cutoff</b>", s => s.m === "rr"], ["Find <b>inverted</b>", s => s.m === "rf"]
+  ]);
+  const W = 340, H = 210;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  function diode(x, y, on, dir, label) {
+    const g = sv("g", { class: on ? "em on" : "em" });
+    const tri = dir > 0 ? `M${x - 10} ${y - 9} L${x + 8} ${y} L${x - 10} ${y + 9} Z` : `M${x + 10} ${y - 9} L${x - 8} ${y} L${x + 10} ${y + 9} Z`;
+    g.append(sv("path", { d: tri }), sv("line", { x1: x + 8 * dir, y1: y - 10, x2: x + 8 * dir, y2: y + 10 }), sv("text", { x, y: y + 24, "text-anchor": "middle", class: "axl", text: label }));
+    return g;
+  }
+  function src(x, y, on, dir, label) {
+    const g = sv("g", { class: on ? "em on" : "em" });
+    g.append(sv("circle", { cx: x, cy: y, r: 11 }), sv("line", { x1: x - 6 * dir, y1: y, x2: x + 6 * dir, y2: y }), sv("path", { d: `M${x + 6 * dir} ${y} l${-4 * dir} -4 M${x + 6 * dir} ${y} l${-4 * dir} 4` }), sv("text", { x, y: y - 16, "text-anchor": "middle", class: "axl", text: label }));
+    return g;
+  }
+  function draw() {
+    const m = st.eb + st.cb; st.m = m;
+    const F = st.eb === "f", R = st.cb === "f";
+    svg.replaceChildren();
+    // wires: E(left)  — node B — C(right)
+    svg.append(sv("line", { x1: 20, y1: 70, x2: 320, y2: 70, class: "wire" }), sv("line", { x1: 20, y1: 120, x2: 320, y2: 120, class: "wire" }));
+    svg.append(sv("line", { x1: 20, y1: 70, x2: 20, y2: 120, class: "wire" }), sv("line", { x1: 320, y1: 70, x2: 320, y2: 120, class: "wire" }));
+    svg.append(sv("line", { x1: 170, y1: 70, x2: 170, y2: 150, class: "wire" }));
+    svg.append(sv("text", { x: 8, y: 98, class: "lbl", text: "E" }), sv("text", { x: 324, y: 98, class: "lbl", text: "C" }), sv("text", { x: 166, y: 166, class: "lbl", text: "B" }));
+    svg.append(diode(95, 70, F, 1, "I_F diode (EB)"), src(95, 120, R, -1, ""), diode(245, 70, R, -1, "I_R diode (CB)"), src(245, 120, F, 1, ""));
+    svg.append(sv("text", { x: 95, y: 146, "text-anchor": "middle", class: "axl", text: "α_I·I_R" }), sv("text", { x: 245, y: 146, "text-anchor": "middle", class: "axl", text: "α_N·I_F" }));
+    // base profile
+    const px = 60, pw = 220, py = 178, h = 26;
+    const yE = F ? py : py + h, yC = R ? py : py + h;
+    svg.append(sv("rect", { x: px, y: py - 2, width: pw, height: h + 4, class: "n-fill" }), sv("line", { x1: px, y1: yE, x2: px + pw, y2: yC, class: "curve-h" }));
+    svg.append(sv("text", { x: px - 4, y: py + 16, "text-anchor": "end", class: "axl", text: "δp" }));
+    L.readout.innerHTML = `<div class="ro wide"><span><b>${names[m][0]}</b>: ${names[m][1]}</span></div>`;
+    L.check(st);
+  }
+  L.controls.append(
+    el("div", { class: "ctl-row" }, el("span", { class: "sl-lab" }, "EB junction"), toggle([["f", "Forward"], ["r", "Reverse"]], "f", v => { st.eb = v; draw(); })),
+    el("div", { class: "ctl-row" }, el("span", { class: "sl-lab" }, "CB junction"), toggle([["f", "Forward"], ["r", "Reverse"]], "r", v => { st.cb = v; draw(); })));
+  draw();
+  return L.root;
+};
+
+/* ---------- L11: JFET pinch-off ---------- */
+LABS.jfet = (ctx) => {
+  const Vp = 4.6, G0 = 1.0187e-3;
+  const st = { VG: 0, VD: 1 };
+  const L = labShell(ctx, "n-channel JFET (V<sub>P</sub> = 4.6 V, ignoring V₀)", [
+    ["Raise V<sub>D</sub> until the channel <b>pinches off</b>", s => s.VG > -Vp && s.VD >= s.Vsat],
+    ["Use V<sub>G</sub> to shut the channel <b>completely off</b>", s => s.VG <= -Vp + 1e-9]
+  ]);
+  const W = 340, H = 230;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  const Id = (VG, VD) => { if (VG <= -Vp) return 0; const Vs = VG + Vp; const v = Math.min(VD, Vs); return G0 * Vp * (v / Vp + (2 / 3) * (Math.pow(-VG / Vp, 1.5) - Math.pow((v - VG) / Vp, 1.5))); };
+  function draw() {
+    const Vsat = st.VG + Vp; st.Vsat = Vsat;
+    const I = Id(st.VG, st.VD);
+    svg.replaceChildren();
+    const cx0 = 30, cw = 280, cy = 20, a = 34; // channel half width px
+    svg.append(sv("rect", { x: cx0, y: cy, width: cw, height: 14, class: "p-fill" }), sv("rect", { x: cx0, y: cy + 14 + 2 * a, width: cw, height: 14, class: "p-fill" }), sv("rect", { x: cx0, y: cy + 14, width: cw, height: 2 * a, class: "n-fill" }));
+    const top = [], botp = [];
+    const vEnd = Math.min(st.VD, Math.max(Vsat, 0));
+    for (let i = 0; i <= 40; i++) {
+      const u = i / 40; const Vx = vEnd * u;
+      const w = st.VG <= -Vp ? 1 : Math.min(1, Math.sqrt(Math.max(0, (Vx - st.VG)) / Vp));
+      top.push([cx0 + u * cw, cy + 14 + w * a]); botp.push([cx0 + u * cw, cy + 14 + 2 * a - w * a]);
+    }
+    svg.append(sv("path", { d: poly([[cx0, cy + 14], ...top, [cx0 + cw, cy + 14]]) + " Z", class: "dep-fill" }), sv("path", { d: poly([[cx0, cy + 14 + 2 * a], ...botp, [cx0 + cw, cy + 14 + 2 * a]]) + " Z", class: "dep-fill" }));
+    svg.append(sv("text", { x: cx0 - 4, y: cy + 14 + a + 4, "text-anchor": "end", class: "lbl", text: "S" }), sv("text", { x: cx0 + cw + 4, y: cy + 14 + a + 4, class: "lbl", text: "D" }), sv("text", { x: cx0 + cw / 2, y: cy + 11, "text-anchor": "middle", class: "axl", text: "p⁺ gate" }));
+    // output curve
+    const x0 = 50, y0 = 120, pw = 270, ph = 85, Imax = 1.7e-3;
+    const g = sv("g"); svg.append(g);
+    axes(g, x0, y0, pw, ph, "V_D (0–10 V)", "I_D");
+    const pts = []; for (let v = 0; v <= 10; v += 0.1) pts.push([x0 + v / 10 * pw, y0 + ph - Id(st.VG, v) / Imax * ph]);
+    g.append(sv("path", { d: poly(pts), class: "curve" }));
+    if (Vsat > 0 && Vsat <= 10) g.append(sv("line", { x1: x0 + Vsat / 10 * pw, y1: y0, x2: x0 + Vsat / 10 * pw, y2: y0 + ph, class: "grid" }), sv("text", { x: x0 + Vsat / 10 * pw + 3, y: y0 + 10, class: "axl", text: "V_D,sat" }));
+    g.append(sv("circle", { cx: x0 + st.VD / 10 * pw, cy: y0 + ph - I / Imax * ph, r: 5.5, class: "pt" }));
+    const region = st.VG <= -Vp ? "OFF (channel fully depleted)" : st.VD >= Vsat ? "Saturation (pinched off)" : "Linear / ohmic";
+    L.readout.innerHTML = ro([["I_D", eng(I, "A")], ["V_D,sat = V_G + V_P", Vsat > 0 ? Vsat.toFixed(2) + " V" : "—"], ["Region", region]]);
+    L.check(st);
+  }
+  const sG = slider({ label: "Gate voltage V<sub>G</sub>", min: -5, max: 0, step: 0.1, value: 0, fmt: v => v.toFixed(1) + " V", oninput: v => { st.VG = v; draw(); } });
+  const sD = slider({ label: "Drain voltage V<sub>D</sub>", min: 0, max: 10, step: 0.1, value: 1, fmt: v => v.toFixed(1) + " V", oninput: v => { st.VD = v; draw(); } });
+  L.controls.append(sG.el, sD.el);
+  draw();
+  return L.root;
+};
+
+/* ---------- L12: MOS capacitor ---------- */
+LABS.mos = (ctx) => {
+  const NA = 1e16, Ci = 6.8e-8, phiF = kT * Math.log(NA / NI), VT = 1.40;
+  const gam = Math.sqrt(2 * EPS * Q * NA) / Ci;
+  const Wm = 2 * Math.sqrt(EPS * phiF / (Q * NA));
+  const st = { VG: 0 };
+  const L = labShell(ctx, "NMOS capacitor (N<sub>A</sub> = 10¹⁶, t<sub>ox</sub> = 50 nm, V<sub>T</sub> = 1.40 V)", [
+    ["<b>Accumulate</b> holes under the gate", s => s.state === "Accumulation"],
+    ["Reach <b>strong inversion</b> (V<sub>G</sub> ≥ V<sub>T</sub>)", s => s.VG >= VT]
+  ]);
+  function phiS(VG) {
+    if (VG < 0) return -0.16 * (1 - Math.exp(VG / 0.45));
+    if (VG < VT) { const s = (-gam + Math.sqrt(gam * gam + 4 * VG)) / 2; return s * s; }
+    return 2 * phiF + 0.04 * Math.log(1 + (VG - VT) / 0.05);
+  }
+  function capOf(VG) {
+    if (VG < 0) return 1;
+    if (VG < VT) { const ps = phiS(VG); const Wd = Math.sqrt(2 * EPS * Math.max(ps, 1e-6) / (Q * NA)); return 1 / (1 + Ci * Wd / EPS); }
+    const Cmin = 1 / (1 + Ci * Wm / EPS); const t = Math.min(1, (VG - VT) / 0.5); return Cmin + (1 - Cmin) * (1 - Math.pow(1 - t, 3));
+  }
+  const W = 340, H = 300;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  function draw() {
+    const VG = st.VG, ps = phiS(VG);
+    let state;
+    if (VG < -0.04) state = "Accumulation"; else if (VG <= 0.04) state = "Flat band"; else if (ps < phiF) state = "Depletion"; else if (VG < VT) state = "Weak inversion"; else state = "Strong inversion";
+    st.state = state;
+    const Wd = ps > 0 ? Math.min(Wm, Math.sqrt(2 * EPS * ps / (Q * NA))) : 0;
+    svg.replaceChildren();
+    const s = 88, yC = 64, yI = yC + 0.56 * s, yV = yC + 1.12 * s, yF = yI + phiF * s;
+    const xs = 74, wpx = 140 / (Wm * 1e7) ; // px per nm
+    const bend = x => { const d = x - xs; if (ps >= 0) { const Wp = Wd * 1e7 * wpx; return d < Wp ? ps * s * (1 - d / Wp) ** 2 : 0; } const Wp = 26; return d < Wp ? ps * s * (1 - d / Wp) ** 2 : 0; };
+    svg.append(sv("rect", { x: 10, y: 20, width: 42, height: 180, class: "metal-fill" }), sv("rect", { x: 52, y: 20, width: 22, height: 180, class: "ox-fill" }));
+    svg.append(sv("text", { x: 31, y: 214, "text-anchor": "middle", class: "axl", text: "gate" }), sv("text", { x: 63, y: 214, "text-anchor": "middle", class: "axl", text: "ox" }), sv("text", { x: 200, y: 214, "text-anchor": "middle", class: "axl", text: "p-Si" }));
+    const yFm = yF + VG * s * 0.55;
+    svg.append(sv("line", { x1: 12, y1: yFm, x2: 50, y2: yFm, class: "ef" }), sv("text", { x: 14, y: yFm - 4, class: "lbl ef-t", text: "E_F" }));
+    const pc = [], pv = [], pi = [];
+    for (let x = xs; x <= W - 8; x += 2) { const b = bend(x); pc.push([x, yC + b]); pv.push([x, yV + b]); pi.push([x, yI + b]); }
+    svg.append(sv("path", { d: poly(pc), class: "ec-p" }), sv("path", { d: poly(pv), class: "ev-p" }), sv("path", { d: poly(pi), class: "ei" }), sv("line", { x1: xs, y1: yF, x2: W - 8, y2: yF, class: "ef" }));
+    svg.append(sv("text", { x: W - 30, y: yC - 5, class: "lbl", text: "E_C" }), sv("text", { x: W - 30, y: yV + 15, class: "lbl", text: "E_V" }), sv("text", { x: W - 30, y: yF + 14, class: "lbl ef-t", text: "E_F" }));
+    // charges
+    const n = Math.round(Math.min(7, Math.abs(VG) * 3));
+    for (let i = 0; i < n; i++) svg.append(sv("text", { x: 46, y: 40 + i * 22, "text-anchor": "middle", class: VG > 0 ? "ion-p" : "ion-m", text: VG > 0 ? "+" : "−" }));
+    if (state === "Accumulation") for (let i = 0; i < n; i++) svg.append(sv("circle", { cx: xs + 5, cy: 40 + i * 22, r: 4, class: "dot-h" }));
+    if (Wd > 0) { const Wp = Wd * 1e7 * wpx; const k = Math.max(1, Math.round(Wp / 18)); for (let i = 0; i < k; i++) for (let j = 0; j < 3; j++) svg.append(sv("text", { x: xs + 9 + i * (Wp - 10) / Math.max(1, k - 0.5), y: 172 + j * 12, class: "ion-m sm", "text-anchor": "middle", text: "⊖" })); }
+    if (VG >= VT) { const ne = Math.min(8, 1 + Math.round((VG - VT) * 5)); for (let i = 0; i < ne; i++) svg.append(sv("circle", { cx: xs + 5 + (i % 2) * 7, cy: 40 + i * 20, r: 4, class: "dot-e" })); }
+    // C–V
+    const x0 = 44, y0 = 230, pw = 280, ph = 52, vmin = -2, vmax = 3;
+    const g = sv("g"); svg.append(g);
+    axes(g, x0, y0, pw, ph, "V_G  (−2 → 3 V)", "C/C_i");
+    const pts = []; for (let v = vmin; v <= vmax; v += 0.02) pts.push([x0 + (v - vmin) / (vmax - vmin) * pw, y0 + ph - capOf(v) * ph * 0.95]);
+    g.append(sv("path", { d: poly(pts), class: "curve" }), sv("circle", { cx: x0 + (VG - vmin) / (vmax - vmin) * pw, cy: y0 + ph - capOf(VG) * ph * 0.95, r: 5, class: "pt" }));
+    L.readout.innerHTML = ro([["State", state], ["Surface potential φ_s", ps.toFixed(3) + " V"], ["2φ_F", (2 * phiF).toFixed(3) + " V"], ["Depletion W", Wd > 0 ? Math.round(Wd * 1e7) + " nm" : "0"], ["C/C_i (low f)", capOf(VG).toFixed(2)]]);
+    L.check(st);
+  }
+  const sG = slider({ label: "Gate voltage V<sub>G</sub>", min: -2, max: 3, step: 0.02, value: 0, fmt: v => (v > 0 ? "+" : "") + v.toFixed(2) + " V", oninput: v => { st.VG = v; draw(); } });
+  L.controls.append(sG.el);
+  draw();
+  return L.root;
+};
+
+/* ---------- L15: bandgap → color ---------- */
+function wlRGB(l) {
+  let r = 0, g = 0, b = 0;
+  if (l >= 380 && l < 440) { r = -(l - 440) / 60; b = 1; } else if (l < 490) { g = (l - 440) / 50; b = 1; } else if (l < 510) { g = 1; b = -(l - 510) / 20; } else if (l < 580) { r = (l - 510) / 70; g = 1; } else if (l < 645) { r = 1; g = -(l - 645) / 65; } else if (l <= 780) { r = 1; }
+  let f = 1; if (l < 420) f = 0.3 + 0.7 * (l - 380) / 40; else if (l > 700) f = 0.3 + 0.7 * (780 - l) / 80;
+  const c = v => Math.round(255 * Math.pow(v * f, 0.8));
+  return `rgb(${c(r)},${c(g)},${c(b)})`;
+}
+function colorName(l) { if (l < 380) return "ultraviolet"; if (l < 450) return "violet"; if (l < 495) return "blue"; if (l < 570) return "green"; if (l < 590) return "yellow"; if (l < 620) return "orange"; if (l <= 750) return "red"; return "infrared"; }
+LABS.photon = (ctx) => {
+  const st = { Eg: 1.12 };
+  const L = labShell(ctx, "Bandgap ↔ wavelength (λ = 1240/E<sub>g</sub>)", [
+    ["Dial in a <b>blue emitter</b> (450–490 nm)", s => s.l >= 450 && s.l <= 490],
+    ["Make a material <b>transparent to all visible light</b>", s => s.l < 380],
+    ["Find <b>silicon's</b> cutoff (E<sub>g</sub> = 1.12 eV)", s => Math.abs(s.Eg - 1.12) < 0.006]
+  ]);
+  const W = 340, H = 150;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  const defs = sv("defs");
+  const grad = sv("linearGradient", { id: "spec" + Math.random().toString(36).slice(2, 7), x1: 0, x2: 1, y1: 0, y2: 0 });
+  for (let l = 380; l <= 780; l += 20) grad.append(sv("stop", { offset: ((l - 380) / 400).toFixed(3), "stop-color": wlRGB(l) }));
+  defs.append(grad);
+  const mats = [["Ge", 0.66], ["Si", 1.12], ["GaAs", 1.42], ["AlGaInP", 1.9], ["InGaN", 2.6], ["SiC", 3.26], ["GaN", 3.4]];
+  function draw() {
+    const l = 1240 / st.Eg; st.l = l;
+    svg.replaceChildren(defs);
+    const x0 = 20, w = 300, X = lam => x0 + (lam - 380) / 400 * w;
+    svg.append(sv("rect", { x: x0, y: 20, width: w, height: 30, fill: `url(#${grad.id})`, rx: 4 }));
+    const cut = Math.max(380, Math.min(780, l));
+    if (l > 380) svg.append(sv("rect", { x: x0, y: 20, width: X(cut) - x0, height: 30, class: "absorbed", rx: 4 }));
+    svg.append(sv("text", { x: x0, y: 64, class: "axl", text: "380 nm" }), sv("text", { x: x0 + w, y: 64, "text-anchor": "end", class: "axl", text: "780 nm" }));
+    if (l > 380 && l < 780) svg.append(sv("line", { x1: X(l), y1: 14, x2: X(l), y2: 56, class: "cutline" }));
+    svg.append(sv("text", { x: x0, y: 14, class: "axl", text: l >= 780 ? "absorbs ALL visible → looks opaque" : l <= 380 ? "absorbs NO visible → transparent" : "◀ absorbed  |  passes ▶" }));
+    const inVis = l >= 380 && l <= 780;
+    svg.append(sv("circle", { cx: 60, cy: 104, r: 26, fill: inVis ? wlRGB(l) : (l < 380 ? "#6b4fd6" : "#5a1e1e"), class: "glow" }));
+    svg.append(sv("text", { x: 100, y: 98, class: "lbl", text: `Emits ${Math.round(l)} nm` }), sv("text", { x: 100, y: 118, class: "lbl dim", text: colorName(l) + (inVis ? "" : " (invisible)") }));
+    const near = mats.filter(m => Math.abs(m[1] - st.Eg) < 0.08).map(m => m[0]).join(", ");
+    svg.append(sv("text", { x: 100, y: 138, class: "axl", text: near ? "≈ " + near : "" }));
+    L.readout.innerHTML = ro([["E_g", st.Eg.toFixed(2) + " eV"], ["λ = 1240/E_g", Math.round(l) + " nm"], ["Absorbs", "λ < " + Math.round(l) + " nm"]]);
+    L.check(st);
+  }
+  const s = slider({ label: "Bandgap E<sub>g</sub>", min: 0.5, max: 4, step: 0.01, value: 1.12, fmt: v => v.toFixed(2) + " eV", oninput: v => { st.Eg = v; draw(); } });
+  const chips = el("div", { class: "chips" }, mats.map(([n, e]) => el("button", { type: "button", class: "chip", onclick: () => { st.Eg = e; s.set(e); draw(); } }, n + " " + e)));
+  L.controls.append(s.el, chips);
+  draw();
+  return L.root;
+};
+
+/* ---------- L16: solar cell ---------- */
+LABS.solar = (ctx) => {
+  const I0 = 1e-10;
+  const st = { Iop: 0.02, lr: 1 };
+  const L = labShell(ctx, "Solar cell + load (I₀ = 0.1 nA)", [
+    ["Get within <b>3% of maximum power</b> (light ≥ 10 mA)", s => s.Iop >= 0.01 && s.P >= 0.97 * s.Pmax],
+    ["<b>Short</b> the cell (R ≤ 1.5 Ω) and read I<sub>sc</sub>", s => s.R <= 1.5 && s.Iop > 0]
+  ]);
+  const W = 340, H = 220, x0 = 40, y0 = 10, pw = 285, ph = 170;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  const IV = (V, Iop) => I0 * (Math.exp(V / kT) - 1) - Iop;
+  function op(Iop, R) { let lo = 0, hi = 0.75; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; const f = IV(m, Iop) + m / R; if (f > 0) hi = m; else lo = m; } const V = (lo + hi) / 2; return { V, I: IV(V, Iop) }; }
+  function draw() {
+    const R = Math.pow(10, st.lr), Iop = st.Iop;
+    const o = op(Iop, R), P = Math.abs(o.V * o.I);
+    let Pmax = 0, Vmp = 0; for (let v = 0; v < 0.7; v += 0.001) { const p = -v * IV(v, Iop); if (p > Pmax) { Pmax = p; Vmp = v; } }
+    const Voc = Iop > 0 ? kT * Math.log(1 + Iop / I0) : 0;
+    Object.assign(st, { R, P, Pmax });
+    const Vmin = -0.1, Vmax = 0.65, Imin = -0.042, Imax = 0.01;
+    const X = v => x0 + (v - Vmin) / (Vmax - Vmin) * pw, Y = i => y0 + ph - (i - Imin) / (Imax - Imin) * ph;
+    svg.replaceChildren();
+    const g = sv("g"); svg.append(g);
+    g.append(sv("rect", { x: X(0), y: Y(0), width: X(Vmax) - X(0), height: Y(Imin) - Y(0), class: "q4" }), sv("text", { x: X(Vmax) - 4, y: Y(Imin) - 6, "text-anchor": "end", class: "axl", text: "4th quadrant: power OUT" }));
+    g.append(sv("line", { x1: x0, y1: Y(0), x2: x0 + pw, y2: Y(0), class: "ax" }), sv("line", { x1: X(0), y1: y0, x2: X(0), y2: y0 + ph, class: "ax" }));
+    g.append(sv("text", { x: x0 + pw, y: Y(0) - 4, "text-anchor": "end", class: "axl", text: "V" }), sv("text", { x: X(0) + 4, y: y0 + 10, class: "axl", text: "I" }));
+    const dk = [], li = [];
+    for (let v = Vmin; v <= Vmax; v += 0.004) { dk.push([X(v), Math.max(y0, Y(IV(v, 0)))]); li.push([X(v), Math.max(y0, Math.min(y0 + ph, Y(IV(v, Iop))))]); }
+    g.append(sv("path", { d: poly(dk), class: "curve-drift" }), sv("path", { d: poly(li), class: "curve" }));
+    const vEnd = Math.min(Vmax, -Imin * R);
+    g.append(sv("line", { x1: X(0), y1: Y(0), x2: X(vEnd), y2: Y(-vEnd / R), class: "loadline" }));
+    g.append(sv("rect", { x: X(0), y: Y(0), width: X(o.V) - X(0), height: Y(o.I) - Y(0), class: "powbox" }));
+    g.append(sv("circle", { cx: X(o.V), cy: Y(o.I), r: 6, class: "pt" }));
+    L.readout.innerHTML = ro([["Operating V", o.V.toFixed(3) + " V"], ["Current", eng(o.I, "A")], ["Power", eng(P, "W")], ["P_max", eng(Pmax, "W") + (Pmax ? " (" + Math.round(100 * P / Pmax) + "%)" : "")], ["I_sc", eng(-Iop, "A")], ["V_oc", Voc.toFixed(3) + " V"]]);
+    L.check(st);
+  }
+  const sL = slider({ label: "Light → I<sub>op</sub>", min: 0, max: 40, step: 0.5, value: 20, fmt: v => v + " mA", oninput: v => { st.Iop = v * 1e-3; draw(); } });
+  const sR = slider({ label: "Load resistance R", min: 0, max: 2.5, step: 0.01, value: 1, fmt: v => sig(Math.pow(10, v), 3) + " Ω", oninput: v => { st.lr = v; draw(); } });
+  L.controls.append(sL.el, sR.el);
+  draw();
+  return L.root;
+};
+
+/* ---------- L19: laser L–I ---------- */
+LABS.laser = (ctx) => {
+  const Ith = 40;
+  const st = { I: 20 };
+  const L = labShell(ctx, "Laser diode: L–I curve and spectrum", [
+    ["Drive it <b>above threshold</b>", s => s.I > Ith + 2],
+    ["Park the current right <b>at threshold</b> (40 ± 2 mA)", s => Math.abs(s.I - Ith) <= 2]
+  ]);
+  const W = 340, H = 250;
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, class: "lab-svg" });
+  L.stage.append(svg);
+  const P = I => I < Ith ? 0.002 * I : 0.08 + 0.45 * (I - Ith);
+  function draw() {
+    const I = st.I, p = P(I);
+    svg.replaceChildren();
+    const x0 = 44, y0 = 10, pw = 280, ph = 110, Pm = P(80);
+    const g = sv("g"); svg.append(g);
+    axes(g, x0, y0, pw, ph, "I (0–80 mA)", "light out");
+    const pts = []; for (let i = 0; i <= 80; i += 0.5) pts.push([x0 + i / 80 * pw, y0 + ph - P(i) / Pm * ph]);
+    g.append(sv("path", { d: poly(pts), class: "curve" }), sv("line", { x1: x0 + Ith / 80 * pw, y1: y0, x2: x0 + Ith / 80 * pw, y2: y0 + ph, class: "grid" }), sv("text", { x: x0 + Ith / 80 * pw + 3, y: y0 + 12, class: "axl", text: "I_th" }));
+    g.append(sv("circle", { cx: x0 + I / 80 * pw, cy: y0 + ph - p / Pm * ph, r: 6, class: "pt" }));
+    // spectrum
+    const sy0 = 150, sph = 80;
+    const g2 = sv("g"); svg.append(g2);
+    axes(g2, x0, sy0, pw, sph, "λ (610–690 nm)", "spectrum");
+    const above = I >= Ith;
+    const spont = Math.min(I, Ith) * 0.002, stim = above ? 0.45 * (I - Ith) + 0.08 : 0;
+    const peak = Math.max(spont / (12 * 2.5), stim / (0.5 * 2.5), 1e-9);
+    const sp = [];
+    for (let l = 610; l <= 690; l += 0.25) { const a = spont / (12 * 2.5) * Math.exp(-((l - 650) ** 2) / (2 * 144)) + stim / (0.5 * 2.5) * Math.exp(-((l - 650) ** 2) / (2 * 0.25)); sp.push([x0 + (l - 610) / 80 * pw, sy0 + sph - (I === 0 ? 0 : a / peak * sph * 0.92)]); }
+    g2.append(sv("path", { d: poly(sp), class: "curve-h" }));
+    const region = I === 0 ? "No emission" : above ? "Stimulated emission: LASING (narrow, coherent)" : "Spontaneous emission: LED-like (broad)";
+    L.readout.innerHTML = ro([["Drive current", I + " mA"], ["Light out", sig(p, 3) + " mW"], ["Regime", region]]);
+    L.check(st);
+  }
+  const s = slider({ label: "Drive current I", min: 0, max: 80, step: 1, value: 20, fmt: v => v + " mA", oninput: v => { st.I = v; draw(); } });
+  L.controls.append(s.el);
+  draw();
+  return L.root;
+};
+
+/* SEMI QUEST — engine */
+(function () {
+"use strict";
+const KEY = "semiQuest.v1";
+const LEVELS = [], LEVEL = {}, BOSS = {};
+WORLDS.forEach((w, wi) => {
+  w.index = wi;
+  w.levels.forEach((l, li) => { l.world = w; l.li = li; LEVELS.push(l); LEVEL[l.id] = l; });
+  w.boss.world = w; BOSS[w.boss.id] = w.boss;
+});
+const isQ = s => !s.lab;
+const QBY = {};
+LEVELS.forEach(l => l.steps.forEach((s, i) => { QBY[l.id + "." + i] = { step: s, level: l, qid: l.id + "." + i }; }));
+
+/* ---------- state ---------- */
+const DEF = { xp: 0, levels: {}, bosses: {}, mistakes: [], streak: { last: "", count: 0 }, intro: false, sound: false, answered: 0 };
+let S;
+try { S = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) { S = Object.assign({}, DEF); }
+S.levels = S.levels || {}; S.bosses = S.bosses || {}; S.mistakes = S.mistakes || []; S.streak = S.streak || { last: "", count: 0 };
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+function today(off = 0) { const d = new Date(Date.now() - off * 864e5); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+function bumpStreak() {
+  const t = today();
+  if (S.streak.last === t) return;
+  S.streak.count = S.streak.last === today(1) ? S.streak.count + 1 : 1;
+  S.streak.last = t;
+}
+function streakNow() { return (S.streak.last === today() || S.streak.last === today(1)) ? S.streak.count : 0; }
+const RANKS = [[0, "Intrinsic"], [150, "Lightly doped"], [400, "Doped"], [800, "Heavily doped"], [1400, "Degenerate"], [2200, "Device physicist"]];
+function rank(xp) { let r = RANKS[0]; for (const k of RANKS) if (xp >= k[0]) r = k; const nx = RANKS[RANKS.indexOf(r) + 1]; return { name: r[1], next: nx ? nx[0] : null, base: r[0] }; }
+function nextUp() {
+  for (const l of LEVELS) if (!(S.levels[l.id] && S.levels[l.id].done)) return { type: "level", obj: l };
+  for (const w of WORLDS) if (!S.bosses[w.boss.id]) return { type: "boss", obj: w.boss };
+  return null;
+}
+
+/* ---------- text formatting ---------- */
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function fmt(s) {
+  if (s == null) return "";
+  let t = esc(s);
+  t = t.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  t = t.replace(/\^\{([^}]*)\}/g, "<sup>$1</sup>");
+  t = t.replace(/_\{([^}]*)\}/g, "<sub>$1</sub>");
+  t = t.replace(/_(\d+|[A-Za-z][A-Za-z0-9]*)/g, "<sub>$1</sub>");
+  t = t.replace(/\^([\-−+]?[0-9.]+)/g, "<sup>$1</sup>");
+  return t;
+}
+
+/* ---------- sound + fx ---------- */
+let AC = null;
+function beep(type) {
+  if (!S.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const seq = type === "ok" ? [[660, 0], [990, 0.08]] : type === "bad" ? [[180, 0], [140, 0.1]] : [[523, 0], [659, 0.1], [784, 0.2], [1046, 0.3]];
+    seq.forEach(([f, t0]) => {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = type === "bad" ? "sawtooth" : "triangle"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, AC.currentTime + t0); g.gain.exponentialRampToValueAtTime(0.08, AC.currentTime + t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + t0 + 0.16);
+      o.connect(g); g.connect(AC.destination); o.start(AC.currentTime + t0); o.stop(AC.currentTime + t0 + 0.2);
+    });
+  } catch (e) { }
+}
+function confetti() {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c = el("canvas", { class: "fx" }); document.body.append(c);
+  const w = c.width = innerWidth, h = c.height = innerHeight, x = c.getContext("2d");
+  const P = Array.from({ length: 70 }, () => ({ x: w / 2 + (Math.random() - 0.5) * 80, y: h * 0.12, vx: (Math.random() - 0.5) * 9, vy: -Math.random() * 9 - 3, e: Math.random() < 0.5, r: 6 + Math.random() * 4 }));
+  let t = 0;
+  (function f() {
+    x.clearRect(0, 0, w, h); t++;
+    for (const p of P) {
+      p.vy += 0.28; p.x += p.vx; p.y += p.vy;
+      x.globalAlpha = Math.max(0, 1 - t / 90);
+      x.fillStyle = p.e ? "#4cc9f0" : "#ffb703"; x.beginPath(); x.arc(p.x, p.y, p.r, 0, 7); x.fill();
+      x.fillStyle = "#0a0f1f"; x.font = "bold 10px sans-serif"; x.textAlign = "center"; x.fillText(p.e ? "−" : "+", p.x, p.y + 3.5);
+    }
+    if (t < 90) requestAnimationFrame(f); else c.remove();
+  })();
+}
+function floatXP(n, anchor) {
+  if (!n) return;
+  const r = anchor ? anchor.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0 };
+  const f = el("div", { class: "xp-float" }, "+" + n + " XP");
+  f.style.left = (r.left + r.width / 2) + "px"; f.style.top = r.top + "px";
+  document.body.append(f); setTimeout(() => f.remove(), 1100);
+}
+
+/* ---------- numeric parsing ---------- */
+function parseNum(str) {
+  let s = String(str).trim().replace(/,/g, "").replace(/−/g, "-").replace(/\s+/g, "");
+  s = s.replace(/[a-zA-Zµ°%Ω/²³⁻¹]+$/u, "");
+  let m = s.match(/^([-+]?\d*\.?\d+)[x×X*]10\^?\(?([-+]?\d+)\)?$/);
+  if (m) return Number(m[1] + "e" + m[2]);
+  m = s.match(/^([-+]?)10\^\(?([-+]?\d+)\)?$/);
+  if (m) return Number(m[1] + "1e" + m[2]);
+  if (/^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/.test(s)) return Number(s);
+  return NaN;
+}
+function numOk(step, v) {
+  if (!isFinite(v)) return false;
+  if (step.tolAbs != null) return Math.abs(v - step.num) <= step.tolAbs;
+  const tol = step.tol != null ? step.tol : 0.04;
+  return Math.abs(v - step.num) <= tol * Math.abs(step.num);
+}
+function unitSlip(step, v) {
+  if (!isFinite(v) || v === 0 || step.tolAbs != null) return 0;
+  for (const k of [3, -3, 6, -6, 9, -9, 2, -2, 4, -4]) if (numOk(step, v / Math.pow(10, k))) return k;
+  return 0;
+}
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+/* ---------- question widgets ---------- */
+// done(result) where result ∈ "first" | "second" | "miss"
+function makeQuestion(step, opts, done) {
+  const box = el("div", { class: "q" });
+  const fb = el("div", { class: "fb", "aria-live": "polite" });
+  let finished = false;
+  const single = opts && opts.single;
+  function finish(res, revealHTML) {
+    if (finished) return; finished = true;
+    box.classList.add("answered");
+    const good = res !== "miss";
+    fb.className = "fb show " + (good ? "good" : "bad");
+    const head = res === "first" ? pick(["Nailed it.", "Correct.", "Yes, exactly.", "Right on."]) : res === "second" ? "Got it on the second try." : "Not this time.";
+    fb.innerHTML = `<div class="fb-h">${head}</div>` + (revealHTML ? `<div class="fb-ans">${revealHTML}</div>` : "") + (step.x ? `<div class="fb-x"><span>Why</span>${fmt(step.x)}</div>` : "");
+    beep(good ? "ok" : "bad");
+    done(res);
+  }
+  function nudge(msg) {
+    fb.className = "fb show warn";
+    fb.innerHTML = `<div class="fb-h">${msg}</div>` + (step.h ? `<div class="fb-x"><span>Hint</span>${fmt(step.h)}</div>` : "");
+    box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+    beep("bad");
+  }
+  box.append(el("div", { class: "q-text", html: fmt(step.q) }));
+
+  if (step.o || step.tf != null) {
+    const options = step.o || ["True", "False"];
+    const ans = step.o ? step.a : (step.tf ? 0 : 1);
+    const tries = single ? 1 : (options.length > 2 ? 2 : 1);
+    let miss = 0;
+    const btns = options.map((o, i) => el("button", { type: "button", class: "opt", onclick: () => choose(i) }, el("span", { class: "k" }, String(i + 1)), el("span", { html: fmt(o) })));
+    function choose(i) {
+      if (finished || btns[i].disabled) return;
+      if (i === ans) { btns[i].classList.add("right"); btns.forEach(b => b.disabled = true); finish(miss ? "second" : "first"); return; }
+      btns[i].classList.add("wrong"); btns[i].disabled = true; miss++;
+      if (miss >= tries) { btns[ans].classList.add("right"); btns.forEach(b => b.disabled = true); finish("miss"); }
+      else nudge("Not quite. One more try.");
+    }
+    box.append(el("div", { class: "opts" + (options.length === 2 ? " two" : "") }, btns));
+    box.keys = e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= btns.length) { choose(n - 1); return true; } return false; };
+  } else if (step.num != null) {
+    const inp = el("input", { class: "num-in", type: "text", inputmode: "text", autocomplete: "off", spellcheck: "false", placeholder: "e.g. 2.25e3 or 2.25x10^3", "aria-label": "Your answer" });
+    const go = el("button", { type: "button", class: "btn primary", onclick: () => check() }, "Check");
+    let miss = 0;
+    function check() {
+      if (finished) return;
+      const v = parseNum(inp.value);
+      if (!isFinite(v)) { nudge("Type a number, like 0.695 or 4.8e10."); return; }
+      if (numOk(step, v)) { inp.classList.add("right"); inp.disabled = true; go.disabled = true; finish(miss ? "second" : "first", "Answer: <b>" + fmtNum(step.num) + (step.u ? " " + step.u : "") + "</b>"); return; }
+      miss++;
+      const k = unitSlip(step, v);
+      if (miss >= (single ? 1 : 2)) { inp.classList.add("wrong"); inp.disabled = true; go.disabled = true; finish("miss", "Answer: <b>" + fmtNum(step.num) + (step.u ? " " + step.u : "") + "</b>" + (k ? ` <em>(yours was off by 10${supStr(k)}: check units)</em>` : "")); }
+      else nudge(k ? `Close! Your number is off by a factor of 10${supStr(k)}. Check your units${step.u ? " (answer in " + step.u + ")" : ""}.` : "Not quite. Try again.");
+    }
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); check(); } });
+    box.append(el("div", { class: "num-row" }, inp, step.u ? el("span", { class: "unit" }, step.u) : null, go));
+    box.focusMe = () => inp.focus({ preventScroll: true });
+  } else if (step.sort) {
+    const correct = step.sort;
+    let pool = shuffle(correct.map((t, i) => ({ t, i })));
+    if (pool.every((p, k) => p.i === k)) pool = pool.reverse();
+    let picked = [], miss = 0;
+    const slots = el("ol", { class: "sort-slots" });
+    const poolEl = el("div", { class: "sort-pool" });
+    const actions = el("div", { class: "row" });
+    function paint() {
+      slots.replaceChildren(...correct.map((_, k) => el("li", { class: "slot" + (picked[k] ? " filled" : "") }, picked[k] ? el("span", { html: fmt(picked[k].t) }) : el("span", { class: "ph" }, "tap an item"))));
+      poolEl.replaceChildren(...pool.map(p => el("button", { type: "button", class: "chip big" + (picked.includes(p) ? " used" : ""), disabled: picked.includes(p) || finished, onclick: () => { picked.push(p); paint(); if (picked.length === correct.length) verify(); } }, el("span", { html: fmt(p.t) }))));
+    }
+    function verify() {
+      const right = picked.filter((p, k) => p.i === k).length;
+      if (right === correct.length) { finish(miss ? "second" : "first"); [...slots.children].forEach(s => s.classList.add("ok")); return; }
+      miss++;
+      if (miss >= (single ? 1 : 2)) {
+        finish("miss", "Correct order: " + correct.map((t, k) => `<b>${k + 1}.</b> ${fmt(t)}`).join(" &nbsp;"));
+        slots.replaceChildren(...correct.map(t => el("li", { class: "slot filled ok" }, el("span", { html: fmt(t) }))));
+        poolEl.remove(); actions.remove();
+      } else { nudge(`${right} of ${correct.length} in the right spot. Try again.`); picked = []; paint(); }
+    }
+    actions.append(el("button", { type: "button", class: "btn ghost sm", onclick: () => { if (!finished) { picked.pop(); paint(); } } }, "Undo"), el("button", { type: "button", class: "btn ghost sm", onclick: () => { if (!finished) { picked = []; paint(); } } }, "Reset"));
+    box.append(slots, poolEl, actions); paint();
+  } else if (step.match) {
+    const pairs = step.match;
+    const rights = shuffle(pairs.map(p => p[1]));
+    let sel = null, miss = 0;
+    const assign = new Array(pairs.length).fill(null);
+    const colors = ["#4cc9f0", "#ffb703", "#2ee59d", "#ff5d8f", "#b388ff", "#ff8a3d"];
+    const L = el("div", { class: "m-col" }), R = el("div", { class: "m-col" });
+    const go = el("button", { type: "button", class: "btn primary", disabled: true, onclick: () => verify() }, "Check");
+    function paint(markWrong) {
+      L.replaceChildren(...pairs.map((p, i) => {
+        const b = el("button", { type: "button", class: "m-item" + (sel === i ? " sel" : "") + (assign[i] != null ? " set" : "") + (markWrong && markWrong[i] === false ? " wrong" : "") + (markWrong && markWrong[i] === true ? " right" : ""), disabled: finished, onclick: () => { sel = i; paint(); } }, el("span", { html: fmt(p[0]) }));
+        if (assign[i] != null) b.style.borderColor = colors[i % colors.length];
+        return b;
+      }));
+      R.replaceChildren(...rights.map((r, j) => {
+        const owner = assign.indexOf(j);
+        const b = el("button", { type: "button", class: "m-item r" + (owner >= 0 ? " set" : ""), disabled: finished, onclick: () => { if (sel == null) { if (owner >= 0) { assign[owner] = null; paint(); } return; } const prev = assign.indexOf(j); if (prev >= 0) assign[prev] = null; assign[sel] = j; sel = assign.findIndex(a => a == null); if (sel < 0) sel = null; paint(); } }, el("span", { html: fmt(r) }));
+        if (owner >= 0) { b.style.borderColor = colors[owner % colors.length]; b.style.boxShadow = `inset 4px 0 0 ${colors[owner % colors.length]}`; }
+        return b;
+      }));
+      go.disabled = assign.some(a => a == null) || finished;
+    }
+    function verify() {
+      const ok = pairs.map((p, i) => assign[i] != null && rights[assign[i]].trim() === p[1].trim());
+      if (ok.every(Boolean)) { paint(ok); finish(miss ? "second" : "first"); go.remove(); return; }
+      miss++;
+      if (miss >= (single ? 1 : 2)) { paint(ok); go.remove(); finish("miss", pairs.map(p => `${fmt(p[0])} → <b>${fmt(p[1])}</b>`).join("<br>")); }
+      else { pairs.forEach((p, i) => { if (!ok[i]) assign[i] = null; }); sel = assign.findIndex(a => a == null); paint(ok); nudge(`${ok.filter(Boolean).length} of ${pairs.length} matched. Fix the rest.`); }
+    }
+    sel = 0;
+    box.append(el("div", { class: "m-hint" }, "Tap a left item, then its partner on the right."), el("div", { class: "match" }, L, R), el("div", { class: "row" }, go));
+    paint();
+  }
+  box.append(fb);
+  return box;
+}
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+/* ---------- views ---------- */
+const app = document.getElementById("app");
+let keyHandler = null;
+document.addEventListener("keydown", e => {
+  if (e.target && e.target.tagName === "INPUT" && e.target.type !== "range") return;
+  if (e.target && e.target.tagName === "BUTTON" && (e.key === "Enter" || e.key === " ")) return;
+  if (keyHandler) keyHandler(e);
+});
+function go(hash) { if (location.hash === "#" + hash) route(); else location.hash = hash; }
+function topStats() {
+  const r = rank(S.xp), st = streakNow();
+  const pct = r.next ? Math.round(100 * (S.xp - r.base) / (r.next - r.base)) : 100;
+  return el("div", { class: "stats" },
+    el("div", { class: "stat", title: "Experience points" }, el("b", null, S.xp), " XP", el("div", { class: "bar" }, el("i", { style: { width: pct + "%" } })), el("small", null, r.name)),
+    el("div", { class: "stat", title: "Days in a row" }, el("b", null, st), " day streak", el("small", null, st ? "keep it alive" : "play today")),
+    el("div", { class: "stat", title: "Levels cleared" }, el("b", null, LEVELS.filter(l => S.levels[l.id] && S.levels[l.id].done).length), "/" + LEVELS.length, el("small", null, "lectures cleared")));
+}
+function logo() {
+  return el("div", { class: "logo", html: `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M2 8 H24 C34 8 32 22 42 22 H62" class="lg-c"/><path d="M2 22 H24 C34 22 32 36 42 36 H62" class="lg-v"/><circle cx="12" cy="4.5" r="3" class="lg-e"/><circle cx="54" cy="26" r="3" class="lg-h"/></svg><div><div class="lg-t">SEMI QUEST</div><div class="lg-s">EECE 2077 · Semiconductor Devices · catch-up run</div></div>` });
+}
+
+function viewHome() {
+  keyHandler = null;
+  const nu = nextUp();
+  const wrap = el("div", { class: "home" });
+  const head = el("header", { class: "top" }, logo(), el("div", { class: "top-r" },
+    el("button", { type: "button", class: "icon-btn", title: S.sound ? "Sound on" : "Sound off", "aria-label": "Toggle sound", onclick: e => { S.sound = !S.sound; save(); e.currentTarget.textContent = S.sound ? "🔊" : "🔈"; beep("ok"); } }, S.sound ? "🔊" : "🔈")));
+  wrap.append(head, topStats());
+  if (nu) {
+    const o = nu.obj, w = nu.type === "level" ? o.world : o.world;
+    wrap.append(el("button", { type: "button", class: "cont", style: { "--wc": w.color }, onclick: () => go(nu.type === "level" ? "level-" + o.id : "boss-" + o.id) },
+      el("div", { class: "cont-k" }, nu.type === "level" ? "NEXT UP · LECTURE " + o.n : "BOSS FIGHT · " + w.name.toUpperCase()),
+      el("div", { class: "cont-t" }, nu.type === "level" ? o.t : o.name),
+      el("div", { class: "cont-s", html: fmt(nu.type === "level" ? o.b : o.flavor) }),
+      el("span", { class: "cont-go" }, "Play →")));
+  } else wrap.append(el("div", { class: "cont done", style: { "--wc": "#2ee59d" } }, el("div", { class: "cont-k" }, "ALL CLEAR"), el("div", { class: "cont-t" }, "You've beaten every lecture and boss."), el("div", { class: "cont-s" }, "Keep the streak with Quick 10 or the Mistake Mixer.")));
+  const nm = S.mistakes.filter(q => QBY[q]).length;
+  wrap.append(el("div", { class: "actions" },
+    el("button", { type: "button", class: "act", onclick: () => go("vault") }, el("span", { class: "a-i" }, "∑"), el("span", null, el("b", null, "Formula Vault"), el("small", null, "your summary sheet"))),
+    el("button", { type: "button", class: "act", disabled: !nm, onclick: () => go("mix") }, el("span", { class: "a-i" }, "↺"), el("span", null, el("b", null, "Mistake Mixer"), el("small", null, nm ? nm + " to fix" : "no misses yet"))),
+    el("button", { type: "button", class: "act", onclick: () => go("quick") }, el("span", { class: "a-i" }, "⚡"), el("span", null, el("b", null, "Quick 10"), el("small", null, "random review")))));
+  WORLDS.forEach((w, wi) => {
+    const doneN = w.levels.filter(l => S.levels[l.id] && S.levels[l.id].done).length;
+    const sec = el("section", { class: "world", style: { "--wc": w.color } },
+      el("div", { class: "w-head" }, el("div", { class: "w-num" }, String(wi + 1)), el("div", null, el("div", { class: "w-name" }, w.name), el("div", { class: "w-sub" }, w.lec + " · " + w.tag)), el("div", { class: "w-prog" }, doneN + "/" + w.levels.length)));
+    const items = [...w.levels.map(l => ({ l })), { boss: w.boss }];
+    const gap = 106, top = 58, Hh = top + (items.length - 1) * gap + 70;
+    const map = el("div", { class: "map", style: { height: Hh + "px" } });
+    const pts = items.map((it, i) => [50 + 27 * Math.sin(i * 1.25 + wi * 0.9), top + i * gap]);
+    const d = pts.map((p, i) => { if (!i) return `M${p[0]} ${p[1]}`; const q = pts[i - 1]; const my = (q[1] + p[1]) / 2; return `C${q[0]} ${my} ${p[0]} ${my} ${p[0]} ${p[1]}`; }).join(" ");
+    map.innerHTML = `<svg class="path" viewBox="0 0 100 ${Hh}" preserveAspectRatio="none"><path d="${d}" class="p-bg"/><path d="${d}" class="p-fg"/></svg>`;
+    items.forEach((it, i) => {
+      const [x, y] = pts[i];
+      if (it.l) {
+        const l = it.l, rec = S.levels[l.id];
+        const isNext = nu && nu.type === "level" && nu.obj === l;
+        const stars = rec ? rec.stars : 0;
+        const node = el("button", { type: "button", class: "node" + (rec && rec.done ? " done" : "") + (isNext ? " next" : ""), style: { left: `calc(${x}% - 32px)`, top: (y - 32) + "px" }, onclick: () => go("level-" + l.id), "aria-label": "Lecture " + l.n + ": " + l.t },
+          el("span", { class: "n" }, l.n), el("span", { class: "stars" }, [0, 1, 2].map(k => el("i", { class: k < stars ? "on" : "" }))));
+        const lab = el("div", { class: "node-l", style: { left: `${x}%`, top: (y + 42) + "px" } }, l.t);
+        map.append(node, lab);
+      } else {
+        const b = it.boss, beat = S.bosses[b.id];
+        const node = el("button", { type: "button", class: "node boss" + (beat ? " done" : "") + (nu && nu.type === "boss" && nu.obj === b ? " next" : ""), style: { left: `calc(${x}% - 40px)`, top: (y - 40) + "px" }, onclick: () => go("boss-" + b.id), "aria-label": "Boss: " + b.name },
+          el("span", { class: "n" }, beat ? "★" : "VS"));
+        const lab = el("div", { class: "node-l boss-l", style: { left: `${x}%`, top: (y + 44) + "px" } }, (b.final ? "" : "BOSS · ") + b.name);
+        map.append(node, lab);
+      }
+    });
+    sec.append(map);
+    wrap.append(sec);
+    if (wi < WORLDS.length - 1) wrap.append(el("div", { class: "junction", html: `<svg viewBox="0 0 200 40" aria-hidden="true"><path d="M0 8 H80 C100 8 100 24 120 24 H200" class="lg-c"/><path d="M0 22 H80 C100 22 100 38 120 38 H200" class="lg-v"/></svg><span>junction → ${esc(WORLDS[wi + 1].name)}</span>` }));
+  });
+  let armed = false;
+  const reset = el("button", { type: "button", class: "btn ghost sm", onclick: e => { if (!armed) { armed = true; e.currentTarget.textContent = "Tap again to erase all progress"; setTimeout(() => { armed = false; e.currentTarget && (e.currentTarget.textContent = "Reset progress"); }, 3000); return; } S = Object.assign({}, DEF, { levels: {}, bosses: {}, mistakes: [], streak: { last: "", count: 0 }, intro: true }); save(); route(); } }, "Reset progress");
+  wrap.append(el("footer", { class: "foot" }, el("p", null, "Built from the EECE 2077 lecture slides and in-class problem sets, Lectures 1–20 (Fall 2026). Questions are paraphrased for practice; numbers follow the class conventions (kT = 0.0259 eV, nᵢ = 1.5×10¹⁰ cm⁻³)."), el("p", null, "Progress is saved in this browser only."), reset));
+  app.replaceChildren(wrap);
+  if (!S.intro) showIntro();
+}
+function showIntro() {
+  const ov = el("div", { class: "overlay" });
+  const close = () => { S.intro = true; save(); ov.remove(); };
+  ov.append(el("div", { class: "modal" },
+    el("div", { class: "m-k" }, "WELCOME"),
+    el("h2", null, "Catch up one lecture at a time"),
+    el("ul", { class: "m-list" },
+      el("li", null, el("b", null, "One level = one lecture. "), "Each step is a tiny idea, then a quick check. No walls of text."),
+      el("li", null, el("b", null, "Labs. "), "Sliders and live band diagrams. Finish the missions to move on."),
+      el("li", null, el("b", null, "Bosses "), "are test-style rounds. The last one is the prof's favorite: drift or diffusion?"),
+      el("li", null, el("b", null, "Formula Vault "), "fills up as you clear levels. It's your exam summary sheet.")),
+    el("div", { class: "row end" },
+      el("button", { type: "button", class: "btn ghost", onclick: close }, "Show me the map"),
+      el("button", { type: "button", class: "btn primary", onclick: () => { close(); go("level-L1"); } }, "Start Lecture 1 →"))));
+  document.body.append(ov);
+}
+
+/* Runner: plays a list of steps (level / mixer / quick) */
+function runSteps(cfg) {
+  const items = cfg.items;
+  let idx = 0, combo = 0, xpGain = 0;
+  const res = [];
+  const color = cfg.color || "#4cc9f0";
+  const wrap = el("div", { class: "run", style: { "--wc": color } });
+  const prog = el("div", { class: "prog" }, items.map(() => el("i")));
+  const xpEl = el("span", { class: "run-xp" }, "+0 XP");
+  const comboEl = el("span", { class: "combo" });
+  const bar = el("div", { class: "run-top" },
+    el("button", { type: "button", class: "icon-btn", "aria-label": "Back to map", onclick: () => go("home") }, "✕"),
+    el("div", { class: "run-title" }, el("small", null, cfg.kicker), el("b", null, cfg.title)),
+    comboEl, xpEl);
+  const stage = el("div", { class: "stage" });
+  const foot = el("div", { class: "run-foot" });
+  wrap.append(bar, prog, stage, foot);
+  app.replaceChildren(wrap);
+  window.scrollTo(0, 0);
+  function setCombo() { comboEl.textContent = combo >= 2 ? "🔥 ×" + combo : ""; comboEl.classList.toggle("on", combo >= 2); }
+  function award(n) { if (!n) return; xpGain += n; S.xp += n; xpEl.textContent = "+" + xpGain + " XP"; floatXP(n, xpEl); save(); }
+  function show() {
+    const it = items[idx], step = it.step;
+    [...prog.children].forEach((d, k) => d.className = k < idx ? (res[k] === "miss" ? "miss" : "done") : k === idx ? "cur" : "");
+    const card = el("article", { class: "card" });
+    card.append(el("div", { class: "card-k" }, (it.level ? "Lecture " + it.level.n + " · " : "") + "step " + (idx + 1) + " of " + items.length));
+    if (step.c && (cfg.showConcept !== false)) card.append(el("div", { class: "idea" }, el("span", { class: "idea-t" }, step.lab ? "LAB" : "IDEA"), el("div", { html: fmt(step.c) })));
+    const next = el("button", { type: "button", class: "btn primary big", onclick: advance }, idx === items.length - 1 ? "Finish" : "Continue");
+    foot.replaceChildren();
+    if (step.lab) {
+      const lab = LABS[step.lab]({ onMission: (i, n, tot) => { award(5); if (n === tot) { next.disabled = false; next.textContent = "Missions complete: continue"; beep("ok"); } } });
+      card.append(lab);
+      next.disabled = true; next.textContent = "Complete the missions";
+      foot.append(el("button", { type: "button", class: "btn ghost", onclick: advance }, "Skip lab"), next);
+      res[idx] = "lab";
+      keyHandler = e => { if (e.key === "Enter" && !next.disabled) advance(); };
+    } else {
+      const q = makeQuestion(step, null, r => {
+        res[idx] = r; bumpStreak(); S.answered++;
+        const qid = it.qid;
+        if (r === "first") { award(10 + 2 * Math.min(combo, 5)); combo++; if (cfg.mode === "mix") S.mistakes = S.mistakes.filter(x => x !== qid); }
+        else { if (r === "second") award(4); combo = 0; if (qid && !S.mistakes.includes(qid)) S.mistakes.push(qid); }
+        setCombo(); save();
+        foot.replaceChildren(next); next.focus({ preventScroll: true });
+        q.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      });
+      card.append(q);
+      foot.append(el("span", { class: "foot-hint" }, step.num != null ? "Enter to check" : step.o || step.tf != null ? "Keys 1–" + ((step.o || [0, 0]).length) + " to answer" : ""));
+      keyHandler = e => { if (res[idx] && e.key === "Enter") { advance(); return; } if (!res[idx] && q.keys && q.keys(e)) e.preventDefault(); };
+      setTimeout(() => q.focusMe && q.focusMe(), 50);
+    }
+    stage.replaceChildren(card);
+    card.classList.add("enter");
+  }
+  function advance() {
+    if (idx < items.length - 1) { idx++; show(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    else { keyHandler = null; cfg.onFinish({ res, xpGain }); }
+  }
+  setCombo(); show();
+}
+
+function playLevel(l) {
+  runSteps({
+    mode: "level", kicker: "LECTURE " + l.n + " · " + l.s, title: l.t, color: l.world.color,
+    items: l.steps.map((s, i) => ({ step: s, level: l, qid: l.id + "." + i })),
+    onFinish: ({ res, xpGain }) => {
+      const qs = res.filter(r => r !== "lab"), first = qs.filter(r => r === "first").length;
+      const ratio = qs.length ? first / qs.length : 1;
+      const stars = ratio >= 0.9 ? 3 : ratio >= 0.7 ? 2 : 1;
+      const prev = S.levels[l.id] || {};
+      const bonus = prev.done ? 0 : 25;
+      S.xp += bonus;
+      S.levels[l.id] = { done: true, stars: Math.max(prev.stars || 0, stars), plays: (prev.plays || 0) + 1 };
+      bumpStreak(); save();
+      results({ title: "Lecture " + l.n + " cleared", sub: l.t, stars, first, total: qs.length, xp: xpGain + bonus, bonus, color: l.world.color, vault: l.v, next: LEVELS[LEVELS.indexOf(l) + 1], replay: "level-" + l.id, world: l.world, lastInWorld: l.li === l.world.levels.length - 1 });
+    }
+  });
+}
+function results(r) {
+  keyHandler = null;
+  beep("win"); confetti();
+  const box = el("div", { class: "results", style: { "--wc": r.color } },
+    el("div", { class: "r-k" }, r.kick || "LEVEL COMPLETE"),
+    el("h2", null, r.title), el("div", { class: "r-sub" }, r.sub),
+    el("div", { class: "big-stars" }, [0, 1, 2].map(k => el("i", { class: k < r.stars ? "on" : "", style: { animationDelay: (0.15 + k * 0.18) + "s" } }))),
+    el("div", { class: "r-stats" }, el("div", null, el("b", null, r.first + "/" + r.total), el("small", null, "first try")), el("div", null, el("b", null, "+" + r.xp), el("small", null, "XP" + (r.bonus ? " (incl. +" + r.bonus + " clear bonus)" : "")))),
+    r.vault ? el("div", { class: "r-vault" }, el("div", { class: "r-vk" }, "∑ Added to your Formula Vault"), el("div", { class: "f-list" }, r.vault.map(f => el("code", { class: "f", html: fmt(f) })))) : null);
+  const btns = el("div", { class: "row end wrap" });
+  btns.append(el("button", { type: "button", class: "btn ghost", onclick: () => go("home") }, "Map"));
+  if (r.replay) btns.append(el("button", { type: "button", class: "btn ghost", onclick: () => go(r.replay) }, "Replay"));
+  if (r.lastInWorld && !S.bosses[r.world.boss.id]) btns.append(el("button", { type: "button", class: "btn primary", onclick: () => go("boss-" + r.world.boss.id) }, "Fight the boss: " + r.world.boss.name + " →"));
+  else if (r.next) btns.append(el("button", { type: "button", class: "btn primary", onclick: () => go("level-" + r.next.id) }, "Next: Lecture " + r.next.n + " →"));
+  box.append(btns);
+  app.replaceChildren(el("div", { class: "run", style: { "--wc": r.color } }, box));
+  window.scrollTo(0, 0);
+  keyHandler = e => { if (e.key === "Enter") { const p = btns.querySelector(".primary") || btns.lastChild; p.click(); } };
+}
+
+/* Boss */
+function playBoss(b) {
+  const w = b.world;
+  keyHandler = null;
+  let pool = shuffle(b.q.map(q => ({ step: q })));
+  if (!b.final) {
+    const extra = shuffle(w.levels.flatMap(l => l.steps.map((s, i) => ({ step: s, level: l, qid: l.id + "." + i }))).filter(x => x.step.o || x.step.tf != null)).slice(0, 3);
+    pool = shuffle(pool.concat(extra));
+  }
+  const total = pool.length;
+  let hearts = 3, hp = total, idx = 0, xp = 0, timerId = null;
+  const wrap = el("div", { class: "run boss-run", style: { "--wc": w.color } });
+  function intro() {
+    wrap.replaceChildren(el("div", { class: "boss-intro" },
+      el("div", { class: "r-k" }, b.final ? "FINAL BOSS" : "BOSS · " + w.name.toUpperCase()),
+      el("div", { class: "boss-face", "aria-hidden": "true" }, el("span", null, b.final ? "⚡" : "VS")),
+      el("h2", null, b.name), el("p", null, b.flavor),
+      el("ul", { class: "m-list" }, el("li", null, total + " questions, one try each."), el("li", null, "3 hearts. A miss costs a heart."), b.timer ? el("li", null, b.timer + " seconds per question.") : null),
+      el("div", { class: "row end" }, el("button", { type: "button", class: "btn ghost", onclick: () => go("home") }, "Not yet"), el("button", { type: "button", class: "btn primary big", onclick: () => q() }, "Fight →"))));
+    keyHandler = e => { if (e.key === "Enter") q(); };
+  }
+  function hud() {
+    return el("div", { class: "boss-hud" },
+      el("button", { type: "button", class: "icon-btn", "aria-label": "Leave", onclick: () => { clearInterval(timerId); go("home"); } }, "✕"),
+      el("div", { class: "hp" }, el("small", null, b.name), el("div", { class: "hp-bar" }, el("i", { style: { width: (100 * hp / total) + "%" } }))),
+      el("div", { class: "hearts" }, [0, 1, 2].map(k => el("span", { class: k < hearts ? "on" : "" }, "♥"))));
+  }
+  function q() {
+    clearInterval(timerId);
+    if (hearts <= 0) return end(false);
+    if (idx >= total) return end(true);
+    const it = pool[idx];
+    const card = el("article", { class: "card" }, el("div", { class: "card-k" }, "Question " + (idx + 1) + " of " + total));
+    const next = el("button", { type: "button", class: "btn primary big", onclick: () => { idx++; q(); } }, "Next");
+    const foot = el("div", { class: "run-foot" });
+    let timeBar = null;
+    const qq = makeQuestion(it.step, { single: true }, r => {
+      clearInterval(timerId);
+      bumpStreak();
+      if (r === "first") { hp--; xp += 8; S.xp += 8; floatXP(8, wrap.querySelector(".hp")); wrap.querySelector(".hp-bar i").style.width = (100 * hp / total) + "%"; wrap.querySelector(".boss-hud").classList.add("hit"); }
+      else { hearts--; wrap.querySelector(".hearts").replaceWith(el("div", { class: "hearts lost" }, [0, 1, 2].map(k => el("span", { class: k < hearts ? "on" : "" }, "♥")))); if (it.qid && !S.mistakes.includes(it.qid)) S.mistakes.push(it.qid); }
+      save();
+      if (hearts <= 0) next.textContent = "See result"; else if (idx === total - 1) next.textContent = "Finish him";
+      foot.replaceChildren(next); next.focus({ preventScroll: true });
+    });
+    card.append(qq);
+    if (b.timer) {
+      timeBar = el("div", { class: "timer" }, el("i"));
+      card.prepend(timeBar);
+      const t0 = Date.now();
+      timerId = setInterval(() => {
+        const left = 1 - (Date.now() - t0) / (b.timer * 1000);
+        timeBar.firstChild.style.width = Math.max(0, left * 100) + "%";
+        if (left <= 0) { clearInterval(timerId); const btns = qq.querySelectorAll(".opt"); const wrongIdx = [...btns].findIndex((x, k) => k !== it.step.a); if (btns[wrongIdx]) { btns[wrongIdx].click(); } }
+      }, 100);
+    }
+    wrap.replaceChildren(hud(), el("div", { class: "stage" }, card), foot);
+    keyHandler = e => { if (foot.contains(next) && e.key === "Enter") { next.click(); return; } if (qq.keys && qq.keys(e)) e.preventDefault(); };
+  }
+  function end(win) {
+    clearInterval(timerId); keyHandler = null;
+    if (win) { const bonus = 50 + hearts * 10; S.xp += bonus; xp += bonus; S.bosses[b.id] = true; save(); beep("win"); confetti(); }
+    const nb = WORLDS[w.index + 1];
+    wrap.replaceChildren(el("div", { class: "results" },
+      el("div", { class: "r-k" }, win ? "BOSS DEFEATED" : "KNOCKED OUT"),
+      el("div", { class: "boss-face", "aria-hidden": "true" }, el("span", null, win ? "★" : "✕")),
+      el("h2", null, win ? b.name + " is down" : b.name + " wins this round"),
+      el("div", { class: "r-sub" }, win ? "Hearts left: " + hearts + ". +" + xp + " XP" : "The questions you missed are now in your Mistake Mixer. Review them, then try again."),
+      el("div", { class: "row end wrap" },
+        el("button", { type: "button", class: "btn ghost", onclick: () => go("home") }, "Map"),
+        !win ? el("button", { type: "button", class: "btn ghost", onclick: () => go("mix") }, "Mistake Mixer") : null,
+        el("button", { type: "button", class: "btn " + (win && nb ? "ghost" : "primary"), onclick: () => { route(); } }, win ? "Fight again" : "Retry"),
+        win && nb ? el("button", { type: "button", class: "btn primary", onclick: () => go("level-" + nb.levels[0].id) }, "Next world: " + nb.name + " →") : null)));
+  }
+  app.replaceChildren(wrap);
+  window.scrollTo(0, 0);
+  intro();
+}
+
+/* Mixer / quick review */
+function playReview(mode) {
+  let items;
+  if (mode === "mix") items = shuffle(S.mistakes.filter(q => QBY[q])).slice(0, 12).map(q => ({ step: QBY[q].step, level: QBY[q].level, qid: q }));
+  else {
+    const cleared = LEVELS.filter(l => S.levels[l.id] && S.levels[l.id].done);
+    const src = (cleared.length ? cleared : LEVELS);
+    items = shuffle(src.flatMap(l => l.steps.map((s, i) => ({ step: s, level: l, qid: l.id + "." + i }))).filter(x => isQ(x.step))).slice(0, 10);
+  }
+  if (!items.length) { go("home"); return; }
+  runSteps({
+    mode, kicker: mode === "mix" ? "MISTAKE MIXER" : "QUICK 10", title: mode === "mix" ? "Fix what you missed" : "Random review", color: mode === "mix" ? "#ff8a3d" : "#2ee59d",
+    items,
+    onFinish: ({ res, xpGain }) => {
+      const first = res.filter(r => r === "first").length;
+      results({ kick: mode === "mix" ? "MIXER COMPLETE" : "REVIEW COMPLETE", title: mode === "mix" ? "Mixer done" : "Quick 10 done", sub: mode === "mix" ? (S.mistakes.length ? S.mistakes.length + " still in the mixer" : "Mixer is empty. Clean sweep.") : "Nice work keeping the streak.", stars: first / items.length >= 0.9 ? 3 : first / items.length >= 0.7 ? 2 : 1, first, total: items.length, xp: xpGain, color: mode === "mix" ? "#ff8a3d" : "#2ee59d", replay: mode });
+    }
+  });
+}
+
+/* Vault */
+function viewVault() {
+  keyHandler = null;
+  let showAll = false, q = "";
+  const wrap = el("div", { class: "vault" });
+  const list = el("div");
+  const search = el("input", { class: "num-in", type: "search", placeholder: "Search formulas (e.g. V_0, β, 1240)", "aria-label": "Search formulas", oninput: e => { q = e.target.value.toLowerCase(); paint(); } });
+  const tog = el("label", { class: "chk" }, el("input", { type: "checkbox", onchange: e => { showAll = e.target.checked; paint(); } }), " Show locked too");
+  function paint() {
+    list.replaceChildren(...WORLDS.map(w => {
+      const levels = w.levels.map(l => {
+        const unlocked = S.levels[l.id] && S.levels[l.id].done;
+        const fs = l.v.filter(f => !q || f.toLowerCase().includes(q) || l.t.toLowerCase().includes(q));
+        if (!fs.length) return null;
+        return el("div", { class: "v-level" + (unlocked || showAll ? "" : " locked") },
+          el("div", { class: "v-lh" }, el("span", null, "L" + l.n + " · " + l.t), unlocked ? null : el("button", { type: "button", class: "btn ghost sm", onclick: () => go("level-" + l.id) }, "🔒 clear to unlock")),
+          el("div", { class: "f-list" }, fs.map(f => el("code", { class: "f", html: fmt(f) }))));
+      }).filter(Boolean);
+      if (!levels.length) return null;
+      return el("section", { class: "v-world", style: { "--wc": w.color } }, el("h3", null, w.name), levels);
+    }).filter(Boolean));
+  }
+  const unlockedN = LEVELS.filter(l => S.levels[l.id] && S.levels[l.id].done).length;
+  wrap.append(
+    el("div", { class: "run-top" }, el("button", { type: "button", class: "icon-btn", "aria-label": "Back", onclick: () => go("home") }, "✕"), el("div", { class: "run-title" }, el("small", null, "∑ FORMULA VAULT"), el("b", null, unlockedN + " of " + LEVELS.length + " lectures unlocked"))),
+    el("div", { class: "v-tools" }, search, tog), list);
+  paint();
+  app.replaceChildren(wrap);
+  window.scrollTo(0, 0);
+}
+
+/* Deploy helper (artifact build only): copy the clean source to the clipboard */
+function viewCopy() {
+  keyHandler = null;
+  const ta = el("textarea", { class: "num-in", style: { width: "100%", height: "260px", fontSize: "11px" }, readonly: true });
+  const msg = el("div", { class: "r-sub" }, "Loading…");
+  const btn = el("button", { type: "button", class: "btn primary big", id: "copy-src", onclick: async () => {
+    try { await navigator.clipboard.writeText(ta.value); msg.textContent = "Copied " + ta.value.length + " characters."; }
+    catch (e) { ta.focus(); ta.select(); msg.textContent = "Clipboard blocked: text selected, press Ctrl+C."; }
+  } }, "Copy source");
+  fetch("src.txt").then(r => r.ok ? r.text() : Promise.reject(r.status)).then(t => { ta.value = t; msg.textContent = t.length + " characters ready."; }).catch(err => { msg.textContent = "Source not available here (" + err + ")."; });
+  app.replaceChildren(el("div", { class: "results" }, el("div", { class: "r-k" }, "DEPLOY HELPER"), el("h2", null, "Copy the deployable source"), msg, el("div", { class: "row" }, btn), ta));
+}
+
+/* Router */
+function route() {
+  document.querySelectorAll(".overlay").forEach(o => o.remove());
+  const h = location.hash.replace(/^#/, "");
+  let m;
+  if (h === "copy-source" && window.SQ_COPY) return viewCopy();
+  if (h === "vault") return viewVault();
+  if (h === "mix") return playReview("mix");
+  if (h === "quick") return playReview("quick");
+  if ((m = h.match(/^level-(L\d+)$/)) && LEVEL[m[1]]) return playLevel(LEVEL[m[1]]);
+  if ((m = h.match(/^boss-(B\d+)$/)) && BOSS[m[1]]) return playBoss(BOSS[m[1]]);
+  return viewHome();
+}
+window.addEventListener("hashchange", route);
+route();
+window.__SQ = { S, LEVELS, WORLDS, parseNum, numOk, fmt };
+})();
+
+</script>
+</body>
+</html>
